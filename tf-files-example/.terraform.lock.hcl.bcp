@@ -1,0 +1,10 @@
+# This file is maintained automatically by "terraform init".
+# Manual edits may be lost in future updates.
+
+provider "sberbank/devops/di" {
+  version     = "0.3.11"
+  constraints = "0.3.11"
+  hashes = [
+    "h1:xOTPK+UvFR/+UOg3ZN8SPPCj9sQVVAzHrh1hww5/yWs=",
+  ]
+}
