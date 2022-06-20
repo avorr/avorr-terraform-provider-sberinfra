@@ -2,9 +2,9 @@
 # Manual edits may be lost in future updates.
 
 provider "sberbank/devops/di" {
-  version     = "0.3.11"
-  constraints = "0.3.11"
+  version     = "0.3.12"
+  constraints = "0.3.12"
   hashes = [
-    "h1:xOTPK+UvFR/+UOg3ZN8SPPCj9sQVVAzHrh1hww5/yWs=",
+    "h1:SLjpHqkNrBukIrMjtE96bDvmMGzubbVYIwkhoKlU04M=",
   ]
 }

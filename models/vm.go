@@ -60,9 +60,9 @@ func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[
 	serverData["hdd"] = map[string]int{
 		"size": server.Disk,
 	}
-
-	delete(serverData, "region") //temporary solution
-
+	if server.Region == "" {
+		delete(serverData, "region")
+	}
 	if o.Volumes != nil && len(o.Volumes) > 0 {
 		volumes := make([]map[string]interface{}, 0)
 		volumeBytes, err := json.Marshal(o.Volumes)

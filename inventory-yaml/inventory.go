@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io/fs"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"sync"
 
 	"github.com/goccy/go-yaml"
@@ -23,12 +25,13 @@ var (
 )
 
 type Inventory struct {
-	mu   sync.Mutex
-	Path string      `json:"-" yaml:"-"`
-	Mode fs.FileMode `json:"-" yaml:"-"`
-	Yml  string      `json:"-" yaml:"-"`
-	Bin  string      `json:"-" yaml:"-"`
-	All  *Group      `json:"all" yaml:"all"`
+	mu      sync.Mutex
+	Path    string      `json:"-" yaml:"-"`
+	Mode    fs.FileMode `json:"-" yaml:"-"`
+	Yml     string      `json:"-" yaml:"-"`
+	Bin     string      `json:"-" yaml:"-"`
+	All     *Group      `json:"all" yaml:"all"`
+	Disable bool        `json:"-" yaml:"-"`
 }
 
 func NewInventory() *Inventory {
@@ -39,6 +42,21 @@ func NewInventory() *Inventory {
 		Bin:  "inventory.bin",
 		Mode: 0755,
 	}
+}
+
+func (o *Inventory) IsDisabled() bool {
+	isDisabled, ok := os.LookupEnv("INVENTORY_DISABLE")
+	if ok {
+		isDisabledBool, err := strconv.ParseBool(isDisabled)
+		if err != nil {
+			log.Println(err)
+			o.Disable = false
+		}
+		o.Disable = isDisabledBool
+	} else {
+		o.Disable = false
+	}
+	return o.Disable
 }
 
 func (o *Inventory) ToYML() ([]byte, error) {
@@ -64,6 +82,9 @@ func (o *Inventory) ToYML() ([]byte, error) {
 }
 
 func (o *Inventory) ToBIN() error {
+	if o.Disable {
+		return nil
+	}
 	buff := bytes.Buffer{}
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(o)
@@ -78,6 +99,9 @@ func (o *Inventory) ToBIN() error {
 }
 
 func (o *Inventory) FromBIN() error {
+	if o.Disable {
+		return nil
+	}
 	filePointer, err := os.Open(filepath.Join(o.Path, o.Bin))
 	if err != nil {
 		return err
@@ -91,6 +115,9 @@ func (o *Inventory) FromBIN() error {
 }
 
 func (o *Inventory) Save() error {
+	if o.Disable {
+		return nil
+	}
 	o.mu.Lock()
 	defer o.mu.Unlock()
 	data, err := o.ToYML()

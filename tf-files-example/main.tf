@@ -14,9 +14,7 @@ terraform {
   required_providers {
     di = {
       source  = "sberbank/devops/di"
-#      source  = "terraform-provider-dynamicinfrastructure_v1.0.2-darwin-amd64"
-#      source  = "git::ssh://git@base.sw.sbc.space:7999/pid/create-vm-sbercloud-portal.git"
-      version = "0.3.11"
+      version = "0.3.12"
     }
 #    vault = {
 #      version = "3.3.0"

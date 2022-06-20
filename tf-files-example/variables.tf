@@ -89,11 +89,7 @@ variable "extra_disk_size" {
 }
 
 
-variable "tags" {
-  description = "VM tags"
-  type = string
-  default = "test-tag"
-}
+
 
 // variable "extra_disk_size_1" {
 //   default = ""

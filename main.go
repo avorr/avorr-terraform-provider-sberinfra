@@ -52,6 +52,7 @@ func ProviderFunc() *schema.Provider {
 	}
 
 	inventory := inventory_yaml.NewInventory()
+	inventory.IsDisabled()
 	err := inventory.FromBIN()
 	if err != nil {
 		log.Println(err)

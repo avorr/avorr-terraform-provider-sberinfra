@@ -92,7 +92,7 @@ func init() {
 		"ram":             {Type: schema.TypeInt, Computed: true},
 		"disk":            {Type: schema.TypeInt, Required: true},
 		"flavor":          {Type: schema.TypeString, Required: true},
-		"region":          {Type: schema.TypeString, Required: true},
+		"region":          {Type: schema.TypeString, Optional: true},
 		"virtualization":  {Type: schema.TypeString, Required: true},
 		"os_name":         {Type: schema.TypeString, Required: true},
 		"os_version":      {Type: schema.TypeString, Required: true},
