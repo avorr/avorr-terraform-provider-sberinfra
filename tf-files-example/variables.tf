@@ -39,7 +39,8 @@ variable "project_id" {
   description = "Project ID"
   type = string
 #  default = "e17039cb-c596-40c8-838e-f73256091947"
-  default = "37f80fa9-bd9f-479e-ba49-f2d66376545b" #PD20
+#  default = "37f80fa9-bd9f-479e-ba49-f2d66376545b" #PD20
+  default = "e5801255-d4e6-41fb-a492-615fdfb5764c" #PD20 gt-common-admins-uat-junior
 #  default = "e17039cb-c596-40c8-838e-f73256091947" #PD15 dvp-dev-admin
 }
 

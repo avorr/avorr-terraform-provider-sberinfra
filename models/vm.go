@@ -143,8 +143,9 @@ func (o *VM) OnReadTF(res *schema.ResourceData, server *Server) {
 		for _, v := range volumeSet.List() {
 			values := v.(map[string]interface{})
 			volume := &Volume{
-				Size: values["size"].(int),
-				Path: values["path"].(string),
+				Size:        values["size"].(int),
+				Path:        values["path"].(string),
+				StorageType: values["storage_type"].(string),
 			}
 			o.Volumes = append(o.Volumes, volume)
 		}
@@ -166,8 +167,9 @@ func (o *VM) OnWriteTF(res *schema.ResourceData, server *Server) {
 		sort.Sort(ByPath(o.Volumes))
 		for _, v := range o.Volumes {
 			volume := map[string]interface{}{
-				"size": v.Size,
-				"path": v.Path,
+				"size":         v.Size,
+				"path":         v.Path,
+				"storage_type": v.StorageType,
 			}
 			volumes = append(volumes, volume)
 		}

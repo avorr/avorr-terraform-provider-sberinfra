@@ -9,12 +9,13 @@ type Volume struct {
 	Status   string `json:"status,omitempty"`
 	// Name           string `json:"name,omitempty" hcl:"name,optional"`
 	// FSType         string `json:"fs_type,omitempty" hcl:"fs_type,optional"`
-	// StorageType    string `json:"storage_type,omitempty" hcl:"storage_type,optional"`
+	StorageType string `json:"storage_type,omitempty" hcl:"storage_type,optional"`
 }
 
 type HCLVolume struct {
-	Size int     `json:"size" hcl:"size"`
-	Path *string `json:"path,omitempty" hcl:"path,optional"`
+	Size        int     `json:"size" hcl:"size"`
+	Path        *string `json:"path,omitempty" hcl:"path,optional"`
+	StorageType string  `json:"storage_type,omitempty" hcl:"storage_type,optional"`
 }
 
 type ByPath []*Volume

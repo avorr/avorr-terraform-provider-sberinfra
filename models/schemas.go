@@ -118,8 +118,9 @@ func init() {
 			// Computed: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"path": {Type: schema.TypeString, Optional: true},
-					"size": {Type: schema.TypeInt, Required: true},
+					"path":         {Type: schema.TypeString, Optional: true},
+					"size":         {Type: schema.TypeInt, Required: true},
+					"storage_type": {Type: schema.TypeString, Optional: true},
 				},
 			},
 		},
