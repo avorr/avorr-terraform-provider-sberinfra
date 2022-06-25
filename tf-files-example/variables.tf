@@ -40,16 +40,18 @@ variable "project_id" {
   type = string
 #  default = "e17039cb-c596-40c8-838e-f73256091947"
 #  default = "37f80fa9-bd9f-479e-ba49-f2d66376545b" #PD20
-  default = "e5801255-d4e6-41fb-a492-615fdfb5764c" #PD20 gt-common-admins-uat-junior
-#  default = "e17039cb-c596-40c8-838e-f73256091947" #PD15 dvp-dev-admin
+#  default = "e5801255-d4e6-41fb-a492-615fdfb5764c" #PD20 gt-common-admins-uat-junior
+#  default = "08e3fb48-c212-486e-a77a-809a73caa440" #PD15 dvp-dev-admin
+  default = "db95faf0-f1b8-46ef-b371-3ee40795c432" #PD24 gt-rosim-nt-dmz
 }
 
 variable "group_id" {
   description = "Group ID"
   type = string
 #  default = "ca0519ee-ab9b-45f8-8caa-16993b273627"
-  default = "d92966b6-0345-43a1-8f68-bd5ae85640f2" #PD20
+#  default = "d92966b6-0345-43a1-8f68-bd5ae85640f2" #PD20
 #  default = "86e75f8c-24c2-448b-b8d4-eb614ad82234" #PD15
+  default = "58194ebe-56a7-4cde-9e3b-03731993a25e" #PD24 ros nt
 }
 
 variable "region" {

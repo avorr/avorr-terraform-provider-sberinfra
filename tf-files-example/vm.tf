@@ -1,3 +1,22 @@
+#variable "disks" {
+#	default = {}
+#}
+
+
+variable "disks" {
+	type = map
+	default = {
+		disk1 = {
+			size: 50
+			storage = "rbd-1"
+		}
+		disk2 = {
+			size: 100
+			storage = "iscsi_common"
+		}
+	}
+}
+
 
 resource "di_vm" "vm1" {
 	group_id        = var.group_id
@@ -13,11 +32,12 @@ resource "di_vm" "vm1" {
 	disk            = 50
 	zone            = "okvm1"
 
-	volume {
-		size = 60
-		storage_type = "rbd-1"
-		##		storage_type = "iscsi_common"
-		##		path = "/test1"
+	dynamic volume {
+		for_each = var.disks
+		content {
+				size = volume.value.size
+				storage_type = volume.value.storage
+		}
 	}
 
 #	tag_ids = [
