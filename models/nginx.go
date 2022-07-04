@@ -182,3 +182,11 @@ func (o *Nginx) HostVars(server *Server) map[string]interface{} {
 func (o *Nginx) GetGroup() string {
 	return ""
 }
+
+func (o *Nginx) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{}
+}
+
+func (o *Nginx) HCLVolumes() []*HCLVolume {
+	return nil
+}

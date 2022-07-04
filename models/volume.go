@@ -13,9 +13,9 @@ type Volume struct {
 }
 
 type HCLVolume struct {
-	Size        int     `json:"size" hcl:"size"`
-	Path        *string `json:"path,omitempty" hcl:"path,optional"`
-	StorageType string  `json:"storage_type,omitempty" hcl:"storage_type,optional"`
+	Size        int    `json:"size" hcl:"size"`
+	Path        string `json:"path,omitempty" hcl:"path,optional"`
+	StorageType string `json:"storage_type,omitempty" hcl:"storage_type,optional"`
 }
 
 type ByPath []*Volume

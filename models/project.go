@@ -23,15 +23,15 @@ type Project struct {
 	StandType          string    `json:"stand_type"`
 	State              string    `json:"state"`
 	Type               string    `json:"type"`
-	AppSystemsCi       string    `json:"app_systems_ci"`
-	ResId              string    `json:"-" hcl:"id"`
+	AppSystemsCi       string    `json:"app_systems_ci" hcl:"app_systems_ci"`
+	ResId              string    `json:"-"`
 	ResType            string    `json:"-" hcl:"type,label"`
 	ResName            string    `json:"-" hcl:"name,label"`
-	ResGroupIdUUID     string    `json:"-" hcl:"group_id_uuid"`
+	ResGroupIdUUID     string    `json:"-"`
 	ResGroupId         string    `json:"-" hcl:"group_id"`
-	ResAsIdUUID        string    `json:"-" hcl:"app_systems_ci_uuid"`
-	ResAsId            string    `json:"-" hcl:"app_systems_ci"`
-	ResStandTypeIdUUID string    `json:"-" hcl:"stand_type_id_uuid"`
+	ResAsIdUUID        string    `json:"-"`
+	ResAsId            string    `json:"-"`
+	ResStandTypeIdUUID string    `json:"-"`
 	ResStandTypeId     string    `json:"-" hcl:"stand_type_id"`
 }
 
@@ -109,9 +109,12 @@ func (o *Project) Deserialize(responseBytes []byte) error {
 		return errors.New("no project in response")
 	}
 	o.Id = uuid.MustParse(objMap["id"].(string))
+	o.ResId = objMap["id"].(string)
 	o.DomainId = uuid.MustParse(objMap["domain_id"].(string))
 	o.GroupId = uuid.MustParse(objMap["group_id"].(string))
+	o.ResGroupId = objMap["group_id"].(string)
 	o.StandTypeId = uuid.MustParse(objMap["stand_type_id"].(string))
+	o.ResStandTypeId = objMap["stand_type_id"].(string)
 	o.StandType = objMap["stand_type"].(string)
 	o.Name = objMap["name"].(string)
 	o.Type = objMap["type"].(string)
@@ -234,4 +237,25 @@ func (o *Project) HostVars(server *Server) map[string]interface{} {
 
 func (o *Project) GetGroup() string {
 	return ""
+}
+
+func (o *Project) ToHCL(server *Server) ([]byte, error) {
+	o.ResType = o.GetType()
+	o.ResName = utils.Reformat(o.Name)
+	type HCLServerRoot struct {
+		Resources *Project `hcl:"resource,block"`
+	}
+	root := &HCLServerRoot{Resources: o}
+	f := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(root, f.Body())
+	// return utils.Regexp(f.Bytes())
+	return f.Bytes(), nil
+}
+
+func (o *Project) HCLAppParams() *HCLAppParams {
+	return nil
+}
+
+func (o *Project) HCLVolumes() []*HCLVolume {
+	return nil
 }

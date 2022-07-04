@@ -164,3 +164,11 @@ func (o *Openshift) apiHost() error {
 func (o *Openshift) GetGroup() string {
 	return o.AppParams["name_project"].(string)
 }
+
+func (o *Openshift) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{}
+}
+
+func (o *Openshift) HCLVolumes() []*HCLVolume {
+	return nil
+}

@@ -19,12 +19,8 @@ import (
 )
 
 func main() {
-	if len(os.Args) >= 3 && os.Args[1] == "import" {
-		kv := "di-terraform"
-		if len(os.Args) == 4 && os.Args[3] != "" {
-			kv = os.Args[3]
-		}
-		importer := imports.Importer{VaultKV: kv}
+	if len(os.Args) == 3 && os.Args[1] == "import" {
+		importer := imports.Importer{}
 		err := importer.Import(os.Args[2])
 		if err != nil {
 			panic(err)
@@ -60,6 +56,10 @@ func ProviderFunc() *schema.Provider {
 	views.Inventory = inventory
 
 	return &schema.Provider{
+		// ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		// 	log.Println(pp.Println(data))
+		// 	return nil, nil
+		// },
 		DataSourcesMap: map[string]*schema.Resource{
 			"di_domain": {
 				ReadContext: ReadDataResource(&models.Domain{}),
@@ -81,7 +81,8 @@ func ProviderFunc() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"di_project": {
 				Importer: &schema.ResourceImporter{
-					State: schema.ImportStatePassthrough,
+					// State:        schema.ImportStatePassthrough,
+					StateContext: views.ProjectImport,
 				},
 				CreateContext: views.ProjectCreate,
 				ReadContext:   views.ProjectRead,
@@ -94,7 +95,8 @@ func ProviderFunc() *schema.Provider {
 			},
 			"di_vm": {
 				Importer: &schema.ResourceImporter{
-					State: schema.ImportStatePassthrough,
+					// State: schema.ImportStatePassthrough,
+					StateContext: views.ImportResource(&models.VM{}),
 				},
 				CreateContext: views.CreateResource(&models.VM{}),
 				ReadContext:   views.ReadResource(&models.VM{}),

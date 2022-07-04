@@ -11,3 +11,8 @@ resource "di_project" "terraformtest" {
   stand_type_id       = data.di_stand_type.dev.id
   app_systems_ci      = data.di_as.ec.code
 }
+
+#resource "di_project" "terraformtest2" {}
+
+
+

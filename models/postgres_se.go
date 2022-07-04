@@ -164,3 +164,11 @@ func (o *PostgresSE) HostVars(server *Server) map[string]interface{} {
 func (o *PostgresSE) GetGroup() string {
 	return ""
 }
+
+func (o *PostgresSE) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{}
+}
+
+func (o *PostgresSE) HCLVolumes() []*HCLVolume {
+	return nil
+}

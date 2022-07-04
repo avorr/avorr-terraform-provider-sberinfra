@@ -1,15 +1,17 @@
 package views
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	inventory_yaml "stash.sigma.sbrf.ru/sddevops/terraform-provider-di/inventory-yaml"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
@@ -459,4 +461,68 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		return diags
 	}
 	return f
+}
+
+func ImportResource(obj models.DIResource) schema.StateContextFunc {
+	return func(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+		// state := res.State()
+		// log.Println(pp.Sprint(state.Ephemeral.Type))
+		server := &models.Server{Object: obj, Id: uuid.MustParse(res.Id())}
+		// log.Println(pp.Sprint(server))
+		err := server.GetPubKey()
+		if err != nil {
+			return nil, err
+		}
+		responseBytes, err := server.ReadDI()
+		if err != nil {
+			return nil, err
+		}
+		err = server.Deserialize(responseBytes)
+		if err != nil {
+			return nil, err
+		}
+		// log.Println(pp.Sprint(server))
+
+		hclRoot := server.GetHCLRoot()
+		hclRoot.Resources.Type = obj.GetType()
+		hclRoot.Resources.AppParams = obj.HCLAppParams()
+		hclRoot.Resources.Volumes = obj.HCLVolumes()
+		objBytes := server.GetHCLRootBytes(hclRoot)
+		index := bytes.IndexByte(objBytes, byte('{'))
+		firstString := objBytes[:index+1]
+		if firstString[0] == byte(0x0a) {
+			firstString = firstString[1:]
+		}
+		appParamsFind := []byte("app_params {")
+		appParamsReplace := []byte("app_params = {")
+		objBytes = bytes.Replace(objBytes, appParamsFind, appParamsReplace, 1)
+		// log.Println(string(objBytes))
+
+		// TODO: file names
+		fileName := "imports.tf"
+		fileBytes, err := ioutil.ReadFile(fileName)
+		if err != nil {
+			return nil, err
+		}
+
+		toReplace := []byte(fmt.Sprintf("%s}", firstString))
+		newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
+		// log.Println(string(newBytes))
+		err = ioutil.WriteFile(fileName, newBytes, 0600)
+		if err != nil {
+			return nil, err
+		}
+		if len(server.TagIds) > 0 {
+			tags := []string{}
+			for _, v := range server.TagIds {
+				tags = append(tags, v.String())
+			}
+			err = res.Set("tag_ids", tags)
+			if err != nil {
+				return nil, err
+			}
+		}
+		// return nil, nil
+		return []*schema.ResourceData{res}, nil
+	}
 }

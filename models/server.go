@@ -202,6 +202,7 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
+	res.Set("password", o.Password)
 
 	if o.ClusterUuid.ID() != uint32(0) {
 		res.Set("cluster_uuid", o.ClusterUuid.String())
@@ -585,4 +586,93 @@ func (o *Server) GetAnsibleVaultPassword() (string, error) {
 		return "", err
 	}
 	return passwordEncrypted, nil
+}
+
+func (o *Server) GetHCLRoot() *HCLRoot {
+	root := &HCLRoot{Resources: &HCL{
+		// Id:             o.Id.String(),
+		// Name:           o.Name,
+		// Name:           utils.Reformat(o.ServiceName),
+		Name:           utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
+		GroupId:        o.GroupId.String(),
+		ProjectId:      o.ProjectId.String(),
+		ServiceName:    o.ServiceName,
+		IrGroup:        o.IrGroup,
+		OsName:         o.OsName,
+		OsVersion:      o.OsVersion,
+		Virtualization: o.Virtualization,
+		FaultTolerance: o.FaultTolerance,
+		Region:         o.Region,
+		Disk:           o.Disk,
+		Flavor:         o.Flavor,
+		Zone:           o.Zone,
+		PublicSshName:  o.PublicSshName,
+		AppParams:      nil,
+		Volumes:        nil,
+		TagIds:         nil,
+	}}
+	if len(o.TagIds) > 0 {
+		tags := HCLTags{}
+		for _, v := range o.TagIds {
+			tags = append(tags, v.String())
+		}
+		root.Resources.TagIds = &tags
+	}
+	return root
+}
+
+func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
+	f := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(root, f.Body())
+	// return utils.Regexp(f.Bytes())
+	return f.Bytes()
+}
+
+func (o *Server) SetObject() bool {
+	if o.IrGroup == "" {
+		return false
+	}
+	if o.Object != nil {
+		return false
+	}
+	var obj DIResource
+	switch o.IrGroup {
+	case "vm":
+		obj = &VM{}
+	case "nginx":
+		obj = &Nginx{}
+	case "sowa":
+		obj = &Sowa{}
+	case "project":
+		obj = &Openshift{}
+	case "postgres":
+		obj = &Postgres{}
+	case "postgres_se":
+		obj = &PostgresSE{}
+	case "elk":
+		obj = &ELK{}
+	}
+	o.Object = obj
+	return true
+}
+
+// "kafka":       "di_kafka",
+// "ignite":      "di_ignite",
+// "patroni":     "di_patroni",
+
+func (o *Server) HCLHeader() []byte {
+	return []byte(fmt.Sprintf(
+		"resource \"%s\" \"%s\" {}\n",
+		o.Object.GetType(),
+		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
+	))
+}
+
+func (o *Server) ImportCmd() []byte {
+	return []byte(fmt.Sprintf(
+		"terraform import %s.%s %s\n",
+		o.Object.GetType(),
+		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
+		o.Id.String(),
+	))
 }

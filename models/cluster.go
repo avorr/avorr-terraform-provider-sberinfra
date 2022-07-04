@@ -414,3 +414,40 @@ type ById []*Server
 func (o ById) Len() int           { return len(o) }
 func (o ById) Less(i, j int) bool { return o[i].Id.String() < o[j].Id.String() }
 func (o ById) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
+
+func (o *Cluster) SetObject() bool {
+	if o.IrGroup == "" {
+		return false
+	}
+	if o.Object != nil {
+		return false
+	}
+	var obj DIClusterResource
+	switch o.IrGroup {
+	case "kafka":
+		obj = &Kafka{}
+	case "ignite":
+		obj = &Ignite{}
+	case "patroni":
+		obj = &Patroni{}
+	}
+	o.Object = obj
+	return true
+}
+
+func (o *Cluster) HCLHeader() []byte {
+	return []byte(fmt.Sprintf(
+		"resource \"%s\" \"%s\" {}\n",
+		o.Object.GetType(),
+		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
+	))
+}
+
+func (o *Cluster) ImportCmd() []byte {
+	return []byte(fmt.Sprintf(
+		"terraform import %s.%s %s\n",
+		o.Object.GetType(),
+		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
+		o.Id.String(),
+	))
+}

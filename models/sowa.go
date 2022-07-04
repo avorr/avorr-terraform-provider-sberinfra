@@ -157,3 +157,11 @@ func (o *Sowa) HostVars(server *Server) map[string]interface{} {
 func (o *Sowa) GetGroup() string {
 	return ""
 }
+
+func (o *Sowa) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{}
+}
+
+func (o *Sowa) HCLVolumes() []*HCLVolume {
+	return nil
+}

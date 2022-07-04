@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 source ~/.bash_profile
 set -ex
-
+cd ..
 echo `date`
 name=terraform-provider-di
 version=0.3.13
@@ -24,7 +24,8 @@ cp ${binary} ${binary_dir}/${binary}
 #cp ${binary} test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 
-cd test/
+#cd test/
+cd tf-files-example/
 rm -rf .terraform/ || true
 #rm terraform.tfstate* || true
 rm ./.terraform.lock.hcl || true
@@ -40,7 +41,7 @@ export INVENTORY_DISABLE=False
 terraform init
 #./imports.sh
 #terraform plan
-terraform apply
+#terraform apply
 #terraform apply -auto-approve
 
 #terraform import di_patroni.patroni 878b50c7-5eb4-4d05-a81a-76597c2ddb84

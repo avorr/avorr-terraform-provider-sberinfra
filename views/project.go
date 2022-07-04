@@ -1,8 +1,12 @@
 package views
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"io/ioutil"
 
+	"github.com/google/uuid"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -99,4 +103,40 @@ func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 	res.SetId("")
 	return diags
+}
+
+func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+	obj := models.Project{Id: uuid.MustParse(res.Id())}
+	responseBytes, err := obj.ReadDI()
+	if err != nil {
+		return nil, err
+	}
+	err = obj.Deserialize(responseBytes)
+	if err != nil {
+		return nil, err
+	}
+	obj.WriteTF(res)
+
+	objBytes, _ := obj.ToHCL(nil)
+	// log.Println(string(objBytes))
+
+	index := bytes.IndexByte(objBytes, byte('{'))
+
+	firstString := objBytes[:index+1]
+
+	fileBytes, err := ioutil.ReadFile("project.tf")
+	if err != nil {
+		return nil, err
+	}
+
+	toReplace := []byte(fmt.Sprintf("%s}", firstString))
+
+	newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
+
+	err = ioutil.WriteFile("project.tf", newBytes, 0600)
+	if err != nil {
+		return nil, err
+	}
+
+	return []*schema.ResourceData{res}, nil
 }

@@ -199,3 +199,25 @@ func (o *VM) HostVars(server *Server) map[string]interface{} {
 func (o *VM) GetGroup() string {
 	return ""
 }
+
+func (o *VM) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{
+		JoinDomain: o.AppParams["joindomain"].(string),
+	}
+}
+
+func (o *VM) HCLVolumes() []*HCLVolume {
+	if len(o.Volumes) == 0 {
+		return nil
+	}
+	hclVolumes := make([]*HCLVolume, 0)
+	for _, v := range o.Volumes {
+		vol := &HCLVolume{
+			Size:        v.Size,
+			Path:        v.Path,
+			StorageType: v.StorageType,
+		}
+		hclVolumes = append(hclVolumes, vol)
+	}
+	return hclVolumes
+}

@@ -157,3 +157,11 @@ func (o *Tag) HostVars(server *Server) map[string]interface{} {
 func (o *Tag) GetGroup() string {
 	return ""
 }
+
+func (o *Tag) HCLAppParams() *HCLAppParams {
+	return nil
+}
+
+func (o *Tag) HCLVolumes() []*HCLVolume {
+	return nil
+}

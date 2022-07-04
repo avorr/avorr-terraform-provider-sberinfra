@@ -107,6 +107,7 @@ func init() {
 		"public_ssh_name": {Type: schema.TypeString, Optional: true},
 		"group":           {Type: schema.TypeString, Optional: true},
 		"user":            {Type: schema.TypeString, Computed: true},
+		"password":        {Type: schema.TypeString, Computed: true},
 		"app_params": {
 			Type:     schema.TypeMap,
 			Optional: true,

@@ -204,3 +204,11 @@ func (o *ELK) HostVars(server *Server) map[string]interface{} {
 func (o *ELK) GetGroup() string {
 	return ""
 }
+
+func (o *ELK) HCLAppParams() *HCLAppParams {
+	return &HCLAppParams{}
+}
+
+func (o *ELK) HCLVolumes() []*HCLVolume {
+	return nil
+}

@@ -38,6 +38,9 @@ type DIResource interface {
 	GetType() string
 	GetGroup() string
 	HostVars(*Server) map[string]interface{}
+	// ToHCL(*Server) ([]byte, error)
+	HCLAppParams() *HCLAppParams
+	HCLVolumes() []*HCLVolume
 }
 
 type DIClusterResource interface {
