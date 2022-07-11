@@ -10,6 +10,7 @@ var (
 	SchemaDomain    map[string]*schema.Schema
 	SchemaGroup     map[string]*schema.Schema
 	SchemaStandType map[string]*schema.Schema
+	SchemaSIProject map[string]*schema.Schema
 
 	// resource
 	SchemaProject    map[string]*schema.Schema
@@ -74,6 +75,17 @@ func init() {
 		"stand_type_id":  {Type: schema.TypeString, Required: true},
 		"domain_id":      {Type: schema.TypeString, Computed: true},
 		"app_systems_ci": {Type: schema.TypeString, Required: true},
+		"name":           {Type: schema.TypeString, Required: true},
+		"stand_type":     {Type: schema.TypeString, Computed: true},
+		"state":          {Type: schema.TypeString, Computed: true},
+		"type":           {Type: schema.TypeString, Computed: true},
+	}
+
+	SchemaSIProject = map[string]*schema.Schema{
+		"group_id":       {Type: schema.TypeString, Required: true},
+		"stand_type_id":  {Type: schema.TypeString, Computed: true},
+		"domain_id":      {Type: schema.TypeString, Computed: true},
+		"app_systems_ci": {Type: schema.TypeString, Optional: true},
 		"name":           {Type: schema.TypeString, Required: true},
 		"stand_type":     {Type: schema.TypeString, Computed: true},
 		"state":          {Type: schema.TypeString, Computed: true},

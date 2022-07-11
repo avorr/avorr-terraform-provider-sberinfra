@@ -1,7 +1,10 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"log"
 	"regexp"
 	"strings"
 	"unicode"
@@ -67,4 +70,15 @@ func Regexp(data []byte) []byte {
 	}
 	out := strings.Join(parts, "\n")
 	return []byte(out)
+}
+
+func JsonRead(responseBytes []uint8) {
+	var out bytes.Buffer
+	err := json.Indent(&out, responseBytes, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("#####\n\n\n")
+	log.Println(out.String())
+	log.Println("#####\n\n\n")
 }

@@ -77,6 +77,18 @@ func ProviderFunc() *schema.Provider {
 				ReadContext: ReadDataResource(&models.AS{}),
 				Schema:      models.SchemaAS,
 			},
+			"di_si-domain": {
+				ReadContext: ReadDataResource(&models.SIDomain{}),
+				Schema:      models.SchemaDomain,
+			},
+			"di_si-group": {
+				ReadContext: ReadDataResource(&models.SIGroup{}),
+				Schema:      models.SchemaGroup,
+			},
+			"di_si-project": {
+				ReadContext: ReadDataResource(&models.SIProject{}),
+				Schema:      models.SchemaSIProject,
+			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
 			"di_project": {
