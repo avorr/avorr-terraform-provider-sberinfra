@@ -42,6 +42,22 @@ func (o *Domain) WriteTF(res *schema.ResourceData) {
 	// resource.Set(k, fmt.Sprintf("%v", v))
 }
 
+//func (o *Domain) Deserialize(responseBytes []byte) error {
+//	data := make(map[string]interface{})
+//	err := json.Unmarshal(responseBytes, &data)
+//	if err != nil {
+//		return err
+//	}
+//	domains := data["domains"].([]interface{})
+//	if len(domains) < 1 {
+//		return errors.New("no domain in response")
+//	}
+//	domain := domains[0].(map[string]interface{})
+//	o.Id = uuid.MustParse(domain["id"].(string))
+//	o.Name = domain["name"].(string)
+//	return nil
+//}
+
 func (o *Domain) Deserialize(responseBytes []byte) error {
 	data := make(map[string]interface{})
 	err := json.Unmarshal(responseBytes, &data)
@@ -52,9 +68,26 @@ func (o *Domain) Deserialize(responseBytes []byte) error {
 	if len(domains) < 1 {
 		return errors.New("no domain in response")
 	}
-	domain := domains[0].(map[string]interface{})
-	o.Id = uuid.MustParse(domain["id"].(string))
-	o.Name = domain["name"].(string)
+
+	domainsBytes, err := json.Marshal(domains)
+	if err != nil {
+		return err
+	}
+
+	m := make([]*Domain, 0)
+	err = json.Unmarshal(domainsBytes, &m)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range m {
+		if v.Name == o.Name {
+			o.Id = v.Id
+		}
+	}
+	// domain := domains[0].(map[string]interface{})
+	// o.Id = uuid.MustParse(domain["id"].(string))
+	// o.Name = domain["name"].(string)
 	return nil
 }
 

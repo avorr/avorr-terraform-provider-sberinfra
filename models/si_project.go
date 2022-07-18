@@ -4,9 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
-	"reflect"
-
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 
@@ -38,7 +35,7 @@ type SIProject struct {
 }
 
 func (o *SIProject) GetType() string {
-	return "di_si-project"
+	return "di_siproject"
 }
 
 func (o *SIProject) NewObj() DIDataResource {
@@ -176,8 +173,6 @@ func (o *SIProject) Deserialize(responseBytes []byte) error {
 		value := v.(map[string]interface{})
 
 		if value["name"].(string) == o.Name {
-			log.Println("@@@", value["name"].(string))
-			log.Println("@@@", reflect.TypeOf(value["name"].(string)))
 			o.Id = uuid.MustParse(value["id"].(string))
 			//o.ResId = value["id"].(string)
 			//o.DomainId = uuid.MustParse(value["domain_id"].(string))
@@ -229,10 +224,6 @@ func (o *SIProject) CreateDI(data []byte) ([]byte, error) {
 
 func (o *SIProject) ReadDI() ([]byte, error) {
 	//return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Id))
-	//log.Println("###ID", o.Id)
-	//log.Println("###GROUPID", o.GroupId)
-
-	//return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Id))
 	return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
@@ -271,7 +262,7 @@ func (o *SIProject) DeserializeAll(responseBytes []byte) ([]*SIProject, error) {
 			Type:         objMap["type"].(string),
 			AppSystemsCi: objMap["app_systems_ci"].(string),
 			ResId:        objMap["id"].(string),
-			ResType:      "di_si-project",
+			ResType:      "di_siproject",
 			ResName:      utils.Reformat(objMap["name"].(string)),
 			// ResDomainId: objMap["domain_id"].(string),
 			ResGroupIdUUID:     objMap["group_id"].(string),

@@ -64,7 +64,9 @@ func (o *Group) deserializeList(responseBytes []byte) error {
 		if v["name"] == o.Name {
 			// o.Limit = v["limit"].(float64)
 			o.Id = uuid.MustParse(v["id"].(string))
-			o.IsProm = v["is_prom"].(bool)
+			if v["is_prom"] != nil {
+				o.IsProm = v["is_prom"].(bool)
+			}
 			return nil
 		}
 	}
