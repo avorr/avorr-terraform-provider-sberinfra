@@ -9,8 +9,8 @@ data "di_group" "group" {
 
 data "di_siproject" "project" {
   group_id = data.di_group.group.id
-  #  name     = "gt-common-admins-uat-junior"
-  name     = "gt-common-admins"
+  name     = "gt-common-admins-uat-junior"
+#  name     = "gt-common-admins"
 }
 
 output "domain_id" {
