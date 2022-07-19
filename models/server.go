@@ -202,7 +202,17 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
-	res.Set("password", o.Password)
+
+	isDisabled, ok := os.LookupEnv("VM_PASSWORD_OUTPUT")
+	if ok {
+		isDisabledBool, err := strconv.ParseBool(isDisabled)
+		if err != nil {
+			log.Println(err)
+		}
+		if isDisabledBool == true {
+			res.Set("password", o.Password)
+		}
+	}
 
 	if o.ClusterUuid.ID() != uint32(0) {
 		res.Set("cluster_uuid", o.ClusterUuid.String())
