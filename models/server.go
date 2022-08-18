@@ -87,7 +87,7 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	}
 	o.FaultTolerance = res.Get("fault_tolerance").(string)
 	o.Virtualization = res.Get("virtualization").(string)
-	o.Region = res.Get("region").(string)
+	//o.Region = res.Get("region").(string)
 	o.Zone = res.Get("zone").(string)
 	disk, ok := res.GetOk("disk")
 	if ok {
@@ -198,10 +198,11 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("dns_name", o.DNSName)
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
-	res.Set("region", o.Region)
+	//res.Set("region", o.Region)
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
+	//res.Set("password", o.Password)
 
 	isDisabled, ok := os.LookupEnv("VM_PASSWORD_OUTPUT")
 	if ok {
@@ -223,17 +224,16 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	if o.Group != "" {
 		res.Set("group", o.Group)
 	}
-
 	o.Object.OnWriteTF(res, o)
 }
 
 func (o *Server) ToMap() map[string]interface{} {
 	serverMap := map[string]interface{}{
-		"group_id":        o.GroupId.String(),
-		"project_id":      o.ProjectId.String(),
-		"service_name":    o.ServiceName,
-		"ir_group":        o.IrGroup,
-		"region":          o.Region,
+		"group_id":     o.GroupId.String(),
+		"project_id":   o.ProjectId.String(),
+		"service_name": o.ServiceName,
+		"ir_group":     o.IrGroup,
+		//"region":          o.Region,
 		"zone":            o.Zone,
 		"cpu":             o.Cpu,
 		"ram":             o.Ram,
@@ -320,7 +320,7 @@ func (o *Server) Deserialize(data []byte) error {
 	o.Virtualization = serverMap["virtualization"].(string)
 	o.IrGroup = serverMap["ir_group"].(string)
 	o.FaultTolerance = serverMap["fault_tolerance"].(string)
-	o.Region = serverMap["region"].(string)
+	//o.Region = serverMap["region"].(string)
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
 	irType, ok := serverMap["ir_type"]
@@ -415,11 +415,19 @@ func (o *Server) ReadDI() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
 }
 
+func (o *Server) ReadDIStatusCode() ([]byte, int, error) {
+	return Api.NewRequestReadStatusCode(fmt.Sprintf(o.Object.Urls("read"), o.Id))
+}
+
 func (o *Server) UpdateDI(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("update"), o.Id), data)
 }
 
 func (o *Server) DeleteDI() error {
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
+}
+
+func (o *Server) DeleteVM() error {
 	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
 }
 
@@ -474,11 +482,20 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
-		Pending:      []string{"Creating"},
-		Target:       []string{"Running", "Damaged"},
+		Pending:      []string{"Creating", "Removing"},
+		//Target:       []string{"Running", "Damaged"},
+		Target: []string{"Running", "Damaged", "Removed"},
+		//Target: []string{"Running", "Damaged"},
 		Refresh: func() (interface{}, string, error) {
 
-			responseBytes, err := o.ReadDI()
+			//responseBytes, err := o.ReadDIStatusCode()
+			responseBytes, responseStatusCode, err := o.ReadDIStatusCode()
+			log.Println("##RSC", responseStatusCode, "ERR", err)
+
+			if responseStatusCode == 404 {
+				return o, "Removed", nil
+			}
+
 			if err != nil {
 				return nil, "error", err
 			}
@@ -496,6 +513,9 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 			}
 			if o.State == "damaged" {
 				return o, "Damaged", nil
+			}
+			if o.State == "removing" {
+				return o, "Removing", nil
 			}
 			return o, "Creating", nil
 		},
@@ -612,14 +632,14 @@ func (o *Server) GetHCLRoot() *HCLRoot {
 		OsVersion:      o.OsVersion,
 		Virtualization: o.Virtualization,
 		FaultTolerance: o.FaultTolerance,
-		Region:         o.Region,
-		Disk:           o.Disk,
-		Flavor:         o.Flavor,
-		Zone:           o.Zone,
-		PublicSshName:  o.PublicSshName,
-		AppParams:      nil,
-		Volumes:        nil,
-		TagIds:         nil,
+		//Region:         o.Region,
+		Disk:          o.Disk,
+		Flavor:        o.Flavor,
+		Zone:          o.Zone,
+		PublicSshName: o.PublicSshName,
+		AppParams:     nil,
+		Volumes:       nil,
+		TagIds:        nil,
 	}}
 	if len(o.TagIds) > 0 {
 		tags := HCLTags{}
@@ -649,18 +669,18 @@ func (o *Server) SetObject() bool {
 	switch o.IrGroup {
 	case "vm":
 		obj = &VM{}
-	case "nginx":
-		obj = &Nginx{}
-	case "sowa":
-		obj = &Sowa{}
-	case "project":
-		obj = &Openshift{}
-	case "postgres":
-		obj = &Postgres{}
-	case "postgres_se":
-		obj = &PostgresSE{}
-	case "elk":
-		obj = &ELK{}
+		//case "nginx":
+		//	obj = &Nginx{}
+		//case "sowa":
+		//	obj = &Sowa{}
+		//case "project":
+		//	obj = &Openshift{}
+		//case "postgres":
+		//	obj = &Postgres{}
+		//case "postgres_se":
+		//	obj = &PostgresSE{}
+		//case "elk":
+		//	obj = &ELK{}
 	}
 	o.Object = obj
 	return true

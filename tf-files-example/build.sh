@@ -42,7 +42,9 @@ terraform init
 #./imports.sh
 #terraform plan
 #terraform apply
+ls -l ~/.terraform.d/plugins/sberbank/devops/di/0.3.13/darwin_amd64/terraform-provider-di_v0.3.13_darwin_amd64
 #terraform apply -auto-approve
+#terraform destroy -auto-approve
 
 #terraform import di_patroni.patroni 878b50c7-5eb4-4d05-a81a-76597c2ddb84
 #terraform import di_project.terraformtest2 c41a6b76-ddfe-4d49-a762-ea659becf35f

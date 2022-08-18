@@ -1,14 +1,14 @@
-#variable "group_id" {
-#  description = "Group ID"
-#  type = string
-#    default = "52ffd9f6-fbc0-4ddc-bf99-b092c6d0351a" #PD23 gostech common
-#}
+variable "group_id" {
+  description = "Group ID"
+  type = string
+    default = "52ffd9f6-fbc0-4ddc-bf99-b092c6d0351a" #PD23 gostech common
+}
 
-#variable "project_id" {
-#  description = "Project ID"
-#  type = string
-#  default = "5639188a-fc11-48fb-a1f9-db86a5eae74b" #PD23 gt-common-admins-uat-junior
-#}
+variable "project_id" {
+  description = "Project ID"
+  type = string
+  default = "5639188a-fc11-48fb-a1f9-db86a5eae74b" #PD23 gt-common-admins-uat-junior
+}
 
 #variable "disks" {
 #  type = map
@@ -88,6 +88,17 @@ variable "extra_disk_size" {
   type = string
   default = ""
 }
+
+
+
+
+// variable "extra_disk_size_1" {
+//   default = ""
+// }
+
+// variable "extra_disk_size_2" {
+//   default = "10"
+// }
 
 variable "ir_group" {
   description = "Information resource type"

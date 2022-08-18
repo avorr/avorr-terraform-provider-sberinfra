@@ -6,20 +6,18 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	inventory_yaml "stash.sigma.sbrf.ru/sddevops/terraform-provider-di/inventory-yaml"
+	"io/ioutil"
+	"log"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
 )
 
-var (
-	Inventory *inventory_yaml.Inventory
-)
+//var (
+//Inventory *inventory_yaml.Inventory
+//)
 
 func CreateResource(o models.DIResource) schema.CreateContextFunc {
 	f := func(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -103,40 +101,40 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 			)
 		}
 
-		groupName := newObj.GetType()[3:]
-		group := Inventory.All.GetGroup(groupName)
-		if group == nil {
-			group = &inventory_yaml.Group{Name: groupName}
-		}
+		//groupName := newObj.GetType()[3:]
+		//group := Inventory.All.GetGroup(groupName)
+		//if group == nil {
+		//	group = &inventory_yaml.Group{Name: groupName}
+		//}
 
-		subgroupName := server.GetGroup()
-		subgroup := group.GetGroup(subgroupName)
-		if subgroup == nil {
-			subgroup = &inventory_yaml.Group{Name: subgroupName}
-			group.AddGroup(subgroup)
-		}
+		//subgroupName := server.GetGroup()
+		//subgroup := group.GetGroup(subgroupName)
+		//if subgroup == nil {
+		//	subgroup = &inventory_yaml.Group{Name: subgroupName}
+		//	group.AddGroup(subgroup)
+		//}
+		//
+		//if subgroup.Vars == nil {
+		//	subgroup.Vars = make(map[string]interface{})
+		//}
+		//subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
+		//subgroup.Vars["service_name_ru"] = server.ServiceName
 
-		if subgroup.Vars == nil {
-			subgroup.Vars = make(map[string]interface{})
-		}
-		subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
-		subgroup.Vars["service_name_ru"] = server.ServiceName
-
-		host := &inventory_yaml.Host{
-			// Name: server.Id.String(),
-			Name: server.DNSName,
-			Vars: newObj.HostVars(&server),
-		}
-		subgroup.AddHost(host)
-		Inventory.All.AddGroup(group)
-		err = Inventory.Save()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = Inventory.ToBIN()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		//host := &inventory_yaml.Host{
+		//// Name: server.Id.String(),
+		//Name: server.DNSName,
+		//Vars: newObj.HostVars(&server),
+		//}
+		//subgroup.AddHost(host)
+		//Inventory.All.AddGroup(group)
+		//err = Inventory.Save()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
+		//err = Inventory.ToBIN()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
 
 		// attach tags
 		if res.HasChange("tag_ids") {
@@ -184,42 +182,42 @@ func ReadResource(obj models.DIResource) schema.ReadContextFunc {
 		// 	res.SetId("")
 		// }
 
-		groupName := obj.GetType()[3:]
-		group := Inventory.All.GetGroup(groupName)
-		if group == nil {
-			group = &inventory_yaml.Group{Name: groupName}
-		}
-
-		subgroupName := server.GetGroup()
-		// subgroupName := obj.GetGroup()
-		// subgroupName := utils.Reformat(server.ServiceName)
-		subgroup := group.GetGroup(subgroupName)
-		if subgroup == nil {
-			subgroup = &inventory_yaml.Group{Name: subgroupName}
-			group.AddGroup(subgroup)
-		}
-
-		if subgroup.Vars == nil {
-			subgroup.Vars = make(map[string]interface{})
-		}
-		subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
-		subgroup.Vars["service_name_ru"] = server.ServiceName
-
-		host := &inventory_yaml.Host{
-			// Name: server.Id.String(),
-			Name: server.DNSName,
-			Vars: newObj.HostVars(&server),
-		}
-		subgroup.AddHost(host)
-		Inventory.All.AddGroup(group)
-		err = Inventory.Save()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = Inventory.ToBIN()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		//groupName := obj.GetType()[3:]
+		//group := Inventory.All.GetGroup(groupName)
+		//if group == nil {
+		//	group = &inventory_yaml.Group{Name: groupName}
+		//}
+		//
+		//subgroupName := server.GetGroup()
+		//// subgroupName := obj.GetGroup()
+		//// subgroupName := utils.Reformat(server.ServiceName)
+		//subgroup := group.GetGroup(subgroupName)
+		//if subgroup == nil {
+		//	subgroup = &inventory_yaml.Group{Name: subgroupName}
+		//	group.AddGroup(subgroup)
+		//}
+		//
+		//if subgroup.Vars == nil {
+		//	subgroup.Vars = make(map[string]interface{})
+		//}
+		//subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
+		//subgroup.Vars["service_name_ru"] = server.ServiceName
+		//
+		//host := &inventory_yaml.Host{
+		//	// Name: server.Id.String(),
+		//	Name: server.DNSName,
+		//	Vars: newObj.HostVars(&server),
+		//}
+		//subgroup.AddHost(host)
+		//Inventory.All.AddGroup(group)
+		//err = Inventory.Save()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
+		//err = Inventory.ToBIN()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
 
 		return diags
 	}
@@ -423,40 +421,60 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		if res.Get("state") == "creating" || res.Get("state_resize") == "resizing" {
 			return diag.FromErr(errors.New("can't delete 'creating' or 'resizing' instance"))
 		}
+		//server.Id = uuid.MustParse(res.Id())
+		err := server.DeleteVM()
+		//log.Println("#RES", server.Id)
+		//os.Exit(3)
+		//responseBytes, err := server.ReadDI()
+		//objRes := models.Server{Object: obj}
+		//err = json.Unmarshal(responseBytes, &objRes)
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
+		//log.Println("#RB-OB", objRes)
+		//objRes.Id = uuid.MustParse(res.Id())
 
-		err := server.DeleteDI()
+		//return diags
+		//_, err := objRes.StateChange(res).WaitForStateContext(ctx)
+		_, err = server.StateChange(res).WaitForStateContext(ctx)
+		if err != nil {
+			//log.Printf("[INFO] timeout on remove for instance (%s), save current state: %s", objRes.Id.String(), objRes.State)
+			log.Printf("[INFO] timeout on remove for instance (%s), save current state: %s", server.Id.String(), server.State)
+		}
+		//os.Exit(3)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		res.SetId("")
 
-		groupName := obj.GetType()[3:]
-		group := Inventory.All.GetGroup(groupName)
-		if group == nil {
-			group = &inventory_yaml.Group{Name: groupName}
-		}
-		subgroupName := server.GetGroup()
-		// subgroupName := utils.Reformat(server.ServiceName)
-		subgroup := group.GetGroup(subgroupName)
-		if subgroup != nil {
-			if len(subgroup.Hosts) == 1 {
-				group.RmGroup(subgroup.Name)
-			} else {
-				subgroup.RmHost(server.DNSName)
-			}
-		}
-		if len(group.Hosts) == 0 && len(group.Children) == 0 {
-			Inventory.All.RmGroup(group.Name)
-		}
+		//groupName := obj.GetType()[3:]
 
-		err = Inventory.Save()
-		if err != nil {
-			return diag.FromErr(err)
-		}
-		err = Inventory.ToBIN()
-		if err != nil {
-			return diag.FromErr(err)
-		}
+		//group := Inventory.All.GetGroup(groupName)
+		//if group == nil {
+		//	group = &inventory_yaml.Group{Name: groupName}
+		//}
+		//subgroupName := server.GetGroup()
+		//// subgroupName := utils.Reformat(server.ServiceName)
+		//subgroup := group.GetGroup(subgroupName)
+		//if subgroup != nil {
+		//	if len(subgroup.Hosts) == 1 {
+		//		group.RmGroup(subgroup.Name)
+		//	} else {
+		//		subgroup.RmHost(server.DNSName)
+		//	}
+		//}
+		//if len(group.Hosts) == 0 && len(group.Children) == 0 {
+		//	Inventory.All.RmGroup(group.Name)
+		//}
+		//
+		//err = Inventory.Save()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
+		//err = Inventory.ToBIN()
+		//if err != nil {
+		//	return diag.FromErr(err)
+		//}
 
 		return diags
 	}

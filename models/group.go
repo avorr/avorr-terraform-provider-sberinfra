@@ -67,6 +67,7 @@ func (o *Group) deserializeList(responseBytes []byte) error {
 			if v["is_prom"] != nil {
 				o.IsProm = v["is_prom"].(bool)
 			}
+
 			return nil
 		}
 	}

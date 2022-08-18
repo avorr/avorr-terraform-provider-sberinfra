@@ -11,12 +11,12 @@ import (
 )
 
 type Importer struct {
-	Api       *client.Api
-	Project   *models.Project
-	Domain    *models.Domain
-	Group     *models.Group
-	StandType *models.StandType
-	AS        *models.AS
+	Api     *client.Api
+	Project *models.Project
+	Domain  *models.Domain
+	Group   *models.Group
+	//StandType *models.StandType
+	//AS        *models.AS
 }
 
 func (o *Importer) Import(projectId string) error {
@@ -56,10 +56,10 @@ func (o *Importer) Import(projectId string) error {
 		bbTF.Write(v.HCLHeader())
 		bbSH.Write(v.ImportCmd())
 	}
-	for _, v := range servers.Clusters {
-		bbTF.Write(v.HCLHeader())
-		bbSH.Write(v.ImportCmd())
-	}
+	//for _, v := range servers.Clusters {
+	//	bbTF.Write(v.HCLHeader())
+	//	bbSH.Write(v.ImportCmd())
+	//}
 
 	err = ioutil.WriteFile("imports.tf", bbTF.Bytes(), 0777)
 	if err != nil {

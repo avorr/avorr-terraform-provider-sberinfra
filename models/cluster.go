@@ -169,7 +169,7 @@ func (o *Cluster) WriteTF(res *schema.ResourceData) {
 	// res.Set("dns_name", o.DNSName)
 	// res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
-	res.Set("region", o.Region)
+	//res.Set("region", o.Region)
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 
@@ -424,12 +424,12 @@ func (o *Cluster) SetObject() bool {
 	}
 	var obj DIClusterResource
 	switch o.IrGroup {
-	case "kafka":
-		obj = &Kafka{}
-	case "ignite":
-		obj = &Ignite{}
-	case "patroni":
-		obj = &Patroni{}
+	//case "kafka":
+	//	obj = &Kafka{}
+	//case "ignite":
+	//	obj = &Ignite{}
+	//case "patroni":
+	//	obj = &Patroni{}
 	}
 	o.Object = obj
 	return true

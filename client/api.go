@@ -2,7 +2,9 @@ package client
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"strings"
 )
 
 type Api struct {
@@ -30,6 +32,8 @@ func NewApi() *Api {
 }
 
 func (o *Api) request(method, resource string) *Request {
+	log.Println("MM", method)
+	log.Println("RR", resource)
 	return &Request{
 		Debug:         o.Debug,
 		Url:           fmt.Sprintf("%s/%s", o.Host, resource),
@@ -45,6 +49,11 @@ func (o *Api) NewRequest(method, resource string, body []byte, expectCode int) (
 		Method:        method,
 		Authorization: o.Token,
 	}
+
+	if resource[:4] == "/v2/" {
+		request.Url = strings.Replace(request.Url, "/v1/", "", 1)
+	}
+
 	if body != nil {
 		request.Body = body
 	}
@@ -64,6 +73,28 @@ func (o *Api) NewRequest(method, resource string, body []byte, expectCode int) (
 	return request, nil
 }
 
+func (o *Api) NewRequestSc(method, resource string, body []byte) (*Request, int, error) {
+	request := &Request{
+		Debug:         o.Debug,
+		Url:           fmt.Sprintf("%s/%s", o.Host, resource),
+		Method:        method,
+		Authorization: o.Token,
+	}
+
+	if resource[:4] == "/v2/" {
+		request.Url = strings.Replace(request.Url, "/v1/", "", 1)
+	}
+
+	if body != nil {
+		request.Body = body
+	}
+	err := request.Make()
+	if err != nil {
+		return nil, request.Response.StatusCode, err
+	}
+	return request, request.Response.StatusCode, nil
+}
+
 func (o *Api) NewRequestCreate(url string, data []byte) ([]byte, error) {
 	request, err := o.NewRequest("POST", url, data, 201)
 	if err != nil {
@@ -78,6 +109,19 @@ func (o *Api) NewRequestRead(url string) ([]byte, error) {
 		return nil, err
 	}
 	return request.ResponseBody, nil
+}
+
+func (o *Api) NewRequestReadStatusCode(url string) ([]byte, int, error) {
+	//request, err := o.NewRequest("GET", url, nil, 200)
+	//request, err := o.request("GET", url, nil, 200)
+	//request := o.request("GET", url)
+	request, statusCode, err := o.NewRequestSc("GET", url, nil)
+	if err != nil {
+		return nil, statusCode, err
+	}
+	//log.Println("DD", request)
+	//log.Println("DD", statusCode)
+	return request.ResponseBody, request.Response.StatusCode, nil
 }
 
 func (o *Api) NewRequestUpdate(url string, data []byte) ([]byte, error) {
