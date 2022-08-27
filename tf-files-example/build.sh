@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-source ~/.bash_profile
+#source ~/.bash_profile
 set -ex
 cd ..
 echo `date`
 name=terraform-provider-di
 version=0.3.13
 platform=darwin_amd64
+#platform=linux_amd64
 
 provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/di
 binary_dir=${provider_dir}/${version}/${platform}
