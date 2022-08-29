@@ -6,8 +6,8 @@ terraform import di_project.terraformtest e257840a-c881-466f-9351-95e7ad763c8f
 
 #terraform import di_openshift.osproject 20df6c7f-0aef-48e3-86ce-92e1525203c8
 
-#terraform import di_vm.test-application[0] 1112b503-8f8c-48f1-8fec-29f4c3402b13
-#terraform import di_vm.test-application[1] 7ea97aad-16d6-45ed-b36a-4364b032a6bf
+#terraform import di_vm.test-di-application[0] 1112b503-8f8c-48f1-8fec-29f4c3402b13
+#terraform import di_vm.test-di-application[1] 7ea97aad-16d6-45ed-b36a-4364b032a6bf
 #terraform import di_vm.tkles-pcb000466 96340bcb-df06-400b-a473-fddb92163215
 
 #terraform import di_openshift.osproject1 4d997a95-a3fc-41fb-aa1e-2aa23e11710d

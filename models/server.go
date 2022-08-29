@@ -202,7 +202,6 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
-	//res.Set("password", o.Password)
 
 	isDisabled, ok := os.LookupEnv("VM_PASSWORD_OUTPUT")
 	if ok {
@@ -483,9 +482,7 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
 		Pending:      []string{"Creating", "Removing"},
-		//Target:       []string{"Running", "Damaged"},
-		Target: []string{"Running", "Damaged", "Removed"},
-		//Target: []string{"Running", "Damaged"},
+		Target:       []string{"Running", "Damaged", "Removed"},
 		Refresh: func() (interface{}, string, error) {
 
 			//responseBytes, err := o.ReadDIStatusCode()

@@ -18,10 +18,10 @@ go mod tidy -v
 #go build -mod=vendor -v -o ${binary}
 go build -v -o ${binary}
 #./${binary} import
-#rm test/.terraform.lock.hcl || true
+#rm test-di/.terraform.lock.hcl || true
 cp ${binary} ${binary_dir}/${binary}
-#mkdir -p test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-#cp ${binary} test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 
 cd test/

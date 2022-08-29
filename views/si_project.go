@@ -37,11 +37,11 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 
 	log.Println("DNC", defaultNetworkCount)
 
-	//return diags
 	requestBytes, err := obj.Serialize()
 
 	log.Println("!!RB", requestBytes)
 	log.Println("!!RBS", string(requestBytes))
+	//return diags
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -77,6 +77,7 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 	//	return diag.FromErr(err)
 	//}
 	log.Println("RRES", res.Get("network"))
+	log.Println("NUUID2", objRes.Project.Networks.NetworkUuid)
 	objRes.WriteTF(res)
 	return diags
 }
@@ -84,6 +85,15 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 func SiProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	log.Println("##", "read_func")
 	log.Println("##", res.Id())
+
+	networks := res.Get("network").(*schema.Set).List()[0].(map[string]interface{})["cidr"]
+
+	//res.Set("network", networks)
+	//res.Set("network_uuid", "12321")
+
+	log.Println("#NN", res.Get("network"))
+
+	log.Printf("!!NET %v, %T\n", networks, networks)
 
 	var diags diag.Diagnostics
 

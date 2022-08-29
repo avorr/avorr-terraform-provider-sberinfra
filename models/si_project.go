@@ -217,11 +217,11 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) {
 	//log.Println("##NET", pp.Sprintln(network))
 	//log.Println("##ST", pp.Sprintln(ok))
 
-	networkSet1 := network.(*schema.Set).List()
-	for _, v := range networkSet1 {
-		log.Printf("##NS %T, %v", v, v)
-		log.Println("##NS", v.(map[string]interface{})["cidr"])
-	}
+	//networkSet1 := network.(*schema.Set).List()
+	//for _, v := range networkSet1 {
+	//	log.Printf("##NS %T, %v \n", v, v)
+	//	log.Println("##NS", v.(map[string]interface{})["network_uuid"])
+	//}
 
 	if ok {
 		networkSet := network.(*schema.Set).List()[0]
@@ -230,7 +230,7 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) {
 		//log.Println("!!!!LENNN", len(networkSet))
 		//log.Printf("!!!!%v, %T \n", networkSet[0].(map[string]interface{})["cidr"], networkSet[0].(map[string]interface{})["cidr"])
 		o.Project.Networks.NetworkName = networkSet.(map[string]interface{})["network_name"].(string)
-		o.Project.Networks.NetworkUuid = networkSet.(map[string]interface{})["network_uuid"].(uuid.UUID)
+		//o.Project.Networks.NetworkUuid = networkSet.(map[string]interface{})["network_uuid"].(uuid.UUID)
 		//o.Project.Networks.NetworkUuid = uuid.MustParse(networkSet.(map[string]interface{})["network_uuid"].(string))
 		//o.Project.Networks.NetworkUuid = uuid.MustParse(networkSet.(map[string]interface{})["network_uuid"].(string))
 		o.Project.Networks.Cidr = networkSet.(map[string]interface{})["cidr"].(string)
@@ -326,7 +326,7 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) {
 }
 
 func (o *SIProject) WriteTF(res *schema.ResourceData) {
-	log.Println("@@@", o)
+	log.Println("@@@", o.Project.Networks)
 	res.SetId(o.Project.ID.String())
 	res.Set("ir_group", o.Project.IrGroup)
 	//res.Set("stand_type_id", o.StandTypeId.String())
@@ -336,6 +336,32 @@ func (o *SIProject) WriteTF(res *schema.ResourceData) {
 	//res.Set("stand_type", o.StandType)
 	//res.Set("state", o.State)
 	res.Set("type", o.Project.Type)
+	//res.Set("network", o.Project.Networks)
+
+	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {
+	//sort.Sort(ByPath(o.Project.Networks))
+
+	//networks := make([]map[string]interface{}, 0)
+	//for _, v := range o.Project.Networks {
+	//	volume := map[string]interface{}{
+	//		"size":         v.Size,
+	//		"path":         v.Path,
+	//		"storage_type": v.StorageType,
+	//	}
+	//	networks = append(networks, volume)
+	//}
+	//err := res.Set("network", networks)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+
+	//}
+
+	//res.SetConnInfo("network")
+	//res.ConnInfo()
+	//res.
+	//log.Println("##NS", res.Get("network"))
+
 	//res.Set("network_uuid")
 }
 
@@ -345,7 +371,7 @@ func (o *SIProject) WriteTF(res *schema.ResourceData) {
 //        "type":"vdc",
 //        "ir_type":"vdc_openstack",
 //        "virtualization":"openstack",
-//        "name":"test-project1", // requared false
+//        "name":"test-di-project1", // requared false
 //        "group_id":"52ffd9f6-fbc0-4ddc-bf99-b092c6d0351a",
 //        "datacenter":"PD23R3PROM",
 //        "jump_host":false,

@@ -54,7 +54,7 @@ func TestNewInventory2(t *testing.T) {
 	group2.AddGroup(group3)
 
 	host1 := &Host{
-		Name: "test1",
+		Name: "test-di",
 	}
 	host2 := &Host{Name: "testhost2", Vars: map[string]interface{}{"host_var2": "value2"}}
 	host3 := &Host{

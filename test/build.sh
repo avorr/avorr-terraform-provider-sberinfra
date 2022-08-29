@@ -19,20 +19,20 @@ go mod tidy -v
 #go build -mod=vendor -v -o ${binary}
 go build -v -o ${binary}
 #./${binary} import
-#rm test/.terraform.lock.hcl || true
+#rm test-di/.terraform.lock.hcl || true
 cp ${binary} ${binary_dir}/${binary}
-#mkdir -p test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-#cp ${binary} test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 
-#cd test/
-cd tf-files-example/
+#cd test-di/
+#cd tf-files-example/
 rm -rf .terraform/ || true
 #rm terraform.tfstate* || true
 rm ./.terraform.lock.hcl || true
 #rm ./inventory.bin || true
 
-export TF_LOG=DEBUG
+#export TF_LOG=DEBUG
 export DI_TIMEOUT=7000
 #export TF_LOG=INFO
 #export TF_LOG=ERROR

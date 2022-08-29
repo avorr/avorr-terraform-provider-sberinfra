@@ -1,210 +1,223 @@
+/*
+resource "di_tag" "tags" {
+  count = length(var.all_tags)
+  name  = element(var.all_tags, count.index)
+}
 
-resource "di_vm" "vmtest" {
-	group_id        = data.di_group.devices.id
-	project_id      = di_project.terraformtest.id
-	service_name    = "vm1"
+variable "vm_tags" {
+  description = "VM tags"
+  type        = list(string)
+  default     = [
+    "jenkins",
+    "wildfly"
+  ]
+}
+
+variable "all_tags" {
+  description = "all tags"
+  type        = list(string)
+  default     = [
+    "vpn",
+    "jenkins",
+    "wildfly",
+    "kibana"
+  ]
+}
+
+variable "disks" {
+  type    = map
+  default = {
+    disk1 = {
+      size : 50
+      storage_type = "rbd-1"
+    }
+    disk2 = {
+      size : 100
+      storage_type = "iscsi_common"
+    }
+  }
+}
+
+*/
+/*
+resource "di_vm" "vm1" {
+	group_id        = data.di_group.group.id
+	project_id      = data.di_siproject.project.id
+	service_name    = "TERRAFORM-TEST"
 	ir_group        = "vm"
 	os_name         = "rhel"
-	os_version      = "8.5.2"
-#	virtualization  = "openstack"
-	virtualization  = "vmware"
+	os_version      = "7.9"
+	virtualization  = "openstack"
 	fault_tolerance = "stand-alone"
-	region          = "skolkovo"
 	flavor          = "m1.tiny"
-	disk            = 31
-	zone            = "edz"
-	public_ssh_name = "CAB-SA-CI000160"
-	app_params      = {
-		joindomain = "delta.sbrf.ru"
+	disk            = 50
+	zone            = "okvm1"
+	count           = 1
+
+#	provisioner "remote-exec" {
+#		inline = [
+#			"ls -la /",
+#			"sudo touch /opt/TESTFILE"
+#		]
+#		connection {
+#			type     = "ssh"
+#			user     = self.user
+#			password = self.password
+#			host     = self.ip
+#			port     = 9022
+#		}
+#	}
+	tag_ids = [
+		for tag in di_tag.tags:
+		tag.id
+		if contains(var.vm_tags, tag.name)
+	]
+	dynamic volume {
+		for_each = var.disks
+		content {
+			size = volume.value.size
+			storage_type = volume.value.storage_type
+		}
 	}
-#	volume {
-#		size = 3
-#		path = "/test1"
-#	}
-#	volume {
-#		size = 5
-#		path = "/test2"
-#	}
-	count           = 0
-#	tag_ids         = [
-#		di_tag.mytag0.id,
-#		di_tag.mytag1.id,
-#		di_tag.mytag2.id,
-#		di_tag.mytag3.id,
-#		di_tag.mytag4.id,
-#	]
+}
+*/
+
+
+#data "di_stand_type" "dev" {
+#	name = "DEV"
+#}
+
+data "di_domain" "domain" {
+  name = "ГосТех"
+  #  name = "Росимущество"
 }
 
-resource "di_nginx" "nginx1" {
-  ir_group        = "nginx"
-  service_name    = "smsaide test nginx"
-  group_id        = data.di_group.devices.id
-  project_id      = di_project.terraformtest.id
-  region          = "skolkovo"
-  zone            = "edz"
-  fault_tolerance = "stand-alone"
-  virtualization  = "openstack"
+data "di_group" "group" {
+  name      = "Common"
+  #  name      = "НТ"
+  #  name      = "ПСИ"
+  domain_id = data.di_domain.domain.id
+}
+
+output "domain_id" {
+  value = data.di_domain.domain.id
+}
+
+output "group_id" {
+  value = data.di_group.group.id
+}
+
+/*
+resource di_siproject "project" {
+  ir_group       = "vdc"
+  type           = "vdc"
+  ir_type        = "vdc_openstack"
+  virtualization = "openstack"
+  name           = "Test-project" //requared false
+  group_id       = data.di_group.group.id
+  #  group_id = "52ffd9f6-fbc0-4ddc-bf99-b092c6d0351a"
+  #  datacenter = "PD23R3PROM"
+  datacenter     = "PD20R3PROM"
+  #  datacenter = "okvm1"
+  jump_host      = false
+  desc           = "test-di.dns.zone"
+  limits {
+    //requared false
+    cores_vcpu_count  = 100
+    ram_gb_amount     = 10000
+    storage_gb_amount = 1000
+  }
+  network {
+    network_name    = "internal-network"
+    cidr            = "172.31.0.0/20"
+    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+    enable_dhcp     = true
+  }
+}
+*/
+
+
+resource di_siproject "project" {
+  ir_group       = "vdc"
+  type           = "vdc"
+  ir_type        = "vdc_openstack"
+  virtualization = "openstack"
+  name           = "terraform-test-si-project" //requared false
+  group_id       = data.di_group.group.id
+  datacenter     = "PD24R3PROM"
+  #  datacenter     = "openstack"
+  jump_host      = false
+  desc           = "test-di.dns.zone"
+  limits {
+    cores_vcpu_count  = 1000 //requared false
+    ram_gb_amount     = 10000
+    storage_gb_amount = 1000
+  }
+  network {
+    network_name    = "internal-network"
+    cidr            = "172.31.0.0/20"
+    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+    enable_dhcp     = true
+    is_default      = true
+  }
+  network {
+    network_name    = "test-di-network"
+    cidr            = "172.31.10.0/29"
+    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+    enable_dhcp     = true
+#    is_default      = true
+  }
+}
+
+
+resource "di_tag" "jenkins" {
+  name = "jenkins"
+}
+
+resource "di_vm" "vm1" {
+  group_id        = data.di_group.group.id
+  project_id      = di_siproject.project.id
+  service_name    = "terraform-test-di-vm-0${count.index + 1}"
+  ir_group        = "vm"
   os_name         = "rhel"
-  os_version      = "8.5.2"
-	public_ssh_name = "CAB-SA-CI000160"
-	flavor          = "m4.tiny"
-  disk            = 30
-	app_params = {
-		version      = "1.20.2-1"
-		nginx_geoip  = "No"
-		nginx_brotli = "No"
-		joindomain   = "sigma.sbrf.ru"
-	}
-	volume {
-		size = 1
-		path = "/test1"
-	}
-	volume {
-		size = 2
-		path = "/test2"
-	}
-	volume {
-		size = 3
-		path = "/test3"
-	}
-	volume {
-		size = 4
-		path = "/test4"
-	}
-	volume {
-		size = 10
-		path = "/opt/nginx"
-	}
-  count          = 0
-	tag_ids         = [
-#		di_tag.mytag0.id,
-#		di_tag.mytag1.id,
-#		di_tag.mytag2.id,
-#		di_tag.mytag3.id,
-#		di_tag.mytag4.id,
-	]
+  os_version      = "7.9"
+  virtualization  = "openstack"
+  fault_tolerance = "Stand-alone"
+  flavor          = "m1.tiny"
+  disk            = 50
+  zone            = di_siproject.project.datacenter
+#  zone            = "internal"
+  volume {
+    size = 50
+    #    storage_type = "rbd-1"
+  }
+  tag_ids = [
+    di_tag.jenkins.id
+  ]
+  count = 1
 }
 
-resource "di_openshift" "osproject" {
-	service_name    = "Тестовый Проект"
-	ir_group        = "project"
-	os_name         = "oc4_project"
-#	os_version      = "2019"
-	virtualization  = "openshift"
-	fault_tolerance = "stand-alone"
-#	region          = "skolkovo"
-	region          = "acod-5"
-	cpu             = 2
-	ram             = 5
-#	disk            = 50
-	zone            = "edz"
-#	public_ssh_name = "CAB-SA-CI000160"
-	group_id        = data.di_group.devices.id
-	project_id      = di_project.terraformtest.id
+#resource di_siproject "project" {
+#  ir_group = "vdc"
+#  type = "vdc"
+#  ir_type = "vdc_openstack"
+#  virtualization = "openstack"
+#  name = "Test-project" //requared false
+#  group_id = data.di_group.group.id
+#  datacenter = "PD20R3PROM"
+#  jump_host = false
+#  desc = "test-di.dns.zone"
+#  limits {                  //requared false
+#    cores_vcpu_count = 100
+#    ram_gb_amount = 10000
+#    storage_gb_amount = 1000
+#  }
+#  network {
+#    network_name = "internal-network"
+#    cidr = "172.31.0.0/20"
+#    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+#    enable_dhcp = true
+#  }
+#}
 
-	app_params = {
-		name_project = "testproject1"
-		admin_user   = "cab-sa-ci000160"
-	}
-	count      = 0
-#	tag_ids         = [
-#		di_tag.mytag0.id,
-#		di_tag.mytag1.id,
-#		di_tag.mytag2.id,
-#		di_tag.mytag3.id,
-#	]
-}
-
-# postgres SE
-resource "di_postgres_se" "postgres_se" {
-	group_id        = data.di_group.devices.id
-	project_id      = di_project.terraformtest.id
-	service_name    = "postgres se test server"
-	ir_group        = "postgres_se"
-	flavor          = "m4.tiny"
-	disk            = 35
-	region          = "skolkovo"
-	zone            = "edz"
-	virtualization  = "openstack"
-	os_name         = "rhel"
-	os_version      = "8.5.2"
-	fault_tolerance = "stand-alone"
-	public_ssh_name = "CAB-SA-CI000160"
-	app_params      = {
-		as_tuz               = "CAB-SA-CI000160" # Список технологических учетных записей
-		version              = "4.2.6" # Версия PostgreSQL Sber Edition
-		as_admins            = "17756439" # Список администраторов АС
-		joindomain           = "sigma.sbrf.ru"
-		schema_name          = "schema1"
-		database_name        = "db1"
-		security_level       = "K4"
-		fault_tolerance      = "stand-alone" # хз зачем оно в ди 2 раза
-		installation_type    = "standalone-postgresql-only"
-		tablespace_name      = "ts1"
-	}
-	volume {
-		size = 50
-		path = "/pgarclogs"
-	}
-	volume {
-		size = 50
-		path = "/pgdata"
-	}
-	volume {
-		size = 50
-		path = "/pgerrorlogs"
-	}
-	volume {
-		size = 1
-		path = "/pgbackup"
-	}
-	count           = 0
-}
-
-# ELK
-resource "di_elk" "elk" {
-	group_id        = data.di_group.devices.id
-	project_id      = di_project.terraformtest.id
-	service_name    = "test elk 4"
-	ir_group        = "elk"
-	flavor          = "m2.tiny"
-	disk            = 35
-	region          = "skolkovo"
-	zone            = "edz"
-	virtualization  = "openstack"
-	os_name         = "rhel"
-	os_version      = "8.5.2"
-	fault_tolerance = "stand-alone"
-	public_ssh_name = "CAB-SA-CI000160"
-	app_params      = {
-		joindomain   = "sigma.sbrf.ru"
-#		elk_set      = "Elasticsearch + Logstash + Kibana"
-		elk_set      = "Kibana"
-		version      = "7.13.2"
-		java_version = "1.8.0"
-	}
-	volume {
-		path    = "/usr"
-		size    = 40
-	}
-	volume {
-		size    = 40
-		path    = "/opt/elastic"
-	}
-	volume {
-		size    = 40
-		path    = "/home"
-	}
-	volume {
-		size    = 10
-		path    = "/var"
-	}
-	count           = 0
-	tag_ids         = [
-#		di_tag.mytag0.id,
-#		di_tag.mytag1.id,
-#		di_tag.mytag2.id,
-#		di_tag.mytag3.id,
-#		di_tag.mytag4.id,
-	]
-}
+#*/
