@@ -76,9 +76,9 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 	//if err != nil {
 	//	return diag.FromErr(err)
 	//}
-	log.Println("RRES", res.Get("network"))
-	log.Println("NUUID2", objRes.Project.Networks.NetworkUuid)
-	objRes.WriteTF(res)
+	//log.Println("RRES", res.Get("network"))
+	//log.Println("NUUID2", objRes.Project.Networks.NetworkUuid)
+	//objRes.WriteTF(res)
 	return diags
 }
 
