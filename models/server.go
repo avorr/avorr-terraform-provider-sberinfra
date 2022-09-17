@@ -38,6 +38,7 @@ type Server struct {
 	Virtualization   string        `json:"virtualization" hcl:"virtualization"`
 	FaultTolerance   string        `json:"fault_tolerance" hcl:"fault_tolerance"`
 	Region           string        `json:"region" hcl:"region"`
+	NetworkUuid      uuid.UUID     `json:"network_uuid" hcl:"network_uuid"`
 	User             string        `json:"user"`
 	Password         string        `json:"password,omitempty"`
 	Cpu              int           `json:"cpu" hcl:"cpu"`
@@ -76,6 +77,11 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
+	networkId := res.Get("network_uuid")
+	if networkId != "" {
+		o.NetworkUuid = uuid.MustParse(networkId.(string))
+	}
+
 	o.ServiceName = res.Get("service_name").(string)
 	o.IrGroup = res.Get("ir_group").(string)
 	o.OsName = res.Get("os_name").(string)
@@ -199,6 +205,7 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
+	res.Set("network_uuid", o.NetworkUuid.String())
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
@@ -233,6 +240,7 @@ func (o *Server) ToMap() map[string]interface{} {
 		"service_name": o.ServiceName,
 		"ir_group":     o.IrGroup,
 		//"region":          o.Region,
+		"network_uuid":    o.NetworkUuid.String(),
 		"zone":            o.Zone,
 		"cpu":             o.Cpu,
 		"ram":             o.Ram,
@@ -320,6 +328,8 @@ func (o *Server) Deserialize(data []byte) error {
 	o.IrGroup = serverMap["ir_group"].(string)
 	o.FaultTolerance = serverMap["fault_tolerance"].(string)
 	//o.Region = serverMap["region"].(string)
+	o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
 	irType, ok := serverMap["ir_type"]

@@ -19,6 +19,10 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 
 	obj.ReadTF(res)
 
+	//if res.Get("limits").(*schema.Set).Len() > 1 {
+	//	return diag.Errorf("Limits set should not be more than one")
+	//}
+
 	networks := res.Get("network").(*schema.Set).List()
 
 	log.Printf("!!NET %v, %T", networks, networks)

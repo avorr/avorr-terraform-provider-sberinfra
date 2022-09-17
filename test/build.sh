@@ -6,6 +6,7 @@ echo `date`
 name=terraform-provider-di
 version=0.3.13
 platform=darwin_amd64
+#platform=windows
 #platform=linux_amd64
 
 provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/di

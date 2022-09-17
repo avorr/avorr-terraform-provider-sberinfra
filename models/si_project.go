@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
@@ -133,38 +134,11 @@ func (o *SIProject) SetResFields() {
 //	return &SIProject{}
 //}
 
-func (o *SIProject) ReadTF(res *schema.ResourceData) {
+func (o *SIProject) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
-	//log.Println("##tf", res.Get("type"))
-	//log.Println("##tf", res.Get("id"))
 	if res.Id() != "" {
 		o.Project.ID = uuid.MustParse(res.Id())
 	}
-	//log.Println("##RES_ID", uuid.MustParse(res.Id()))
-	//log.Println("##RES_ID", res.Id())
-
-	//log.Printf("##out %v, %T", res.Get("ir_group").(string), res.Get("ir_group").(string))
-	//log.Printf("##out %v, %T", res.Get("type").(string), res.Get("type").(string))
-	//log.Printf("##out %v, %T", res.Get("ir_type").(string), res.Get("ir_type").(string))
-	//log.Printf("##out %v, %T", res.Get("virtualization").(string), res.Get("virtualization").(string))
-	//log.Printf("##out %v, %T", res.Get("name").(string), res.Get("name").(string))
-	//log.Printf("##out %v, %T", uuid.MustParse(res.Get("group_id").(string)), uuid.MustParse(res.Get("group_id").(string)))
-	//log.Printf("##out %v, %T", res.Get("datacenter").(string), res.Get("datacenter").(string))
-	//log.Printf("##out %v, %T", res.Get("limits"), res.Get("limits"))
-
-	//limits1, ok := res.GetOk("limits")
-
-	//log.Printf("##out %v, %T", limits1, limits1)
-	//log.Printf("##out %v, %T", ok, ok)
-
-	//log.Printf("##jumph %v, %T\n", res.Get("jump_host").(bool), res.Get("jump_host").(bool))
-	//return
-	//if res.Id() != "" {
-	//	o.Id = uuid.MustParse(res.Id())
-	//}
-
-	//log.Printf("###TYPEID%v, %T\n", o.Project.ID, o.Project.ID)
-	//log.Printf("###TYPEID%v, %T\n", res.Get("name"), res.Get("name"))
 
 	o.Project.IrGroup = res.Get("ir_group").(string)
 	o.Project.Type = res.Get("type").(string)
@@ -183,9 +157,24 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) {
 		o.Project.JumpHost = false
 	}
 
-	//o.Limits.CoresVcpuCount = res.Get()
+	net, ok := res.GetOk("network")
+	log.Println("NETWORK", net)
+	log.Println("NETWORK", net.(*schema.Set).List())
+	log.Println("NETWORK", net.(*schema.Set).Len())
 
-	limits, ok := res.GetOk("limits")
+	limits := res.Get("limits")
+
+	log.Println("LLOK", ok)
+	log.Println("LL", limits)
+	log.Println("LL", len(limits.(*schema.Set).List()))
+	log.Println("LL", limits.(*schema.Set).Len())
+
+	//if ok {
+	//	if limits.(*schema.Set).Len() > 1 {
+	//		res.Get("limits").(*schema.Set).Len()
+	//		return diag.Errorf("Limits set should not be more than one")
+	//	}
+	//}
 
 	if ok {
 		limitsSet := limits.(*schema.Set)
@@ -212,117 +201,45 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) {
 		}
 	}
 
+	//networks := make([]map[string]interface{}, 0)
+	//for _, v := range o.Project.Networks {
+	//	volume := map[string]interface{}{
+	//		"size":         v.Size,
+	//		"path":         v.Path,
+	//		"storage_type": v.StorageType,
+	//	}
+	//	networks = append(networks, volume)
+	//}
+	//err := res.Set("network", networks)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+
 	network, ok := res.GetOk("network")
 
-	//log.Println("##NET", pp.Sprintln(network))
-	//log.Println("##ST", pp.Sprintln(ok))
-
-	//networkSet1 := network.(*schema.Set).List()
-	//for _, v := range networkSet1 {
-	//	log.Printf("##NS %T, %v \n", v, v)
-	//	log.Println("##NS", v.(map[string]interface{})["network_uuid"])
-	//}
-
 	if ok {
-		networkSet := network.(*schema.Set).List()[0]
+		networkSet := network.(*schema.Set).List()
 
-		//log.Printf("!!!!%v, %T \n", networkSet, networkSet)
-		//log.Println("!!!!LENNN", len(networkSet))
-		//log.Printf("!!!!%v, %T \n", networkSet[0].(map[string]interface{})["cidr"], networkSet[0].(map[string]interface{})["cidr"])
-		o.Project.Networks.NetworkName = networkSet.(map[string]interface{})["network_name"].(string)
-		//o.Project.Networks.NetworkUuid = networkSet.(map[string]interface{})["network_uuid"].(uuid.UUID)
-		//o.Project.Networks.NetworkUuid = uuid.MustParse(networkSet.(map[string]interface{})["network_uuid"].(string))
-		//o.Project.Networks.NetworkUuid = uuid.MustParse(networkSet.(map[string]interface{})["network_uuid"].(string))
-		o.Project.Networks.Cidr = networkSet.(map[string]interface{})["cidr"].(string)
-		//o.Network.DNSNameservers = networkSet[0].(map[string]interface{})["dns_nameservers"].(*schema.Set)
-		o.Project.Networks.EnableDhcp = networkSet.(map[string]interface{})["enable_dhcp"].(bool)
-		o.Project.Networks.IsDefault = networkSet.(map[string]interface{})["is_default"].(bool)
+		for _, v := range networkSet {
+			if v.(map[string]interface{})["is_default"].(bool) {
+				o.Project.Networks.NetworkName = v.(map[string]interface{})["network_name"].(string)
+				o.Project.Networks.Cidr = v.(map[string]interface{})["cidr"].(string)
+				o.Project.Networks.EnableDhcp = v.(map[string]interface{})["enable_dhcp"].(bool)
+				//o.Project.Networks.IsDefault = v.(map[string]interface{})["is_default"].(bool)
+				o.Project.Networks.IsDefault = true
+				//o.Project.Networks.NetworkUuid = v.(map[string]interface{})["network_uuid"].(uuid.UUID)
+				//log.Printf("#@ %v, %T\n", v.(map[string]interface{})["network_uuid"], v.(map[string]interface{})["network_uuid"])
 
-		//o.Network.DNSNameservers = networkSet[0].(map[string]interface{})["dns_nameservers"].(*schema.Set)
-
-		//log.Printf("!11%v, %T \n", networkSet[0].(map[string]interface{})["dns_nameservers"].(*schema.Set).List()[0], networkSet[0].(map[string]interface{})["dns_nameservers"].(*schema.Set).List()[0])
-		var dnsNameServers = []string{}
-		for _, dnsIp := range networkSet.(map[string]interface{})["dns_nameservers"].(*schema.Set).List() {
-			//log.Printf("@@I %v, %T\n", i, i)
-			//log.Println("@@ILEN", networkSet.(map[string]interface{})["dns_nameservers"])
-			//log.Printf("@@NS%v, %T \n", networkSet.(map[string]interface{})["dns_nameservers"], networkSet.(map[string]interface{})["dns_nameservers"])
-			//log.Printf("@@I %v, %T\n", i2, i2)
-			dnsNameServers = append(dnsNameServers, dnsIp.(string))
+				var dnsNameServers = []string{}
+				for _, dnsIp := range v.(map[string]interface{})["dns_nameservers"].(*schema.Set).List() {
+					dnsNameServers = append(dnsNameServers, dnsIp.(string))
+				}
+				o.Project.Networks.DNSNameservers = dnsNameServers
+			}
 		}
-
-		o.Project.Networks.DNSNameservers = dnsNameServers
-
-		//log.Println("$$", dnsNameServers)
-		//return
-
-		//o.Network.EnableDhcp = networkSet[0].(map[string]interface{})["enable_dhcp"].(bool)
-
-		//for _, v := range networkSet.List() {
-		//	values := v.(map[string]interface{})
-
-		//log.Printf("net!!out %v, %T \n", values["network_name"], values["network_name"])
-		//log.Printf("net!!out %v, %T \n", values["cidr"], values["cidr"])
-		//log.Printf("net!!out %v, %T \n", values["dns_nameservers"].(*schema.Set), values["dns_nameservers"].(*schema.Set))
-		//log.Printf("net!!out %v, %T \n", values["enable_dhcp"], values["enable_dhcp"])
-
-		//o.Network = values["network_name"].(string)
-
-		//limit := &SIProject{
-		//log.Printf("!!out %v, %T", strconv.Atoi(values["cores_vcpu_count"].(string)), values["cores_vcpu_count"])
-
-		//CoresVcpuCount, err := strconv.Atoi(values["cores_vcpu_count"].(string))
-		//if err != nil {
-		//	panic(err)
-		//}
-		//RamGbAmount, err := strconv.Atoi(values["ram_gb_amount"].(string))
-		//if err != nil {
-		//	panic(err)
-		//}
-		//StorageGbAmount, err := strconv.Atoi(values["storage_gb_amount"].(string))
-		//if err != nil {
-		//	panic(err)
-		//}
-
-		//o.Limits.CoresVcpuCount = CoresVcpuCount
-		//o.Limits.RAMGbAmount = RamGbAmount
-		//o.Limits.StorageGbAmount = StorageGbAmount
 	}
-	//log.Printf("!!out %v, %T", o, o)
 
-	//log.Println("!!!v", pp.Sprintln(o.Name))
-	//log.Println("!!!v", pp.Sprintln(o.Datacenter))
-	//log.Println("!!!v", pp.Sprintln(o.GroupId.String()))
-	//log.Println("!!!v", pp.Sprintln(o.Virtualization))
-	//log.Println("!!!v", pp.Sprintln(o.IrType))
-	//log.Println("!!!v", pp.Sprintln(o.IrGroup))
-	//log.Println("!!!v", pp.Sprintln(o.Type))
-	//log.Println("!!!v", pp.Sprintln(o.Limits))
-	//log.Println("!!!v", pp.Sprintln(o.JumpHost))
-	//log.Println("!!!v", pp.Sprintln(o.Network))
-
-	//log.Println("!@@v", pp.Sprintln(o))
-
-	//sort.Sort(ByPath(o.Volumes))
-	//}
-
-	//groupId := res.Get("group_id")
-	//if groupId != "" {
-	//	o.GroupId = uuid.MustParse(groupId.(string))
-	//}
-	//domainId := res.Get("domain_id")
-	//if domainId != "" {
-	//	o.DomainId = uuid.MustParse(domainId.(string))
-	//}
-	//o.Name = res.Get("name").(string)
-
-	//o.StandType = res.Get("stand_type").(string)
-	//standTypeId := res.Get("stand_type_id")
-	//if standTypeId != "" {
-	//	o.StandTypeId = uuid.MustParse(standTypeId.(string))
-	//}
-	//o.State = res.Get("state").(string)
-	//o.Type = res.Get("type").(string)
-	//o.AppSystemsCi = res.Get("app_systems_ci").(string)
+	return diag.Diagnostics{}
 }
 
 func (o *SIProject) WriteTF(res *schema.ResourceData) {

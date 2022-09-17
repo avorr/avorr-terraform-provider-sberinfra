@@ -1,0 +1,6 @@
+terraform.tfstate*
+.idea
+.terraform.lock.hcl
+.terraform
+*.json
+.my_env

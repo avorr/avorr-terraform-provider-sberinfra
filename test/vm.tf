@@ -88,15 +88,17 @@ resource "di_vm" "vm1" {
 #}
 
 data "di_domain" "domain" {
-  name = "ГосТех"
+  name = "Гостех - авторизация"
+  #  name = "ГосТех"
   #  name = "Росимущество"
 }
 
 data "di_group" "group" {
-  name      = "Common"
+  domain_id = data.di_domain.domain.id
+  name      = "IAM для внешних интеграций"
+  #  name      = "Common"
   #  name      = "НТ"
   #  name      = "ПСИ"
-  domain_id = data.di_domain.domain.id
 }
 
 output "domain_id" {
@@ -136,7 +138,7 @@ resource di_siproject "project" {
 }
 */
 
-
+/*
 resource di_siproject "project" {
   ir_group       = "vdc"
   type           = "vdc"
@@ -191,11 +193,12 @@ resource "di_vm" "vm1" {
     size = 50
     #    storage_type = "rbd-1"
   }
-  tag_ids = [
-    di_tag.jenkins.id
-  ]
-  count = 1
+#  tag_ids = [
+#    di_tag.jenkins.id
+#  ]
+  count = 0
 }
+*/
 
 #resource di_siproject "project" {
 #  ir_group = "vdc"
@@ -221,3 +224,54 @@ resource "di_vm" "vm1" {
 #}
 
 #*/
+
+
+#"cd57f3d7-176f-4295-aae8-c5ee16716a82"
+
+resource "di_vm" "vm1" {
+  group_id        = data.di_group.group.id
+  project_id      = "0c479d29-898b-4b1a-b3cb-bc408723aa4a"
+  service_name    = "terraform-test-di-vm-0${count.index + 1}"
+  ir_group        = "vm"
+  os_name         = "rhel"
+  os_version      = "7.9"
+  virtualization  = "openstack"
+  fault_tolerance = "Stand-alone"
+  flavor          = "m1.tiny"
+  disk            = 50
+  zone            = "internal"
+  network_uuid    = "857d0f59-9479-4028-a583-74f1edaf22a0"
+  count = 1
+}
+
+
+resource "di_vm" "vm2" {
+  group_id        = data.di_group.group.id
+  project_id      = "0c479d29-898b-4b1a-b3cb-bc408723aa4a"
+  service_name    = "terraform-testvm2-k8s-0${count.index + 1}"
+  ir_group        = "vm"
+  os_name         = "rhel"
+  os_version      = "7.9"
+  virtualization  = "openstack"
+  fault_tolerance = "Stand-alone"
+  flavor          = "m1.tiny"
+  disk            = 50
+  zone            = "internal"
+  network_uuid    = "cd57f3d7-176f-4295-aae8-c5ee16716a82"
+  count = 1
+}
+
+resource "di_vm" "vm3" {
+  group_id        = data.di_group.group.id
+  project_id      = "0c479d29-898b-4b1a-b3cb-bc408723aa4a"
+  service_name    = "terraform-testvm3-defautl-network-0${count.index + 1}"
+  ir_group        = "vm"
+  os_name         = "rhel"
+  os_version      = "7.9"
+  virtualization  = "openstack"
+  fault_tolerance = "Stand-alone"
+  flavor          = "m1.tiny"
+  disk            = 50
+  zone            = "internal"
+  count = 1
+}

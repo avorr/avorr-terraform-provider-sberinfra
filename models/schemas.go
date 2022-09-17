@@ -108,6 +108,7 @@ func init() {
 		"disk":            {Type: schema.TypeInt, Required: true},
 		"flavor":          {Type: schema.TypeString, Required: true},
 		"region":          {Type: schema.TypeString, Optional: true},
+		"network_uuid":    {Type: schema.TypeString, Optional: true},
 		"virtualization":  {Type: schema.TypeString, Required: true},
 		"os_name":         {Type: schema.TypeString, Required: true},
 		"os_version":      {Type: schema.TypeString, Required: true},
