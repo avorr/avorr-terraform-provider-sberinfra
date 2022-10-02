@@ -50,15 +50,17 @@ func init() {
 	}
 
 	SchemaSiProject = map[string]*schema.Schema{
-		"ir_group":       {Type: schema.TypeString, Required: true},
-		"type":           {Type: schema.TypeString, Required: true},
-		"ir_type":        {Type: schema.TypeString, Required: true},
-		"virtualization": {Type: schema.TypeString, Required: true},
-		"name":           {Type: schema.TypeString, Optional: true},
-		"group_id":       {Type: schema.TypeString, Required: true},
-		"datacenter":     {Type: schema.TypeString, Required: true},
-		"jump_host":      {Type: schema.TypeString, Required: true},
-		"desc":           {Type: schema.TypeString, Optional: true},
+		"ir_group":        {Type: schema.TypeString, Required: true},
+		"type":            {Type: schema.TypeString, Required: true},
+		"ir_type":         {Type: schema.TypeString, Required: true},
+		"virtualization":  {Type: schema.TypeString, Required: true},
+		"name":            {Type: schema.TypeString, Optional: true},
+		"group_id":        {Type: schema.TypeString, Required: true},
+		"domain_id":       {Type: schema.TypeString, Optional: true},
+		"default_network": {Type: schema.TypeString, Computed: true},
+		"datacenter":      {Type: schema.TypeString, Required: true},
+		"jump_host":       {Type: schema.TypeString, Required: true},
+		"desc":            {Type: schema.TypeString, Optional: true},
 		//"limits": {
 		//	Type:     schema.TypeMap,
 		//	Optional: true,
