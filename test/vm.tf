@@ -42,7 +42,7 @@ variable "disks" {
 /*
 resource "di_vm" "vm1" {
 	group_id        = data.di_group.group.id
-	project_id      = data.di_siproject.project.id
+	project_id      = data.di_project.project.id
 	service_name    = "TERRAFORM-TEST"
 	ir_group        = "vm"
 	os_name         = "rhel"
@@ -110,7 +110,7 @@ output "group_id" {
 }
 
 /*
-resource di_siproject "project" {
+resource di_project "project" {
   ir_group       = "vdc"
   type           = "vdc"
   ir_type        = "vdc_openstack"
@@ -139,7 +139,7 @@ resource di_siproject "project" {
 */
 
 /*
-resource di_siproject "project" {
+resource di_project "project" {
   ir_group       = "vdc"
   type           = "vdc"
   ir_type        = "vdc_openstack"
@@ -174,7 +174,7 @@ resource di_siproject "project" {
 
 resource "di_vm" "vm1" {
   group_id        = data.di_group.group.id
-  project_id      = di_siproject.project.id
+  project_id      = di_project.project.id
   service_name    = "terraform-test-di-vm-0${count.index + 1}"
   ir_group        = "vm"
   os_name         = "rhel"
@@ -183,7 +183,7 @@ resource "di_vm" "vm1" {
   fault_tolerance = "Stand-alone"
   flavor          = "m1.tiny"
   disk            = 50
-  zone            = di_siproject.project.datacenter
+  zone            = di_project.project.datacenter
 #  zone            = "internal"
   volume {
     size = 50
@@ -196,7 +196,7 @@ resource "di_vm" "vm1" {
 }
 */
 
-resource di_siproject "project" {
+resource di_project "project" {
   ir_group       = "vdc"
   type           = "vdc"
   ir_type        = "vdc_openstack"
@@ -234,7 +234,7 @@ resource "di_tag" "jenkins" {
 #"cd57f3d7-176f-4295-aae8-c5ee16716a82"
 
 locals {
-  networks = {for k, v in di_siproject.project.network : k.network_name => v.network_uuid}
+  networks = {for k, v in di_project.project.network : k.network_name => v.network_uuid}
 }
 
 resource "di_vm" "vm1" {
@@ -259,6 +259,6 @@ resource "di_vm" "vm1" {
 }
 
 output "ni" {
-  #    value = one([for s in di_siproject.project.network : s.network_uuid if s.network_name == "internal-network"])
+  #    value = one([for s in di_project.project.network : s.network_uuid if s.network_name == "internal-network"])
   value = local.networks["internal-network"]
 }

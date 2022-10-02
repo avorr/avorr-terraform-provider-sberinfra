@@ -12,18 +12,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/imports"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/views"
 )
 
 func main() {
 	if len(os.Args) == 3 && os.Args[1] == "import" {
-		importer := imports.Importer{}
-		err := importer.Import(os.Args[2])
-		if err != nil {
-			panic(err)
-		}
+		log.Println("Imports doesnt support")
+		//importer := imports.Importer{}
+		//err := importer.Import(os.Args[2])
+		//if err != nil {
+		//	panic(err)
+		//}
 	} else {
 		runPlugin()
 	}
@@ -70,22 +70,22 @@ func ProviderFunc() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"di_project": {
-				Importer: &schema.ResourceImporter{
-					// State:        schema.ImportStatePassthrough,
-					StateContext: views.ProjectImport,
-				},
-				CreateContext: views.ProjectCreate,
-				ReadContext:   views.ProjectRead,
-				UpdateContext: views.ProjectUpdate,
-				DeleteContext: views.ProjectDelete,
-				Schema:        models.SchemaProject,
-				Timeouts: &schema.ResourceTimeout{
-					Create: schema.DefaultTimeout(timeout),
-				},
-			},
+			//"di_project": {
+			//	Importer: &schema.ResourceImporter{
+			//// State:        schema.ImportStatePassthrough,
+			//StateContext: views.ProjectImport,
+			//},
+			//CreateContext: views.ProjectCreate,
+			//ReadContext:   views.ProjectRead,
+			//UpdateContext: views.ProjectUpdate,
+			//DeleteContext: views.ProjectDelete,
+			//Schema:        models.SchemaProject,
+			//Timeouts: &schema.ResourceTimeout{
+			//	Create: schema.DefaultTimeout(timeout),
+			//},
+			//},
 
-			"di_siproject": {
+			"di_project": {
 				//Importer: &schema.ResourceImporter{
 				//	State:        schema.ImportStatePassthrough,
 				//	StateContext: views.SiProjectImport,
