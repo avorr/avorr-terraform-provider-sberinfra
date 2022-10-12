@@ -7,8 +7,8 @@ package imports
 //	"io/ioutil"
 //
 //	"github.com/google/uuid"
-//	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
-//	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
+//	"base.sw.sbc.space/pid/terraform-provider-si/client"
+//	"base.sw.sbc.space/pid/terraform-provider-si/models"
 //)
 //
 //type Importer struct {

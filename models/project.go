@@ -1,6 +1,7 @@
 package models
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"context"
 	"encoding/json"
 	"errors"
@@ -10,13 +11,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	//"utils1"
+	//"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"strconv"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/k0kubun/pp/v3"
 )
 
 type SIProject struct {
@@ -181,7 +182,6 @@ func (o *SIProject) AddNetwork(ctx context.Context, res *schema.ResourceData, ad
 
 		_, err = deserializeResBody.StateChangeNetwork(res, v["network_name"].(string)).WaitForStateContext(ctx)
 	}
-
 	return diag.Diagnostics{}
 }
 
@@ -382,8 +382,6 @@ func (o *ResSIProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	//log.Println("NETWORK", net.(*schema.Set).List())
 	//log.Println("NETWORK", net.(*schema.Set).Len())
 
-	limits, ok := res.GetOk("limits")
-
 	//log.Println("LLOK", ok)
 	//log.Println("LL", limits)
 	//log.Println("LL", len(limits.(*schema.Set).List()))
@@ -396,6 +394,7 @@ func (o *ResSIProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	//	}
 	//}
 
+	limits, ok := res.GetOk("limits")
 	if ok {
 		limitsSet := limits.(*schema.Set)
 
@@ -461,7 +460,7 @@ func (o *SIProject) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
-	res.Set("domain_id", o.Project.GroupID.String())
+	//res.Set("domain_id", o.Project.GroupID.String())
 	//res.Set("state", o.State)
 	res.Set("type", o.Project.Type)
 	//res.Set("network", o.Project.Networks)
@@ -497,7 +496,7 @@ func (o *ResSIProject) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
-	res.Set("domain_id", o.Project.DomainID.String())
+	//res.Set("domain_id", o.Project.DomainID.String())
 	//res.Set("state", o.Project.State)
 	res.Set("type", o.Project.Type)
 
@@ -622,8 +621,6 @@ func (o *SIProject) DeserializeOld(responseBytes []byte) error {
 		value := v.(map[string]interface{})
 
 		if value["name"].(string) == o.Project.Name {
-			//log.Println("@@@", value["name"].(string))
-			//log.Println("@@@", reflect.TypeOf(value["name"].(string)))
 			o.Project.GroupID = uuid.MustParse(value["group_id"].(string))
 			//o.ResId = value["id"].(string)
 			//o.DomainId = uuid.MustParse(value["domain_id"].(string))
@@ -755,7 +752,6 @@ func (o *SIProject) ParseIdFromCreateResponse(data []byte) error {
 }
 
 func (o *SIProject) CreateDI(data []byte) ([]byte, error) {
-	log.Println("###data", pp.Sprintln(string(data)))
 	return Api.NewRequestCreate("/v2/projects", data)
 }
 
@@ -861,20 +857,14 @@ func (o *ResSIProject) StateChangeNetwork(res *schema.ResourceData, networkName 
 			// write to TF state
 			//o.WriteTFRes(res)
 
-			//if o.Project.Networks == "ready" {
-			//	return o, "Running", nil
-			//}
-
 			for _, net := range o.Project.Networks {
 				if net.NetworkName == networkName {
-					log.Println(net.NetworkName)
-					log.Println(net.NetworkUUID)
-					log.Println("STTAUS", net.Status)
 					if net.Status == "ready" {
 						return o, "Running", nil
+					} else if net.Status == "pending" {
+						return o, "Pending", nil
 					}
 				}
-
 			}
 
 			//if o.Project.State == "damaged" {

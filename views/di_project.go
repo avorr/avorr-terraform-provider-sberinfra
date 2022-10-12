@@ -8,7 +8,7 @@ package views
 //	"io/ioutil"
 //
 //	"github.com/google/uuid"
-//	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
+//	"base.sw.sbc.space/pid/terraform-provider-si/models"
 //
 //	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 //	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

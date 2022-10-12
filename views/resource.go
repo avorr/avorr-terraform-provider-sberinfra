@@ -1,6 +1,8 @@
 package views
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,8 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"log"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
 )
 
 //var (

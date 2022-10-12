@@ -1,9 +1,9 @@
 package models
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
 )
 
 type HCLDataResource struct {

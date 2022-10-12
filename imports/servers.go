@@ -5,8 +5,8 @@ package imports
 //	"encoding/json"
 //	"fmt"
 //
-//	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
-//	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
+//	"base.sw.sbc.space/pid/terraform-provider-si/client"
+//	"base.sw.sbc.space/pid/terraform-provider-si/models"
 //)
 //
 //type Servers struct {

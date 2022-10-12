@@ -1,4 +1,4 @@
-module stash.sigma.sbrf.ru/sddevops/terraform-provider-di
+module base.sw.sbc.space/pid/terraform-provider-si
 
 go 1.18
 
@@ -6,7 +6,6 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.12.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.15.0
-	github.com/k0kubun/pp/v3 v3.1.0
 	github.com/sosedoff/ansible-vault-go v0.1.1
 )
 

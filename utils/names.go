@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/translit"
+	"base.sw.sbc.space/pid/terraform-provider-si/translit"
 )
 
 func Reformat(name string) string {

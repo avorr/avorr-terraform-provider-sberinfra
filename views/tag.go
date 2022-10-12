@@ -1,11 +1,11 @@
 package views
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/models"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"

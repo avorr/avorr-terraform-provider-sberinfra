@@ -11,9 +11,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/views"
+	"base.sw.sbc.space/pid/terraform-provider-si/client"
+	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"base.sw.sbc.space/pid/terraform-provider-si/views"
 )
 
 func main() {
@@ -90,10 +90,10 @@ func ProviderFunc() *schema.Provider {
 				//	State:        schema.ImportStatePassthrough,
 				//	StateContext: views.SiProjectImport,
 				//},
-				CreateContext: views.SiProjectCreate,
-				ReadContext:   views.SiProjectRead,
-				UpdateContext: views.SiProjectUpdate,
-				DeleteContext: views.SiProjectDelete,
+				CreateContext: views.ProjectCreate,
+				ReadContext:   views.ProjectRead,
+				UpdateContext: views.ProjectUpdate,
+				DeleteContext: views.ProjectDelete,
 				Schema:        models.SchemaSiProject,
 				Timeouts: &schema.ResourceTimeout{
 					Create: schema.DefaultTimeout(timeout),

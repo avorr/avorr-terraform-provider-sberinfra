@@ -1,9 +1,9 @@
 package models
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/client"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
 )
 
 var (

@@ -5,9 +5,9 @@ cd ..
 echo `date`
 name=terraform-provider-di
 version=0.3.13
-platform=darwin_amd64
-#platform=windows
-#platform=linux_amd64
+platform=darwin_amd64; goos="darwin"
+#platform=linux_amd64; goos="linux"
+#platform=windows; goos="windows"
 
 provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/di
 binary_dir=${provider_dir}/${version}/${platform}
@@ -18,7 +18,7 @@ go version
 go mod tidy -v
 #go mod vendor -v
 #go build -mod=vendor -v -o ${binary}
-go build -v -o ${binary}
+GOOS=${goos} go build -v -o ${binary}
 #./${binary} import
 #rm test-di/.terraform.lock.hcl || true
 cp ${binary} ${binary_dir}/${binary}

@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vault "github.com/sosedoff/ansible-vault-go"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 )
 
 type Server struct {
@@ -38,7 +38,7 @@ type Server struct {
 	Virtualization   string        `json:"virtualization" hcl:"virtualization"`
 	FaultTolerance   string        `json:"fault_tolerance" hcl:"fault_tolerance"`
 	Region           string        `json:"region" hcl:"region"`
-	NetworkUuid      uuid.UUID     `json:"network_uuid" hcl:"network_uuid"`
+	NetworkUuid      uuid.UUID     `json:"network_uuid,omitempty" hcl:"network_uuid"`
 	User             string        `json:"user"`
 	Password         string        `json:"password,omitempty"`
 	Cpu              int           `json:"cpu" hcl:"cpu"`
@@ -77,8 +77,17 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
-	networkId := res.Get("network_uuid")
-	if networkId != "" {
+
+	//networkId := res.Get("network_uuid")
+	//if networkId != "" {
+	//	o.NetworkUuid = uuid.MustParse(networkId.(string))
+	//} else {
+	//	o.NetworkUuid = uuid.Nil
+	//}
+
+	log.Println("RNCHECK", res.Get("network_uuid"))
+	networkId, ok := res.GetOk("network_uuid")
+	if ok {
 		o.NetworkUuid = uuid.MustParse(networkId.(string))
 	}
 
@@ -205,7 +214,24 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
-	res.Set("network_uuid", o.NetworkUuid.String())
+
+	log.Println("WNCHECK1", res.Get("network_uuid"))
+
+	//if o.NetworkUuid != uuid.Nil {
+	//	log.Println("NNNN", o.NetworkUuid)
+	//	log.Println("NNNN", o.NetworkUuid.String())
+	//	log.Println("NNNN", o.NetworkUuid.ID())
+	//	res.Set("network_uuid", o.NetworkUuid.String())
+	//}
+	//if res.GetOk()
+
+	_, ok := res.GetOk("network_uuid")
+	if ok && o.NetworkUuid != uuid.Nil {
+		res.Set("network_uuid", o.NetworkUuid.String())
+	}
+
+	log.Println("WNCHECK2", res.Get("network_uuid"))
+
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
@@ -328,7 +354,7 @@ func (o *Server) Deserialize(data []byte) error {
 	o.IrGroup = serverMap["ir_group"].(string)
 	o.FaultTolerance = serverMap["fault_tolerance"].(string)
 	//o.Region = serverMap["region"].(string)
-	o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
 
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
@@ -386,6 +412,13 @@ func (o *Server) Deserialize(data []byte) error {
 	if ok && projectId != nil {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
+
+	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+	networkUuid, ok := serverMap["network_uuid"]
+	if ok && networkUuid != "" {
+		o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+	}
+
 	publicSshName, ok := serverMap["public_ssh_name"]
 	if ok && publicSshName != "" {
 		o.PublicSshName = publicSshName.(string)

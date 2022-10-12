@@ -201,7 +201,7 @@ resource di_project "project" {
   type           = "vdc"
   ir_type        = "vdc_openstack"
   virtualization = "openstack"
-  name           = "Test-project" //requared false
+  name           = "Test-terraform-project" //requared false
   group_id       = data.di_group.group.id
 #  datacenter     = "okvm1"
   datacenter     = "PD24R3PROM"
@@ -222,14 +222,16 @@ resource di_project "project" {
   }
   network {
     network_name    = "internal-network2"
+#    network_name    = "internal-network"
     cidr            = "172.30.100.0/30"
     dns_nameservers = ["8.8.8.8", "8.8.4.4"]
     enable_dhcp     = true
+    is_default      = false
   }
 }
-resource "di_tag" "jenkins" {
-  name = "jenkins"
-}
+#resource "di_tag" "jenkins" {
+#  name = "jenkins"
+#}
 
 #"cd57f3d7-176f-4295-aae8-c5ee16716a82"
 
@@ -239,7 +241,8 @@ locals {
 
 resource "di_vm" "vm1" {
   group_id        = data.di_group.group.id
-  project_id      = "0c479d29-898b-4b1a-b3cb-bc408723aa4a"
+#  project_id      = "0c479d29-898b-4b1a-b3cb-bc408723aa4a"
+  project_id      = di_project.project.id
   service_name    = "terraform-test-di-vm-0${count.index + 1}"
   ir_group        = "vm"
   os_name         = "rhel"
@@ -253,12 +256,11 @@ resource "di_vm" "vm1" {
   #  network_name    = "internal-network"
   network_uuid    = local.networks["internal-network"]
   tag_ids         = [
-    di_tag.jenkins.id
+#    di_tag.jenkins.id
   ]
-  count = 0
+  count = 1
 }
 
-output "ni" {
-  #    value = one([for s in di_project.project.network : s.network_uuid if s.network_name == "internal-network"])
-  value = local.networks["internal-network"]
-}
+#output "ni" {
+#  value = local.networks["internal-network"]
+#}

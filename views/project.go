@@ -1,18 +1,18 @@
 package views
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/models"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"log"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	//_ "github.com/k0kubun/pp/v3"
 )
 
-func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
@@ -25,7 +25,15 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 	additionalNetworks := make([]map[string]interface{}, 0)
 
 	defaultNetworkCount := 0
+	networkNames := make([]string, 0)
 	for _, v := range networks {
+		for _, name := range networkNames {
+			if v.(map[string]interface{})["network_name"].(string) == name {
+				return diag.Errorf("There should not be networks with the same name")
+			}
+		}
+		networkNames = append(networkNames, v.(map[string]interface{})["network_name"].(string))
+
 		if v.(map[string]interface{})["is_default"] == true {
 			defaultNetworkCount += 1
 			if defaultNetworkCount > 1 {
@@ -77,9 +85,14 @@ func SiProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{
 	return diags
 }
 
-func SiProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
-	log.Println("##", "read_func")
-	log.Println("##", res.Id())
+func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+
+	//log.Println("!!!!!!!!", res.HasChange("network"))
+	//if res.HasChange("network") {
+	//	log.Println("NETTT")
+	//}
+	//log.Println("##", "read_func")
+	//log.Println("##", res.Id())
 
 	//foo := res.Get("network").(*schema.Set).List()
 	//log.Println("!!!", foo)
@@ -127,7 +140,7 @@ func SiProjectRead(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
-func SiProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	obj := models.SIProject{}
@@ -234,7 +247,7 @@ func SiProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{
 	return diags
 }
 
-func SiProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	obj := models.SIProject{}
 	obj.ReadTF(res)
