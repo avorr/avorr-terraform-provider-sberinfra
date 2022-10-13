@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#source ~/.bash_profile
 set -ex
 cd ..
 echo `date`
@@ -26,8 +25,6 @@ cp ${binary} ${binary_dir}/${binary}
 #cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 
-#cd test-di/
-#cd tf-files-example/
 rm -rf .terraform/ || true
 #rm terraform.tfstate* || true
 rm ./.terraform.lock.hcl || true
@@ -41,10 +38,10 @@ export DI_ANSIBLE_PASSWORD=False
 export INVENTORY_DISABLE=False
 
 terraform init
+ls -l ~/.terraform.d/plugins/sberbank/devops/di/0.3.13/${platform}/terraform-provider-di_v0.3.13_${platform}
 #./imports.sh
 #terraform plan
 #terraform apply
-ls -l ~/.terraform.d/plugins/sberbank/devops/di/0.3.13/darwin_amd64/terraform-provider-di_v0.3.13_darwin_amd64
 #terraform apply -auto-approve
 #terraform destroy -auto-approve
 
