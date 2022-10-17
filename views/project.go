@@ -5,44 +5,44 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	//_ "github.com/k0kubun/pp/v3"
+	"log"
 )
 
 func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
-	obj := models.SIProject{}
+	obj := models.Project{}
 
 	obj.ReadTF(res)
 
 	networks := res.Get("network").(*schema.Set).List()
 
-	additionalNetworks := make([]map[string]interface{}, 0)
+	additionalNetworks := make([]interface{}, 0)
 
 	defaultNetworkCount := 0
 	networkNames := make([]string, 0)
 	for _, v := range networks {
+		v := v.(map[string]interface{})
 		for _, name := range networkNames {
-			if v.(map[string]interface{})["network_name"].(string) == name {
-				return diag.Errorf("There should not be networks with the same name")
+			if v["network_name"].(string) == name {
+				return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["network_name"])
 			}
 		}
-		networkNames = append(networkNames, v.(map[string]interface{})["network_name"].(string))
+		networkNames = append(networkNames, v["network_name"].(string))
 
-		if v.(map[string]interface{})["is_default"] == true {
+		if v["is_default"] == true {
 			defaultNetworkCount += 1
 			if defaultNetworkCount > 1 {
 				return diag.Errorf("Default networks should not be more than one")
 			}
 		} else {
-			additionalNetworks = append(additionalNetworks, v.(map[string]interface{}))
+			additionalNetworks = append(additionalNetworks, v)
 		}
 	}
+
 	requestBytes, err := obj.Serialize()
 
 	if err != nil {
@@ -53,7 +53,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	objRes := models.SIProject{}
+	objRes := models.Project{}
 
 	err = objRes.ParseIdFromCreateResponse(responseBytes)
 
@@ -67,7 +67,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	objRes2 := models.ResSIProject{}
+	objRes2 := models.ResProject{}
 	objRes2.Project.ID = objRes.Project.ID
 	objRes.AddNetwork(ctx, res, additionalNetworks)
 	responseBytes, err = objRes2.ReadDIRes()
@@ -87,41 +87,13 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
-	//log.Println("!!!!!!!!", res.HasChange("network"))
-	//if res.HasChange("network") {
-	//	log.Println("NETTT")
-	//}
-	//log.Println("##", "read_func")
-	//log.Println("##", res.Id())
-
-	//foo := res.Get("network").(*schema.Set).List()
-	//log.Println("!!!", foo)
-
-	//networks := make([]map[string]interface{}, 0)
-	//for _, v := range o.Project.Networks {
-	//	volume := map[string]interface{}{
-	//		"size":         v.Size,
-	//		"path":         v.Path,
-	//		"storage_type": v.StorageType,
-	//	}
-	//	networks = append(networks, volume)
-	//}
-
-	//networks := res.Get("network").(*schema.Set).List()[0].(map[string]interface{})["cidr"]
-	//res.Set("network", networks)
-	//res.Set("network_uuid", "12321")
-	//log.Println("#NN", res.Get("network"))
-	//log.Printf("!!NET %v, %T\n", networks, networks)
-
 	var diags diag.Diagnostics
 
-	//obj := models.SIProject{}
-	obj := models.ResSIProject{}
+	//obj := models.Project{}
+	obj := models.ResProject{}
 	obj.ReadTFRes(res)
 
 	responseBytes, err := obj.ReadDIRes()
-
-	//log.Println("wer", string(responseBytes))
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -129,8 +101,6 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 
 	//err = obj.Deserialize(responseBytes)
 	err = obj.DeserializeRead(responseBytes)
-
-	//log.Printf("§§%v\n %T\n", obj.Project.Networks, obj.Project.Networks)
 
 	if err != nil {
 		return diag.FromErr(err)
@@ -143,61 +113,95 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	obj := models.SIProject{}
-	//obj := models.ResSIProject{}
+	obj := models.Project{}
+	//obj := models.ResProject{}
 	obj.ReadTF(res)
 
-	//log.Println("HC-ir_group", res.HasChange("ir_group"))
-	//log.Println("HC-type", res.HasChange("type"))
-	//log.Println("HC-vdc_openstack", res.HasChange("vdc_openstack"))
-	//log.Println("HC-openstack", res.HasChange("openstack"))
-	//log.Println("HC-name", res.HasChange("name"))
-	//log.Println("HC-group_id", res.HasChange("group_id"))
-	//log.Println("HC-datacenter", res.HasChange("datacenter"))
-	//log.Println("HC-jump_host", res.HasChange("jump_host"))
-	//log.Println("HC-limits", res.HasChange("limits"))
+	if res.HasChange("network") {
+		v1, v2 := res.GetChange("network")
+		netSet1 := v1.(*schema.Set)
+		netSet2 := v2.(*schema.Set)
 
-	//log.Println("HC-network", res.HasChange("network"))
-	//log.Println("")
+		for i1, net1 := range netSet2.List() {
+			net1 := net1.(map[string]interface{})
+			netIsDefault1 := net1["is_default"]
+			netName1 := net1["network_name"]
+			for i2, net2 := range netSet2.List() {
+				net2 := net2.(map[string]interface{})
+				netIsDefault2 := net2["is_default"]
+				if i2-i1 > 0 && netIsDefault2 == netIsDefault1 {
+					return diag.Errorf("Default networks shouldn't be more than one")
+				}
+				netName2 := net2["network_name"]
+				if i2-i1 > 0 && netName1 == netName2 {
+					return diag.Errorf("There mustn't be networks with the same name [%s, %s]", netName1, netName2)
+				}
+			}
+		}
+
+		removeNetSet := netSet1.Difference(netSet2)
+		addNetSet := netSet2.Difference(netSet1)
+
+		log.Println("NETSET2", netSet2)
+		log.Println("NETSET1", netSet1)
+
+		return diags
+
+		// add
+		if addNetSet.Len() > 0 {
+			obj.AddNetwork(ctx, res, addNetSet.List())
+		}
+
+		// remove
+		if removeNetSet.Len() > 0 {
+			for _, v := range removeNetSet.List() {
+				vol := v.(map[string]interface{})
+				err := obj.DeleteNetwork(vol["network_uuid"].(string))
+				log.Println(err.Error())
+
+				//if err != nil {
+				//	return diag.FromErr(err)
+				//}
+			}
+		}
+	}
 
 	if res.HasChange("name") {
-		type updateSIProjectName struct {
+		type updateProjectName struct {
 			Project struct {
 				Action string `json:"action"`
 				Name   string `json:"name"`
 			} `json:"project"`
 		}
-		objSIProjectUpdate := updateSIProjectName{}
-		objSIProjectUpdate.Project.Action = "change_name"
-		objSIProjectUpdate.Project.Name = obj.Project.Name
-		requestBytes, err := json.Marshal(objSIProjectUpdate)
-		responseBytes, err := obj.UpdateSIProjectName(requestBytes)
+		objProjectUpdate := updateProjectName{}
+		objProjectUpdate.Project.Action = "change_name"
+		objProjectUpdate.Project.Name = obj.Project.Name
+		requestBytes, err := json.Marshal(objProjectUpdate)
+		responseBytes, err := obj.UpdateProjectName(requestBytes)
 		if err != nil {
-			return diag.FromErr(err)
-			log.Println(responseBytes)
+			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
 	if res.HasChange("desc") {
-		type updateSIProjectDesc struct {
+		type updateProjectDesc struct {
 			Project struct {
 				Action string `json:"action"`
 				Desc   string `json:"desc"`
 			} `json:"project"`
 		}
-		objSIProjectUpdate := updateSIProjectDesc{}
-		objSIProjectUpdate.Project.Action = "change_desc"
-		objSIProjectUpdate.Project.Desc = obj.Project.Desc
-		requestBytes, err := json.Marshal(objSIProjectUpdate)
-		responseBytes, err := obj.UpdateSIProjectDesc(requestBytes)
+		objProjectUpdate := updateProjectDesc{}
+		objProjectUpdate.Project.Action = "change_desc"
+		objProjectUpdate.Project.Desc = obj.Project.Desc
+		requestBytes, err := json.Marshal(objProjectUpdate)
+		responseBytes, err := obj.UpdateProjectDesc(requestBytes)
 		if err != nil {
-			return diag.FromErr(err)
-			log.Println(responseBytes)
+			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
 	if res.HasChange("limits") {
-		type updateSIProjectsLimits struct {
+		type updateProjectLimits struct {
 			GroupID uuid.UUID `json:"group_id"`
 			Limits  struct {
 				CoresVcpuCount  int `json:"cores_vcpu_count"`
@@ -206,50 +210,56 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 			} `json:"limits"`
 		}
 
-		objSIProjectLimits := updateSIProjectsLimits{}
-		objSIProjectLimits.GroupID = obj.Project.GroupID
-		objSIProjectLimits.Limits.CoresVcpuCount = obj.Project.Limits.CoresVcpuCount
-		objSIProjectLimits.Limits.StorageGbAmount = obj.Project.Limits.StorageGbAmount
-		objSIProjectLimits.Limits.RAMGbAmount = obj.Project.Limits.RAMGbAmount
+		objProjectLimits := updateProjectLimits{}
+		objProjectLimits.GroupID = obj.Project.GroupID
+		objProjectLimits.Limits.CoresVcpuCount = obj.Project.Limits.CoresVcpuCount
+		objProjectLimits.Limits.StorageGbAmount = obj.Project.Limits.StorageGbAmount
+		objProjectLimits.Limits.RAMGbAmount = obj.Project.Limits.RAMGbAmount
 
-		requestBytes, err := json.Marshal(objSIProjectLimits)
-		responseBytes, err := obj.UpdateSIProjectLimits(requestBytes)
+		requestBytes, err := json.Marshal(objProjectLimits)
+		responseBytes, err := obj.UpdateProjectLimits(requestBytes)
 
 		if err != nil {
-			return diag.FromErr(err)
-			log.Println(responseBytes)
+			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
-	//log.Println("RESID", res.Id())
-	//log.Println("RESNAME", res.Get("name"))
-	//log.Println("RESNAME", obj.Project.Name)
-	//log.Println("RES", reflect.TypeOf(res))
+	objRes := models.ResProject{}
+	objRes.Project.ID = obj.Project.ID
+	responseBytes, err := objRes.ReadDIRes()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	err = objRes.DeserializeRead(responseBytes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	objRes.WriteTFRes(res)
 
 	return diags
 
-	requestBytes, err := obj.Serialize()
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	//requestBytes, err := obj.Serialize()
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
 
-	responseBytes, err := obj.UpdateDI(requestBytes)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	//responseBytes, err := obj.UpdateDI(requestBytes)
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
 
-	err = obj.Deserialize(responseBytes)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	//err = obj.Deserialize(responseBytes)
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
 
-	obj.WriteTF(res)
-	return diags
+	//obj.WriteTF(res)
+	//return diags
 }
 
 func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	obj := models.SIProject{}
+	obj := models.Project{}
 	obj.ReadTF(res)
 
 	err := obj.DeleteDI()

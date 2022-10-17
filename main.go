@@ -94,7 +94,7 @@ func ProviderFunc() *schema.Provider {
 				ReadContext:   views.ProjectRead,
 				UpdateContext: views.ProjectUpdate,
 				DeleteContext: views.ProjectDelete,
-				Schema:        models.SchemaSiProject,
+				Schema:        models.SchemaProject,
 				Timeouts: &schema.ResourceTimeout{
 					Create: schema.DefaultTimeout(timeout),
 				},

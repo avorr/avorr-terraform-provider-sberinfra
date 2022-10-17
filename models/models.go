@@ -42,15 +42,3 @@ type DIResource interface {
 	HCLAppParams() *HCLAppParams
 	HCLVolumes() []*HCLVolume
 }
-
-type DIClusterResource interface {
-	NewObj() DIClusterResource
-	OnSerialize(map[string]interface{}, *Cluster) map[string]interface{}
-	OnDeserialize(map[string]interface{}, *Cluster)
-	Urls(string) string
-	OnReadTF(*schema.ResourceData, *Cluster)
-	OnWriteTF(*schema.ResourceData, *Cluster)
-	GetType() string
-	HostVars(*Server) map[string]interface{}
-	GroupVars(*Cluster) map[string]interface{}
-}

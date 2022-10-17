@@ -208,36 +208,35 @@ resource di_project "project" {
   jump_host      = false
   desc           = "test-di.dns.zone"
   limits {
-    //requared false
-    cores_vcpu_count  = 100
-    ram_gb_amount     = 10000
-    storage_gb_amount = 1000
+    cores_vcpu_count  = 100    //
+    ram_gb_amount     = 10000   // requared false
+    storage_gb_amount = 1000    //
   }
   network {
     network_name    = "internal-network"
     cidr            = "172.31.0.0/20"
     dns_nameservers = ["8.8.8.8", "8.8.4.4"]
     enable_dhcp     = true
-    is_default      = true
+#    is_default      = true
   }
   network {
     network_name    = "internal-network2"
-#    network_name    = "internal-network"
     cidr            = "172.30.100.0/30"
     dns_nameservers = ["8.8.8.8", "8.8.4.4"]
     enable_dhcp     = true
-    is_default      = false
+    is_default      = true
   }
 }
+
 #resource "di_tag" "jenkins" {
 #  name = "jenkins"
 #}
 
 #"cd57f3d7-176f-4295-aae8-c5ee16716a82"
 
-locals {
-  networks = {for k, v in di_project.project.network : k.network_name => v.network_uuid}
-}
+#locals {
+#  networks = {for k, v in di_project.project.network : k.network_name => v.network_uuid}
+#}
 
 resource "di_vm" "vm1" {
   group_id        = data.di_group.group.id
@@ -254,11 +253,11 @@ resource "di_vm" "vm1" {
   zone            = "internal"
   #  network_uuid    = "857d0f59-9479-4028-a583-74f1edaf22a0"
   #  network_name    = "internal-network"
-  network_uuid    = local.networks["internal-network"]
+#  network_uuid    = local.networks["internal-network"]
   tag_ids         = [
 #    di_tag.jenkins.id
   ]
-  count = 1
+  count = 0
 }
 
 #output "ni" {

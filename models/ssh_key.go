@@ -1,8 +1,6 @@
 package models
 
-import (
-	"github.com/google/uuid"
-)
+import "github.com/google/uuid"
 
 type SSHKey struct {
 	Id            uuid.UUID `json:"uuid"`

@@ -11,8 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
-	//"utils1"
-	//"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"strconv"
 	"time"
 
@@ -20,7 +18,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type SIProject struct {
+type Project struct {
 	Project struct {
 		ID                 uuid.UUID   `json:"id"`
 		Name               string      `json:"name"`
@@ -71,7 +69,7 @@ type SIProject struct {
 	} `json:"project"`
 }
 
-type ResSIProject struct {
+type ResProject struct {
 	Project struct {
 		ID                 uuid.UUID     `json:"id"`
 		Name               string        `json:"name"`
@@ -153,11 +151,12 @@ type Networks struct {
 	} `json:"network"`
 }
 
-func (o *SIProject) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []map[string]interface{}) diag.Diagnostics {
+func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []interface{}) diag.Diagnostics {
 
 	body := Networks{}
 
 	for _, v := range additionalNets {
+		v := v.(map[string]interface{})
 		body.Network.Cidr = v["cidr"].(string)
 		body.Network.EnableDhcp = v["enable_dhcp"].(bool)
 		body.Network.IsDefault = v["is_default"].(bool)
@@ -172,49 +171,57 @@ func (o *SIProject) AddNetwork(ctx context.Context, res *schema.ResourceData, ad
 		result, err := json.Marshal(body)
 
 		if err != nil {
-			log.Println(err)
+			return diag.FromErr(err)
 		}
 
 		resBody, err := Api.NewRequestCreate(fmt.Sprintf("projects/%s/networks", o.Project.ID), result)
 
-		deserializeResBody := ResSIProject{}
-		json.Unmarshal(resBody, &deserializeResBody)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		deserializeResBody := ResProject{}
+		err = json.Unmarshal(resBody, &deserializeResBody)
+		if err != nil {
+			return diag.FromErr(err)
+		}
 
 		_, err = deserializeResBody.StateChangeNetwork(res, v["network_name"].(string)).WaitForStateContext(ctx)
 	}
+
 	return diag.Diagnostics{}
 }
 
-func (o *SIProject) GetType() string {
+func (o *Project) GetType() string {
 	return "di_project"
 }
 
-//func (o *SIProject) NewObj() DIDataResource {
-//	return &SIProject{}
+//func (o *Project) NewObj() DIDataResource {
+//	return &Project{}
 //}
 
-func (o *SIProject) GetId() string {
+func (o *Project) GetId() string {
 	return o.Project.ID.String()
 }
 
-func (o *SIProject) GetDomainId() uuid.UUID {
+func (o *Project) GetDomainId() uuid.UUID {
 	return o.Project.DomainID
 }
 
-func (o *SIProject) GetResType() string {
+func (o *Project) GetResType() string {
 	return "di_group"
 }
 
-func (o *SIProject) GetResName() string {
+func (o *Project) GetResName() string {
 	return o.Project.Name
 }
 
-func (o *SIProject) GetOutput() (string, string) {
+func (o *Project) GetOutput() (string, string) {
 	//return o.ResOutputName, o.ResOutputValue
 	return "", ""
 }
 
-func (o *SIProject) SetResFields() {
+func (o *Project) SetResFields() {
 	/*
 		o.ResId = o.GetId()
 		o.ResType = o.GetResType()
@@ -233,8 +240,8 @@ func (o *SIProject) SetResFields() {
 	*/
 }
 
-//func (o *SIProject) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
-//	m := make(map[string][]*SIProject)
+//func (o *Project) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
+//	m := make(map[string][]*Project)
 //	err := json.Unmarshal(responseBytes, &m)
 //	if err != nil {
 //		return nil, err
@@ -247,11 +254,11 @@ func (o *SIProject) SetResFields() {
 //	return m2, nil
 //}
 
-//func (o *SIProject) NewObj() DIResource {
-//	return &SIProject{}
+//func (o *Project) NewObj() DIResource {
+//	return &Project{}
 //}
 
-func (o *SIProject) ReadTF(res *schema.ResourceData) diag.Diagnostics {
+func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
 	if res.Id() != "" {
 		o.Project.ID = uuid.MustParse(res.Id())
@@ -274,24 +281,7 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 		o.Project.JumpHost = false
 	}
 
-	//net, ok := res.GetOk("network")
-	//log.Println("NETWORK", net)
-	//log.Println("NETWORK", net.(*schema.Set).List())
-	//log.Println("NETWORK", net.(*schema.Set).Len())
-
 	limits, ok := res.GetOk("limits")
-
-	//log.Println("LLOK", ok)
-	//log.Println("LL", limits)
-	//log.Println("LL", len(limits.(*schema.Set).List()))
-	//log.Println("LL", limits.(*schema.Set).Len())
-
-	//if ok {
-	//	if limits.(*schema.Set).Len() > 1 {
-	//		res.Get("limits").(*schema.Set).Len()
-	//		return diag.Errorf("Limits set should not be more than one")
-	//	}
-	//}
 
 	if ok {
 		limitsSet := limits.(*schema.Set)
@@ -318,32 +308,19 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 		}
 	}
 
-	//networks := make([]map[string]interface{}, 0)
-	//for _, v := range o.Project.Networks {
-	//	volume := map[string]interface{}{
-	//		"size":         v.Size,
-	//		"path":         v.Path,
-	//		"storage_type": v.StorageType,
-	//	}
-	//	networks = append(networks, volume)
-	//}
-	//err := res.Set("network", networks)
-	//if err != nil {
-	//	log.Println(err)
-	//}
-
 	network, ok := res.GetOk("network")
 
 	if ok {
 		networkSet := network.(*schema.Set).List()
 		for _, v := range networkSet {
-			if v.(map[string]interface{})["is_default"].(bool) {
-				o.Project.Networks.NetworkName = v.(map[string]interface{})["network_name"].(string)
-				o.Project.Networks.Cidr = v.(map[string]interface{})["cidr"].(string)
-				o.Project.Networks.EnableDhcp = v.(map[string]interface{})["enable_dhcp"].(bool)
+			v := v.(map[string]interface{})
+			if v["is_default"].(bool) {
+				o.Project.Networks.NetworkName = v["network_name"].(string)
+				o.Project.Networks.Cidr = v["cidr"].(string)
+				o.Project.Networks.EnableDhcp = v["enable_dhcp"].(bool)
 				o.Project.Networks.IsDefault = true
 				var dnsNameServers = []string{}
-				for _, dnsIp := range v.(map[string]interface{})["dns_nameservers"].(*schema.Set).List() {
+				for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
 					dnsNameServers = append(dnsNameServers, dnsIp.(string))
 				}
 				o.Project.Networks.DNSNameservers = dnsNameServers
@@ -354,7 +331,7 @@ func (o *SIProject) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	return diag.Diagnostics{}
 }
 
-func (o *ResSIProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
+func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 
 	if res.Id() != "" {
 		o.Project.ID = uuid.MustParse(res.Id())
@@ -378,14 +355,6 @@ func (o *ResSIProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	}
 
 	//net, ok := res.GetOk("network")
-	//log.Println("NETWORK", net)
-	//log.Println("NETWORK", net.(*schema.Set).List())
-	//log.Println("NETWORK", net.(*schema.Set).Len())
-
-	//log.Println("LLOK", ok)
-	//log.Println("LL", limits)
-	//log.Println("LL", len(limits.(*schema.Set).List()))
-	//log.Println("LL", limits.(*schema.Set).Len())
 
 	//if ok {
 	//	if limits.(*schema.Set).Len() > 1 {
@@ -456,7 +425,7 @@ func (o *ResSIProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	return diag.Diagnostics{}
 }
 
-func (o *SIProject) WriteTF(res *schema.ResourceData) {
+func (o *Project) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
@@ -486,13 +455,10 @@ func (o *SIProject) WriteTF(res *schema.ResourceData) {
 
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
-	//res.
-	//log.Println("##NS", res.Get("network"))
-
 	//res.Set("network_uuid")
 }
 
-func (o *ResSIProject) WriteTFRes(res *schema.ResourceData) {
+func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
@@ -535,31 +501,7 @@ func (o *ResSIProject) WriteTFRes(res *schema.ResourceData) {
 	}
 }
 
-//{
-//    "project": {
-//        "ir_group":"vdc",
-//        "type":"vdc",
-//        "ir_type":"vdc_openstack",
-//        "virtualization":"openstack",
-//        "name":"test-di-project1", // requared false
-//        "group_id":"52ffd9f6-fbc0-4ddc-bf99-b092c6d0351a",
-//        "datacenter":"PD23R3PROM",
-//        "jump_host":false,
-//        "limits": { // requared false
-//            "cores_vcpu_count":100,
-//            "ram_gb_amount":10000,
-//            "storage_gb_amount":1000
-//        },
-//        "network": {
-//            "network_name":"internal-network",
-//            "cidr":"172.31.0.0/20",
-//            "dns_nameservers":["8.8.8.8","8.8.4.4"],
-//            "enable_dhcp":true
-//        }
-//    }
-//}
-
-func (o *SIProject) Serialize() ([]byte, error) {
+func (o *Project) Serialize() ([]byte, error) {
 	//requestMap := map[string]map[string]interface{}{
 	//	"project": {
 	//		"ir_group":       o.IrGroup,
@@ -576,10 +518,10 @@ func (o *SIProject) Serialize() ([]byte, error) {
 	//}
 
 	//type FullSiProject struct {
-	//	Project SIProject `json:"project"`
+	//	Project Project `json:"project"`
 	//}
 
-	//requestMap := SIProject{}
+	//requestMap := Project{}
 	//
 	//	IrGroup:        o.Project.IrGroup,
 	//	Type:           o.Project.Type,
@@ -603,8 +545,7 @@ func (o *SIProject) Serialize() ([]byte, error) {
 	return requestBytes, nil
 }
 
-func (o *SIProject) DeserializeOld(responseBytes []byte) error {
-	//log.Println("!!!bytes", responseBytes)
+func (o *Project) DeserializeOld(responseBytes []byte) error {
 	//response := make(map[string]map[string]interface{})
 	response := make(map[string]interface{})
 	err := json.Unmarshal(responseBytes, &response)
@@ -651,21 +592,14 @@ func (o *SIProject) DeserializeOld(responseBytes []byte) error {
 	return nil
 }
 
-func (o *SIProject) Deserialize(responseBytes []byte) error {
-
-	//log.Println("RBB", responseBytes)
-	//log.Println("RBB", string(responseBytes))
-
+func (o *Project) Deserialize(responseBytes []byte) error {
 	//response := make(map[string]map[string]interface{})
 	//response := make(map[string]interface{})
-	response := SIProject{}
+	response := Project{}
 	err := json.Unmarshal(responseBytes, &response)
 	if err != nil {
 		return err
 	}
-
-	//log.Println("!!!!!!!DES", response)
-	//log.Println("!!!!!!!IDDD", response.Project.ID)
 
 	o.Project.ID = response.Project.ID
 	o.Project.DomainID = response.Project.DomainID
@@ -720,7 +654,7 @@ func (o *SIProject) Deserialize(responseBytes []byte) error {
 	return nil
 }
 
-func (o *ResSIProject) DeserializeRead(responseBytes []byte) error {
+func (o *ResProject) DeserializeRead(responseBytes []byte) error {
 
 	err := json.Unmarshal(responseBytes, &o)
 	if err != nil {
@@ -730,7 +664,7 @@ func (o *ResSIProject) DeserializeRead(responseBytes []byte) error {
 	return nil
 }
 
-func (o *SIProject) ParseIdFromCreateResponse(data []byte) error {
+func (o *Project) ParseIdFromCreateResponse(data []byte) error {
 	response := make(map[string]map[string]interface{})
 	//log.Println("DATA", data)
 	err := json.Unmarshal(data, &response)
@@ -742,7 +676,7 @@ func (o *SIProject) ParseIdFromCreateResponse(data []byte) error {
 		return errors.New("no project in response")
 	}
 
-	//o2 := &SIProject{}
+	//o2 := &Project{}
 	o.Project.ID = uuid.MustParse(objMap["id"].(string))
 	o.Project.GroupID = uuid.MustParse(objMap["group_id"].(string))
 	//o.Project.Networks.NetworkUuid = uuid.MustParse(objMap["networks"].([]interface{})[0].(map[string]interface{})["network_uuid"].(string))
@@ -751,55 +685,49 @@ func (o *SIProject) ParseIdFromCreateResponse(data []byte) error {
 	return nil
 }
 
-func (o *SIProject) CreateDI(data []byte) ([]byte, error) {
+func (o *Project) CreateDI(data []byte) ([]byte, error) {
 	return Api.NewRequestCreate("/v2/projects", data)
 }
 
-func (o *SIProject) ReadDI() ([]byte, error) {
-	//return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Id))
-	//log.Println("###ID", o.Project.ID)
-	//log.Println("###GROUPID", o.Project.GroupID)
-
-	//log.Println("###ProjectID", o.Project.ID)
+func (o *Project) ReadDI() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Project.ID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
-func (o *ResSIProject) ReadDIRes() ([]byte, error) {
-	//return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Id))
-	//log.Println("###ID", o.Project.ID)
-	//log.Println("###GROUPID", o.Project.GroupID)
-
-	//log.Println("###ProjectID", o.Project.ID)
+func (o *ResProject) ReadDIRes() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Project.ID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
-func (o *SIProject) UpdateDI(data []byte) ([]byte, error) {
+func (o *Project) UpdateDI(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
 }
 
-func (o *SIProject) UpdateSIProjectName(data []byte) ([]byte, error) {
+func (o *Project) UpdateProjectName(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
 }
 
-func (o *SIProject) UpdateSIProjectDesc(data []byte) ([]byte, error) {
+func (o *Project) UpdateProjectDesc(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
 }
 
-func (o *SIProject) UpdateSIProjectLimits(data []byte) ([]byte, error) {
+func (o *Project) UpdateProjectLimits(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("/v2/projects/%s/quota", o.Project.ID), data)
 }
 
-func (o *SIProject) DeleteDI() error {
+func (o *Project) DeleteDI() error {
 	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.Project.ID), nil)
 }
 
-func (o *SIProject) ReadAll() ([]byte, error) {
+func (o *Project) DeleteNetwork(NetworkUuid string) error {
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.Project.ID, NetworkUuid), nil)
+}
+
+func (o *Project) ReadAll() ([]byte, error) {
 	return Api.NewRequestRead("projects/")
 }
 
-func (o *SIProject) StateChange(res *schema.ResourceData) *resource.StateChangeConf {
+func (o *Project) StateChange(res *schema.ResourceData) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
@@ -835,7 +763,7 @@ func (o *SIProject) StateChange(res *schema.ResourceData) *resource.StateChangeC
 	}
 }
 
-func (o *ResSIProject) StateChangeNetwork(res *schema.ResourceData, networkName string) *resource.StateChangeConf {
+func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName string) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
@@ -878,17 +806,17 @@ func (o *ResSIProject) StateChangeNetwork(res *schema.ResourceData, networkName 
 	}
 }
 
-func (o *SIProject) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
+func (o *Project) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
 	return nil
 }
-func (o *SIProject) OnDeserialize(map[string]interface{}, *Server) {}
-func (o *SIProject) Urls(string) string {
+func (o *Project) OnDeserialize(map[string]interface{}, *Server) {}
+func (o *Project) Urls(string) string {
 	return ""
 }
-func (o *SIProject) OnReadTF(*schema.ResourceData, *Server)  {}
-func (o *SIProject) OnWriteTF(*schema.ResourceData, *Server) {}
+func (o *Project) OnReadTF(*schema.ResourceData, *Server)  {}
+func (o *Project) OnWriteTF(*schema.ResourceData, *Server) {}
 
-func (o *SIProject) ToHCLOutput() []byte {
+func (o *Project) ToHCLOutput() []byte {
 	dataRoot := &HCLOutputRoot{
 		Resources: &HCLOutput{
 			ResName: fmt.Sprintf(
@@ -910,21 +838,21 @@ func (o *SIProject) ToHCLOutput() []byte {
 	return utils.Regexp(f.Bytes())
 }
 
-func (o *SIProject) HostVars(server *Server) map[string]interface{} {
+func (o *Project) HostVars(server *Server) map[string]interface{} {
 	return nil
 }
 
-func (o *SIProject) GetGroup() string {
+func (o *Project) GetGroup() string {
 	return ""
 }
 
-func (o *SIProject) ToHCL(server *Server) ([]byte, error) {
+func (o *Project) ToHCL(server *Server) ([]byte, error) {
 	//o.ResType = o.GetType()
 	o.Project.IrType = o.GetType()
 	//o.ResName = utils.Reformat(o.Name)
 	o.Project.IrType = utils.Reformat(o.Project.Name)
 	type HCLServerRoot struct {
-		Resources *SIProject `hcl:"resource,block"`
+		Resources *Project `hcl:"resource,block"`
 	}
 	root := &HCLServerRoot{Resources: o}
 	f := hclwrite.NewEmptyFile()
@@ -933,10 +861,10 @@ func (o *SIProject) ToHCL(server *Server) ([]byte, error) {
 	return f.Bytes(), nil
 }
 
-func (o *SIProject) HCLAppParams() *HCLAppParams {
+func (o *Project) HCLAppParams() *HCLAppParams {
 	return nil
 }
 
-func (o *SIProject) HCLVolumes() []*HCLVolume {
+func (o *Project) HCLVolumes() []*HCLVolume {
 	return nil
 }

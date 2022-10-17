@@ -6,9 +6,8 @@ import (
 
 var (
 	//// data
-	SchemaDomain    map[string]*schema.Schema
-	SchemaGroup     map[string]*schema.Schema
-	SchemaSiProject map[string]*schema.Schema
+	SchemaDomain map[string]*schema.Schema
+	SchemaGroup  map[string]*schema.Schema
 
 	//// resource
 	SchemaProject map[string]*schema.Schema
@@ -39,17 +38,6 @@ func init() {
 	}
 
 	SchemaProject = map[string]*schema.Schema{
-		"group_id":      {Type: schema.TypeString, Required: true},
-		"stand_type_id": {Type: schema.TypeString, Required: true},
-		//"domain_id":      {Type: schema.TypeString, Computed: true},
-		"app_systems_ci": {Type: schema.TypeString, Required: true},
-		"name":           {Type: schema.TypeString, Required: true},
-		"stand_type":     {Type: schema.TypeString, Computed: true},
-		"state":          {Type: schema.TypeString, Computed: true},
-		"type":           {Type: schema.TypeString, Computed: true},
-	}
-
-	SchemaSiProject = map[string]*schema.Schema{
 		"ir_group":       {Type: schema.TypeString, Required: true},
 		"type":           {Type: schema.TypeString, Required: true},
 		"ir_type":        {Type: schema.TypeString, Required: true},
