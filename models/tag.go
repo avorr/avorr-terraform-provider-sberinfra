@@ -91,7 +91,7 @@ func (o *Tag) ReadDI() ([]byte, error) {
 }
 
 func (o *Tag) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf("dict/tags?uuid=%s", o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf("dict/tags?uuid=%s", o.Id), nil, 204)
 }
 
 func (o *Tag) ReadAll() ([]byte, error) {

@@ -3,7 +3,7 @@ set -ex
 cd ..
 echo `date`
 name=terraform-provider-di
-version=0.3.13
+version=0.3.14
 platform=darwin_amd64; goos="darwin"
 #platform=linux_amd64; goos="linux"
 #platform=windows; goos="windows"
@@ -38,7 +38,7 @@ export DI_ANSIBLE_PASSWORD=False
 export INVENTORY_DISABLE=False
 
 terraform init
-ls -l ~/.terraform.d/plugins/sberbank/devops/di/0.3.13/${platform}/terraform-provider-di_v0.3.13_${platform}
+ls -l ~/.terraform.d/plugins/sberbank/devops/di/${version}/${platform}/terraform-provider-di_v${version}_${platform}
 #./imports.sh
 #terraform plan
 #terraform apply

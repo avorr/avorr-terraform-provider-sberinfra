@@ -423,7 +423,6 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		}
 		//server.Id = uuid.MustParse(res.Id())
 		err := server.DeleteVM()
-		//log.Println("#RES", server.Id)
 		//os.Exit(3)
 		//responseBytes, err := server.ReadDI()
 		//objRes := models.Server{Object: obj}
@@ -431,7 +430,6 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		//if err != nil {
 		//	return diag.FromErr(err)
 		//}
-		//log.Println("#RB-OB", objRes)
 		//objRes.Id = uuid.MustParse(res.Id())
 
 		//return diags

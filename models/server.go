@@ -85,7 +85,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	//	o.NetworkUuid = uuid.Nil
 	//}
 
-	log.Println("RNCHECK", res.Get("network_uuid"))
 	networkId, ok := res.GetOk("network_uuid")
 	if ok {
 		o.NetworkUuid = uuid.MustParse(networkId.(string))
@@ -215,22 +214,10 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
 
-	log.Println("WNCHECK1", res.Get("network_uuid"))
-
-	//if o.NetworkUuid != uuid.Nil {
-	//	log.Println("NNNN", o.NetworkUuid)
-	//	log.Println("NNNN", o.NetworkUuid.String())
-	//	log.Println("NNNN", o.NetworkUuid.ID())
-	//	res.Set("network_uuid", o.NetworkUuid.String())
-	//}
-	//if res.GetOk()
-
 	_, ok := res.GetOk("network_uuid")
 	if ok && o.NetworkUuid != uuid.Nil {
 		res.Set("network_uuid", o.NetworkUuid.String())
 	}
-
-	log.Println("WNCHECK2", res.Get("network_uuid"))
 
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
@@ -466,11 +453,11 @@ func (o *Server) UpdateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil, 204)
 }
 
 func (o *Server) DeleteVM() error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil, 204)
 }
 
 func (o *Server) ResizeDI(data []byte) ([]byte, error) {
@@ -482,7 +469,7 @@ func (o *Server) VolumeCreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) VolumeRemoveDI(data []byte) ([]byte, error) {
-	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data)
+	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data, 204)
 }
 
 func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
@@ -499,7 +486,7 @@ func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
 }
 
 func (o *Server) TagDetachDI(tagId string) error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("tag_detach"), o.Id, tagId), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("tag_detach"), o.Id, tagId), nil, 204)
 }
 
 func (o *Server) MoveDI(data []byte) ([]byte, error) {
@@ -530,7 +517,6 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 
 			//responseBytes, err := o.ReadDIStatusCode()
 			responseBytes, responseStatusCode, err := o.ReadDIStatusCode()
-			log.Println("##RSC", responseStatusCode, "ERR", err)
 
 			if responseStatusCode == 404 {
 				return o, "Removed", nil

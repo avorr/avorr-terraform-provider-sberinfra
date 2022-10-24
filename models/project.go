@@ -169,7 +169,6 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 		}
 		body.Network.DNSNameservers = dnsNameServers
 		result, err := json.Marshal(body)
-
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -186,10 +185,37 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 			return diag.FromErr(err)
 		}
 
-		_, err = deserializeResBody.StateChangeNetwork(res, v["network_name"].(string)).WaitForStateContext(ctx)
+		_, err = deserializeResBody.StateChangeNetwork(res, body.Network.NetworkName, body.Network.IsDefault).WaitForStateContext(ctx)
 	}
 
 	return diag.Diagnostics{}
+}
+
+func (o *Project) SetDefaultNetwork(networkUuid string) error {
+	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
+	if err != nil {
+		return err
+	}
+
+	_, err = Api.NewRequestUpdate(fmt.Sprintf("projects/%s/networks/set_default", o.Project.ID), body)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
+	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
+	if err != nil {
+		return err
+	}
+	_, err = Api.NewRequestUpdate(fmt.Sprintf("projects/%s/networks/set_default", o.Project.ID), body)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (o *Project) GetType() string {
@@ -308,26 +334,33 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 		}
 	}
 
-	network, ok := res.GetOk("network")
+	network := res.Get("network")
 
-	if ok {
-		networkSet := network.(*schema.Set).List()
-		for _, v := range networkSet {
-			v := v.(map[string]interface{})
-			if v["is_default"].(bool) {
-				o.Project.Networks.NetworkName = v["network_name"].(string)
-				o.Project.Networks.Cidr = v["cidr"].(string)
-				o.Project.Networks.EnableDhcp = v["enable_dhcp"].(bool)
-				o.Project.Networks.IsDefault = true
-				var dnsNameServers = []string{}
-				for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
-					dnsNameServers = append(dnsNameServers, dnsIp.(string))
-				}
-				o.Project.Networks.DNSNameservers = dnsNameServers
+	var existDefaultNetwork bool
+
+	networkSet := network.(*schema.Set)
+	for i, v := range networkSet.List() {
+		v := v.(map[string]interface{})
+
+		if v["is_default"].(bool) {
+			existDefaultNetwork = v["is_default"].(bool)
+		}
+		if existDefaultNetwork == false && networkSet.Len() == i+1 {
+			return diag.Errorf("There must be one default network. [is_default = true]")
+		}
+
+		if networkSet.Len() == 1 || v["is_default"].(bool) {
+			o.Project.Networks.NetworkName = v["network_name"].(string)
+			o.Project.Networks.Cidr = v["cidr"].(string)
+			o.Project.Networks.EnableDhcp = v["enable_dhcp"].(bool)
+			o.Project.Networks.IsDefault = true
+			var dnsNameServers []string
+			for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
+				dnsNameServers = append(dnsNameServers, dnsIp.(string))
 			}
+			o.Project.Networks.DNSNameservers = dnsNameServers
 		}
 	}
-
 	return diag.Diagnostics{}
 }
 
@@ -622,8 +655,6 @@ func (o *Project) Deserialize(responseBytes []byte) error {
 	//	value := v.(map[string]interface{})
 
 	//if value["name"].(string) == o.Project.Name {
-	//	log.Println("@@@", value["name"].(string))
-	//	log.Println("@@@", reflect.TypeOf(value["name"].(string)))
 	//	o.Project.GroupID = uuid.MustParse(value["group_id"].(string))
 	//o.ResId = value["id"].(string)
 	//o.DomainId = uuid.MustParse(value["domain_id"].(string))
@@ -666,7 +697,6 @@ func (o *ResProject) DeserializeRead(responseBytes []byte) error {
 
 func (o *Project) ParseIdFromCreateResponse(data []byte) error {
 	response := make(map[string]map[string]interface{})
-	//log.Println("DATA", data)
 	err := json.Unmarshal(data, &response)
 	if err != nil {
 		return err
@@ -679,8 +709,6 @@ func (o *Project) ParseIdFromCreateResponse(data []byte) error {
 	//o2 := &Project{}
 	o.Project.ID = uuid.MustParse(objMap["id"].(string))
 	o.Project.GroupID = uuid.MustParse(objMap["group_id"].(string))
-	//o.Project.Networks.NetworkUuid = uuid.MustParse(objMap["networks"].([]interface{})[0].(map[string]interface{})["network_uuid"].(string))
-	//log.Println("NUUID", o.Project.Networks.NetworkUuid)
 
 	return nil
 }
@@ -716,11 +744,11 @@ func (o *Project) UpdateProjectLimits(data []byte) ([]byte, error) {
 }
 
 func (o *Project) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.Project.ID), nil)
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.Project.ID), nil, 204)
 }
 
 func (o *Project) DeleteNetwork(NetworkUuid string) error {
-	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.Project.ID, NetworkUuid), nil)
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.Project.ID, NetworkUuid), nil, 200)
 }
 
 func (o *Project) ReadAll() ([]byte, error) {
@@ -763,7 +791,7 @@ func (o *Project) StateChange(res *schema.ResourceData) *resource.StateChangeCon
 	}
 }
 
-func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName string) *resource.StateChangeConf {
+func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName string, isDefault bool) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
@@ -788,19 +816,20 @@ func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName st
 			for _, net := range o.Project.Networks {
 				if net.NetworkName == networkName {
 					if net.Status == "ready" {
+						if isDefault {
+							err := o.SetDefaultNetwork(net.NetworkUUID.String())
+							if err != nil {
+								return o, "Running", err
+							}
+						}
 						return o, "Running", nil
+
 					} else if net.Status == "pending" {
 						return o, "Pending", nil
 					}
 				}
 			}
 
-			//if o.Project.State == "damaged" {
-			//	return o, "Damaged", nil
-			//}
-			//if o.Project.State == "pending" {
-			//	return o, "Pending", nil
-			//}
 			return o, "Creating", nil
 		},
 	}
@@ -838,9 +867,9 @@ func (o *Project) ToHCLOutput() []byte {
 	return utils.Regexp(f.Bytes())
 }
 
-func (o *Project) HostVars(server *Server) map[string]interface{} {
-	return nil
-}
+//func (o *Project) HostVars(server *Server) map[string]interface{} {
+//	return nil
+//}
 
 func (o *Project) GetGroup() string {
 	return ""

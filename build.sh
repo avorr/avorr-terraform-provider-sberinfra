@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 set -ex
-cd ..
 echo `date`
 name=terraform-provider-di
 version=0.3.13
