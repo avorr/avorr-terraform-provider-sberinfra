@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -91,7 +91,7 @@ func (o *Tag) ReadDI() ([]byte, error) {
 }
 
 func (o *Tag) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf("dict/tags?uuid=%s", o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf("dict/tags?uuid=%s", o.Id), nil, 204)
 }
 
 func (o *Tag) ReadAll() ([]byte, error) {

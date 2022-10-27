@@ -14,7 +14,7 @@ terraform {
   required_providers {
     di = {
       source  = "sberbank/devops/di"
-      version = "0.3.13"
+      version = "0.3.14"
     }
 #    vault = {
 #      version = "3.3.0"
@@ -30,6 +30,7 @@ terraform {
 #  }
 }
 provider "di" {}
+
 
 #provider "vault" {
 #  skip_child_token = true

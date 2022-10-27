@@ -19,7 +19,7 @@ resource "di_vm" "vmtest" {
 	}
 #	volume {
 #		size = 3
-#		path = "/test1"
+#		path = "/test-di"
 #	}
 #	volume {
 #		size = 5

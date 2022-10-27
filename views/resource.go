@@ -1,6 +1,8 @@
 package views
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -11,8 +13,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"io/ioutil"
 	"log"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/models"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
 )
 
 //var (
@@ -423,7 +423,6 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		}
 		//server.Id = uuid.MustParse(res.Id())
 		err := server.DeleteVM()
-		//log.Println("#RES", server.Id)
 		//os.Exit(3)
 		//responseBytes, err := server.ReadDI()
 		//objRes := models.Server{Object: obj}
@@ -431,7 +430,6 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		//if err != nil {
 		//	return diag.FromErr(err)
 		//}
-		//log.Println("#RB-OB", objRes)
 		//objRes.Id = uuid.MustParse(res.Id())
 
 		//return diags

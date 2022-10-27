@@ -17,7 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	vault "github.com/sosedoff/ansible-vault-go"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 )
 
 type Server struct {
@@ -38,6 +38,7 @@ type Server struct {
 	Virtualization   string        `json:"virtualization" hcl:"virtualization"`
 	FaultTolerance   string        `json:"fault_tolerance" hcl:"fault_tolerance"`
 	Region           string        `json:"region" hcl:"region"`
+	NetworkUuid      uuid.UUID     `json:"network_uuid,omitempty" hcl:"network_uuid"`
 	User             string        `json:"user"`
 	Password         string        `json:"password,omitempty"`
 	Cpu              int           `json:"cpu" hcl:"cpu"`
@@ -76,6 +77,19 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
+
+	//networkId := res.Get("network_uuid")
+	//if networkId != "" {
+	//	o.NetworkUuid = uuid.MustParse(networkId.(string))
+	//} else {
+	//	o.NetworkUuid = uuid.Nil
+	//}
+
+	networkId, ok := res.GetOk("network_uuid")
+	if ok {
+		o.NetworkUuid = uuid.MustParse(networkId.(string))
+	}
+
 	o.ServiceName = res.Get("service_name").(string)
 	o.IrGroup = res.Get("ir_group").(string)
 	o.OsName = res.Get("os_name").(string)
@@ -199,10 +213,15 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
+
+	_, ok := res.GetOk("network_uuid")
+	if ok && o.NetworkUuid != uuid.Nil {
+		res.Set("network_uuid", o.NetworkUuid.String())
+	}
+
 	res.Set("project_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
-	//res.Set("password", o.Password)
 
 	isDisabled, ok := os.LookupEnv("VM_PASSWORD_OUTPUT")
 	if ok {
@@ -234,6 +253,7 @@ func (o *Server) ToMap() map[string]interface{} {
 		"service_name": o.ServiceName,
 		"ir_group":     o.IrGroup,
 		//"region":          o.Region,
+		"network_uuid":    o.NetworkUuid.String(),
 		"zone":            o.Zone,
 		"cpu":             o.Cpu,
 		"ram":             o.Ram,
@@ -321,6 +341,8 @@ func (o *Server) Deserialize(data []byte) error {
 	o.IrGroup = serverMap["ir_group"].(string)
 	o.FaultTolerance = serverMap["fault_tolerance"].(string)
 	//o.Region = serverMap["region"].(string)
+	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
 	irType, ok := serverMap["ir_type"]
@@ -377,6 +399,13 @@ func (o *Server) Deserialize(data []byte) error {
 	if ok && projectId != nil {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
+
+	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+	networkUuid, ok := serverMap["network_uuid"]
+	if ok && networkUuid != "" {
+		o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
+	}
+
 	publicSshName, ok := serverMap["public_ssh_name"]
 	if ok && publicSshName != "" {
 		o.PublicSshName = publicSshName.(string)
@@ -424,11 +453,11 @@ func (o *Server) UpdateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil, 204)
 }
 
 func (o *Server) DeleteVM() error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("delete"), o.Id), nil, 204)
 }
 
 func (o *Server) ResizeDI(data []byte) ([]byte, error) {
@@ -440,7 +469,7 @@ func (o *Server) VolumeCreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) VolumeRemoveDI(data []byte) ([]byte, error) {
-	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data)
+	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data, 204)
 }
 
 func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
@@ -457,7 +486,7 @@ func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
 }
 
 func (o *Server) TagDetachDI(tagId string) error {
-	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("tag_detach"), o.Id, tagId), nil)
+	return Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("tag_detach"), o.Id, tagId), nil, 204)
 }
 
 func (o *Server) MoveDI(data []byte) ([]byte, error) {
@@ -483,14 +512,11 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
 		Pending:      []string{"Creating", "Removing"},
-		//Target:       []string{"Running", "Damaged"},
-		Target: []string{"Running", "Damaged", "Removed"},
-		//Target: []string{"Running", "Damaged"},
+		Target:       []string{"Running", "Damaged", "Removed"},
 		Refresh: func() (interface{}, string, error) {
 
 			//responseBytes, err := o.ReadDIStatusCode()
 			responseBytes, responseStatusCode, err := o.ReadDIStatusCode()
-			log.Println("##RSC", responseStatusCode, "ERR", err)
 
 			if responseStatusCode == 404 {
 				return o, "Removed", nil

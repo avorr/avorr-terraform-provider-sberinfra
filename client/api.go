@@ -2,7 +2,6 @@ package client
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 )
@@ -32,8 +31,6 @@ func NewApi() *Api {
 }
 
 func (o *Api) request(method, resource string) *Request {
-	log.Println("MM", method)
-	log.Println("RR", resource)
 	return &Request{
 		Debug:         o.Debug,
 		Url:           fmt.Sprintf("%s/%s", o.Host, resource),
@@ -119,8 +116,6 @@ func (o *Api) NewRequestReadStatusCode(url string) ([]byte, int, error) {
 	if err != nil {
 		return nil, statusCode, err
 	}
-	//log.Println("DD", request)
-	//log.Println("DD", statusCode)
 	return request.ResponseBody, request.Response.StatusCode, nil
 }
 
@@ -132,8 +127,8 @@ func (o *Api) NewRequestUpdate(url string, data []byte) ([]byte, error) {
 	return request.ResponseBody, nil
 }
 
-func (o *Api) NewRequestDelete(url string, data []byte) error {
-	_, err := o.NewRequest("DELETE", url, data, 204)
+func (o *Api) NewRequestDelete(url string, data []byte, expectCode int) error {
+	_, err := o.NewRequest("DELETE", url, data, expectCode)
 	if err != nil {
 		return err
 	}

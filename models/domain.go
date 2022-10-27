@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -92,12 +92,8 @@ func (o *Domain) Deserialize(responseBytes []byte) error {
 }
 
 func (o *Domain) ReadDI() ([]byte, error) {
-	return Api.NewRequestRead(
-		fmt.Sprintf(
-			"domains?searchstring=%s",
-			url.QueryEscape(o.Name),
-		),
-	)
+	//return Api.NewRequestRead(fmt.Sprintf("domains?searchstring=%s", url.QueryEscape(o.Name)))
+	return Api.NewRequestRead(fmt.Sprintf("domains?filter[name]=%s", url.QueryEscape(o.Name)))
 }
 
 func (o *Domain) GetId() string {

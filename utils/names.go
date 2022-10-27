@@ -9,7 +9,7 @@ import (
 	"strings"
 	"unicode"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/translit"
+	"base.sw.sbc.space/pid/terraform-provider-si/translit"
 )
 
 func Reformat(name string) string {
@@ -80,5 +80,5 @@ func JsonRead(responseBytes []uint8) {
 	}
 	log.Printf("#####\n\n\n")
 	log.Println(out.String())
-	log.Println("#####\n\n\n")
+	log.Printf("#####\n\n\n")
 }

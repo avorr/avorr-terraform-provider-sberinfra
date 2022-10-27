@@ -53,8 +53,8 @@ data "di_as" "ec" {
 }
 
 #data "vault_generic_secret" "test_vault_secrets" {
-##  path = "di-terraform/t-sberdevices/devops/dev/terraformtest/di_ignite/test-ignite-cluster"
-##  path = "kv/team/test"
+##  path = "di-terraform/t-sberdevices/devops/dev/terraformtest/di_ignite/test-di-ignite-cluster"
+##  path = "kv/team/test-di"
 ##  path = "kv/team/test_sm_admin_tools"
 ##  path = "CI01808661_CI01875672/A/MAIN/OSH/MAIN/KV/approle"
 ##  path = "CI01808661_CI02063031_DEV/A/MAIN/JEN/MAIN/KV/ALL_0.1"

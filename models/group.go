@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/utils"
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 )
 
 type Group struct {

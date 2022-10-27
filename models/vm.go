@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"log"
 	"sort"
 
@@ -62,6 +63,9 @@ func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[
 	}
 	if server.Region == "" {
 		delete(serverData, "region")
+	}
+	if server.NetworkUuid == uuid.Nil {
+		delete(serverData, "network_uuid")
 	}
 	if o.Volumes != nil && len(o.Volumes) > 0 {
 		volumes := make([]map[string]interface{}, 0)

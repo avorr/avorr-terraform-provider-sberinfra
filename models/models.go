@@ -1,9 +1,9 @@
 package models
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/client"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"stash.sigma.sbrf.ru/sddevops/terraform-provider-di/client"
 )
 
 var (
@@ -41,16 +41,4 @@ type DIResource interface {
 	// ToHCL(*Server) ([]byte, error)
 	HCLAppParams() *HCLAppParams
 	HCLVolumes() []*HCLVolume
-}
-
-type DIClusterResource interface {
-	NewObj() DIClusterResource
-	OnSerialize(map[string]interface{}, *Cluster) map[string]interface{}
-	OnDeserialize(map[string]interface{}, *Cluster)
-	Urls(string) string
-	OnReadTF(*schema.ResourceData, *Cluster)
-	OnWriteTF(*schema.ResourceData, *Cluster)
-	GetType() string
-	HostVars(*Server) map[string]interface{}
-	GroupVars(*Cluster) map[string]interface{}
 }

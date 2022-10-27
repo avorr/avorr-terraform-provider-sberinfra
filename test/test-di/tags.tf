@@ -1,12 +1,11 @@
-#resource "di_tag" "jenkins" {
-#	name = "jenkins"
+#resource "di_tag" "mytag0" {
+#	name = "тег 0"
 #}
-
-#resource "di_tag" "wildfly" {
-#	name = "wildfly"
+#
+#resource "di_tag" "mytag1" {
+#	name = "тег 1"
 #}
-
-
+#
 #resource "di_tag" "mytag2" {
 #	name = "тег 2"
 #}

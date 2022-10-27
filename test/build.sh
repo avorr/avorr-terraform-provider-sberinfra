@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-#source ~/.bash_profile
 set -ex
 cd ..
 echo `date`
 name=terraform-provider-di
-version=0.3.13
-platform=darwin_amd64
-#platform=linux_amd64
+version=0.3.14
+platform=darwin_amd64; goos="darwin"
+#platform=linux_amd64; goos="linux"
+#platform=windows; goos="windows"
 
 provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/di
 binary_dir=${provider_dir}/${version}/${platform}
@@ -17,22 +17,20 @@ go version
 go mod tidy -v
 #go mod vendor -v
 #go build -mod=vendor -v -o ${binary}
-go build -v -o ${binary}
+GOOS=${goos} go build -v -o ${binary}
 #./${binary} import
-#rm test/.terraform.lock.hcl || true
+#rm test-di/.terraform.lock.hcl || true
 cp ${binary} ${binary_dir}/${binary}
-#mkdir -p test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-#cp ${binary} test/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 
-#cd test/
-cd tf-files-example/
 rm -rf .terraform/ || true
 #rm terraform.tfstate* || true
 rm ./.terraform.lock.hcl || true
 #rm ./inventory.bin || true
 
-export TF_LOG=DEBUG
+#export TF_LOG=DEBUG
 export DI_TIMEOUT=7000
 #export TF_LOG=INFO
 #export TF_LOG=ERROR
@@ -40,10 +38,10 @@ export DI_ANSIBLE_PASSWORD=False
 export INVENTORY_DISABLE=False
 
 terraform init
+ls -l ~/.terraform.d/plugins/sberbank/devops/di/${version}/${platform}/terraform-provider-di_v${version}_${platform}
 #./imports.sh
 #terraform plan
 #terraform apply
-ls -l ~/.terraform.d/plugins/sberbank/devops/di/0.3.13/darwin_amd64/terraform-provider-di_v0.3.13_darwin_amd64
 #terraform apply -auto-approve
 #terraform destroy -auto-approve
 

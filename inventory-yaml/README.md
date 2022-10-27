@@ -49,7 +49,7 @@ func main() {
 	group2.AddGroup(group3)
 
 	host1 := &inventory_yaml.Host{
-		Name: "test1",
+		Name: "test-di",
 	}
 	host2 := &inventory_yaml.Host{Name: "testhost2", Vars: map[string]interface{}{"host_var2": "value2"}}
 	host3 := &inventory_yaml.Host{
@@ -81,7 +81,7 @@ $ cat inventory.yml
 ---
 all:
   hosts:
-    test1:
+    test-di:
   vars:
     group_all_var: value
   children:
