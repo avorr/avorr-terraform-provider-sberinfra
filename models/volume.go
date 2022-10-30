@@ -3,7 +3,8 @@ package models
 type Volume struct {
 	// Id             string `json:"volume_id"`
 	// ToscaRequestId string `json:"tosca_request_id"`
-	VolumeId string `json:"volume_id,omitempty" hcl:"-"`
+	//VolumeId string `json:"volume_id,omitempty" hcl:"-"`
+	VolumeId string `json:"volume_id"`
 	Size     int    `json:"size" hcl:"size"`
 	Path     string `json:"path,omitempty" hcl:"path,optional"`
 	Status   string `json:"status,omitempty"`

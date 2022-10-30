@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -314,23 +313,9 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
 		for _, v := range limitsSet.List() {
 			values := v.(map[string]interface{})
-
-			CoresVcpuCount, err := strconv.Atoi(values["cores_vcpu_count"].(string))
-			if err != nil {
-				panic(err)
-			}
-			RamGbAmount, err := strconv.Atoi(values["ram_gb_amount"].(string))
-			if err != nil {
-				panic(err)
-			}
-			StorageGbAmount, err := strconv.Atoi(values["storage_gb_amount"].(string))
-			if err != nil {
-				panic(err)
-			}
-
-			o.Project.Limits.CoresVcpuCount = CoresVcpuCount
-			o.Project.Limits.RAMGbAmount = RamGbAmount
-			o.Project.Limits.StorageGbAmount = StorageGbAmount
+			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
+			o.Project.Limits.RAMGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
 		}
 	}
 
@@ -403,22 +388,9 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 		for _, v := range limitsSet.List() {
 			values := v.(map[string]interface{})
 
-			CoresVcpuCount, err := strconv.Atoi(values["cores_vcpu_count"].(string))
-			if err != nil {
-				panic(err)
-			}
-			RamGbAmount, err := strconv.Atoi(values["ram_gb_amount"].(string))
-			if err != nil {
-				panic(err)
-			}
-			StorageGbAmount, err := strconv.Atoi(values["storage_gb_amount"].(string))
-			if err != nil {
-				panic(err)
-			}
-
-			o.Project.Limits.CoresVcpuCount = CoresVcpuCount
-			o.Project.Limits.RAMGbAmount = RamGbAmount
-			o.Project.Limits.StorageGbAmount = StorageGbAmount
+			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
+			o.Project.Limits.RAMGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
 		}
 	}
 

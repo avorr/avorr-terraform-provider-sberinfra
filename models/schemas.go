@@ -2,6 +2,7 @@ package models
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var (
@@ -49,26 +50,24 @@ func init() {
 		"datacenter":      {Type: schema.TypeString, Required: true},
 		"jump_host":       {Type: schema.TypeString, Required: true},
 		"desc":            {Type: schema.TypeString, Optional: true},
-		//"limits": {
-		//	Type:     schema.TypeMap,
-		//	Optional: true,
-		//	Elem:     &schema.Schema{Type: schema.TypeString, Optional: true},
-		//},
 		"limits": {
 			Type:     schema.TypeSet,
 			Optional: true,
+			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"cores_vcpu_count":  {Type: schema.TypeString, Required: true},
-					"ram_gb_amount":     {Type: schema.TypeString, Required: true},
-					"storage_gb_amount": {Type: schema.TypeString, Required: true},
+					"cores_vcpu_count":  {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(1, 1000)},
+					"ram_gb_amount":     {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(500, 1000000)},
+					"storage_gb_amount": {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(50, 1000000000)},
 				},
 			},
 		},
 		"network": {
 			Type:     schema.TypeSet,
 			Required: true,
+			MinItems: 1,
 			Elem: &schema.Resource{
+
 				Schema: map[string]*schema.Schema{
 					"network_name": {Type: schema.TypeString, Required: true},
 					"network_uuid": {Type: schema.TypeString, Computed: true},
@@ -79,8 +78,7 @@ func init() {
 						Elem:     &schema.Schema{Type: schema.TypeString},
 					},
 					"enable_dhcp": {Type: schema.TypeBool, Required: true},
-					//"is_default":  {Type: schema.TypeBool, Optional: true},
-					"is_default": {Type: schema.TypeBool, Optional: true, Default: false},
+					"is_default":  {Type: schema.TypeBool, Optional: true, Default: false},
 				},
 			},
 		},
@@ -115,19 +113,16 @@ func init() {
 		"group":           {Type: schema.TypeString, Optional: true},
 		"user":            {Type: schema.TypeString, Computed: true},
 		"password":        {Type: schema.TypeString, Computed: true},
-		"app_params": {
-			Type:     schema.TypeMap,
-			Optional: true,
-			Elem:     &schema.Schema{Type: schema.TypeString, Required: true},
-		},
 		"volume": {
 			Type:     schema.TypeSet,
 			Optional: true,
 			// Computed: true,
+			ForceNew: false,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"path":         {Type: schema.TypeString, Optional: true},
-					"size":         {Type: schema.TypeInt, Required: true},
+					"volume_id": {Type: schema.TypeString, Computed: true},
+					//"path":         {Type: schema.TypeString, Optional: true},
+					"size":         {Type: schema.TypeInt, Required: true, ForceNew: false},
 					"storage_type": {Type: schema.TypeString, Optional: true},
 				},
 			},

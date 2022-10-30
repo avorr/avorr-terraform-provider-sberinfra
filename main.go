@@ -1,6 +1,7 @@
 package main
 
 import (
+	"base.sw.sbc.space/pid/terraform-provider-si/imports"
 	"context"
 	"log"
 	"os"
@@ -18,12 +19,12 @@ import (
 
 func main() {
 	if len(os.Args) == 3 && os.Args[1] == "import" {
-		log.Println("Imports doesnt support")
-		//importer := imports.Importer{}
-		//err := importer.Import(os.Args[2])
-		//if err != nil {
-		//	panic(err)
-		//}
+		//log.Println("Imports doesnt support")
+		importer := imports.Importer{}
+		err := importer.Import(os.Args[2])
+		if err != nil {
+			panic(err)
+		}
 	} else {
 		runPlugin()
 	}
@@ -102,7 +103,7 @@ func ProviderFunc() *schema.Provider {
 
 			"di_vm": {
 				Importer: &schema.ResourceImporter{
-					// State: schema.ImportStatePassthrough,
+					//State:        schema.ImportStatePassthrough,
 					StateContext: views.ImportResource(&models.VM{}),
 				},
 				CreateContext: views.CreateResource(&models.VM{}),
