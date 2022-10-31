@@ -2,7 +2,6 @@ package models
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
 	"log"
 	"sort"
@@ -15,8 +14,15 @@ type VM struct {
 	Volumes   []*Volume              `json:"volumes"`
 }
 
+//	pc, _, _, _ := runtime.Caller(0)
+//	log.Println(pp.Sprintf("RUN FUNC %s", runtime.FuncForPC(pc).Name()))
+
 func (o *VM) GetType() string {
 	return "di_vm"
+}
+
+func (o *VM) GetFile() string {
+	return "vm.tf"
 }
 
 func (o *VM) Urls(action string) string {
@@ -28,6 +34,7 @@ func (o *VM) Urls(action string) string {
 		"resize":        "servers/%s/resize",
 		"move":          "servers/moving_vms",
 		"volume_create": "servers/%s/volume_attachments",
+		"volume_remove": "servers/%s/volume_detachments",
 		"tag_attach":    "servers/%s/tags",
 		"tag_detach":    "servers/%s/tags/%s",
 	}
@@ -41,23 +48,6 @@ func (o *VM) NewObj() DIResource {
 func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[string]interface{} {
 	delete(serverData, "cpu")
 	delete(serverData, "ram")
-	// if o.AppParams == nil || len(o.AppParams) == 0 {
-	// 	return serverData
-	// }
-	serialized := make(map[string]map[string]interface{})
-	joindomain, ok := o.AppParams["joindomain"]
-	if ok {
-		serialized["joindomain"] = map[string]interface{}{
-			"value": joindomain.(string),
-		}
-	}
-	versionJDK, ok := o.AppParams["version_jdk"]
-	if ok {
-		serialized["version_jdk"] = map[string]interface{}{
-			"value": versionJDK.(string),
-		}
-	}
-	serverData["app_params"] = serialized
 	serverData["hdd"] = map[string]int{
 		"size": server.Disk,
 	}
@@ -81,37 +71,10 @@ func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[
 		}
 		serverData["volumes"] = volumes
 	}
-
 	return serverData
 }
 
 func (o *VM) OnDeserialize(serverData map[string]interface{}, server *Server) {
-	params, ok := serverData["app_params"].(map[string]interface{})
-	if !ok {
-		return
-	}
-	joindomain, ok := params["joindomain"]
-	if ok {
-		if o.AppParams == nil {
-			o.AppParams = make(map[string]interface{})
-		}
-		o.AppParams["joindomain"] = joindomain.(map[string]interface{})["value"]
-	}
-	versionJDK, ok := params["version_jdk"]
-	if ok {
-		versionJDKmap := versionJDK.(map[string]interface{})
-		if versionJDKmap["value"] != "Не устанавливать" {
-			if o.AppParams == nil {
-				o.AppParams = make(map[string]interface{})
-			}
-			switch versionJDKmap["value"].(type) {
-			case string:
-				o.AppParams["version_jdk"] = versionJDKmap["value"].(string)
-			case float64:
-				o.AppParams["version_jdk"] = fmt.Sprintf("%.0f", versionJDKmap["value"].(float64))
-			}
-		}
-	}
 	volumes, ok := serverData["volumes"].([]interface{})
 	if ok {
 		if len(volumes) > 0 {
@@ -130,6 +93,9 @@ func (o *VM) OnDeserialize(serverData map[string]interface{}, server *Server) {
 				if v.Status == "creating" {
 					server.StateResize = "resizing"
 				}
+				if v.Status == "removing" {
+					server.StateResize = "resizing"
+				}
 			}
 		}
 		sort.Sort(ByPath(o.Volumes))
@@ -137,45 +103,50 @@ func (o *VM) OnDeserialize(serverData map[string]interface{}, server *Server) {
 }
 
 func (o *VM) OnReadTF(res *schema.ResourceData, server *Server) {
-	params, ok := res.GetOk("app_params")
-	if ok {
-		o.AppParams = params.(map[string]interface{})
-	}
 	volumes, ok := res.GetOk("volume")
 	if ok {
 		volumeSet := volumes.(*schema.Set)
 		for _, v := range volumeSet.List() {
 			values := v.(map[string]interface{})
-			volume := &Volume{
-				Size:        values["size"].(int),
-				Path:        values["path"].(string),
-				StorageType: values["storage_type"].(string),
+			if values["storage_type"].(string) != "__DEFAULT__" {
+				volume := &Volume{
+					Size: values["size"].(int),
+					//Path:        values["path"].(string),
+					StorageType: values["storage_type"].(string),
+				}
+				o.Volumes = append(o.Volumes, volume)
+
+			} else {
+				volume := &Volume{Size: values["size"].(int)}
+				o.Volumes = append(o.Volumes, volume)
 			}
-			o.Volumes = append(o.Volumes, volume)
 		}
 		sort.Sort(ByPath(o.Volumes))
 	}
 }
 
 func (o *VM) OnWriteTF(res *schema.ResourceData, server *Server) {
-	if o.AppParams != nil && len(o.AppParams) > 0 {
-		// tmp := strconv.Itoa(o.AppParams["version_jdk"].(int))
-		// o.AppParams["version_jdk"] = tmp
-		err := res.Set("app_params", o.AppParams)
-		if err != nil {
-			log.Println(err)
-		}
-	}
 	if o.Volumes != nil && len(o.Volumes) > 0 {
 		volumes := make([]map[string]interface{}, 0)
 		sort.Sort(ByPath(o.Volumes))
 		for _, v := range o.Volumes {
-			volume := map[string]interface{}{
-				"size":         v.Size,
-				"path":         v.Path,
-				"storage_type": v.StorageType,
+			if v.StorageType != "__DEFAULT__" {
+				volume := map[string]interface{}{
+					"size": v.Size,
+					//"path":         v.Path,
+					"storage_type": v.StorageType,
+					"volume_id":    v.VolumeId,
+				}
+				volumes = append(volumes, volume)
+			} else {
+				volume := map[string]interface{}{
+					"size": v.Size,
+					//"path": v.Path,
+					//"storage_type": v.StorageType,
+					"volume_id": v.VolumeId,
+				}
+				volumes = append(volumes, volume)
 			}
-			volumes = append(volumes, volume)
 		}
 		err := res.Set("volume", volumes)
 		if err != nil {
@@ -191,12 +162,6 @@ func (o *VM) HostVars(server *Server) map[string]interface{} {
 		"dns_name":     server.DNSName,
 		"name":         server.Name,
 	}
-	passwordEncrypted, err := server.GetAnsibleVaultPassword()
-	if err != nil {
-		log.Println(err)
-	} else {
-		m["ansible_password"] = passwordEncrypted
-	}
 	return m
 }
 
@@ -206,7 +171,7 @@ func (o *VM) GetGroup() string {
 
 func (o *VM) HCLAppParams() *HCLAppParams {
 	return &HCLAppParams{
-		JoinDomain: o.AppParams["joindomain"].(string),
+		JoinDomain: "",
 	}
 }
 

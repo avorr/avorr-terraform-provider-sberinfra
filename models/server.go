@@ -4,20 +4,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strconv"
 	"time"
 
+	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	vault "github.com/sosedoff/ansible-vault-go"
-
-	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 )
 
 type Server struct {
@@ -77,13 +74,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
-
-	//networkId := res.Get("network_uuid")
-	//if networkId != "" {
-	//	o.NetworkUuid = uuid.MustParse(networkId.(string))
-	//} else {
-	//	o.NetworkUuid = uuid.Nil
-	//}
 
 	networkId, ok := res.GetOk("network_uuid")
 	if ok {
@@ -161,7 +151,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 			o.TagIds = append(o.TagIds, id)
 		}
 	}
-
 	o.Object.OnReadTF(res, o)
 }
 
@@ -233,7 +222,6 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 			res.Set("password", o.Password)
 		}
 	}
-
 	if o.ClusterUuid.ID() != uint32(0) {
 		res.Set("cluster_uuid", o.ClusterUuid.String())
 	}
@@ -400,7 +388,6 @@ func (o *Server) Deserialize(data []byte) error {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
 
-	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
 	networkUuid, ok := serverMap["network_uuid"]
 	if ok && networkUuid != "" {
 		o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
@@ -469,7 +456,7 @@ func (o *Server) VolumeCreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) VolumeRemoveDI(data []byte) ([]byte, error) {
-	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data, 204)
+	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data, 200)
 }
 
 func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
@@ -573,32 +560,33 @@ func (o *Server) StateResizeChange(res *schema.ResourceData) *resource.StateChan
 	}
 }
 
-func (o *Server) StateClusterChange(res *schema.ResourceData) *resource.StateChangeConf {
-	return &resource.StateChangeConf{
-		Timeout:      res.Timeout(schema.TimeoutCreate),
-		PollInterval: 15 * time.Second,
-		Pending:      []string{"WaitForCluster"},
-		Target:       []string{"InCluster"},
-		Refresh: func() (interface{}, string, error) {
-			responseBytes, err := o.ReadDI()
-			if err != nil {
-				return nil, "error", err
-			}
-			err = o.Deserialize(responseBytes)
-			if err != nil {
-				return nil, "error", err
-			}
-			log.Printf("[DEBUG] Refresh state for [%s]", o.Id.String())
-			if o.ClusterUuid.ID() != uint32(0) {
-				log.Printf("[DEBUG] Got cluster uuid: %s", o.ClusterUuid)
-				return o, "InCluster", nil
-			}
-			return o, "WaitForCluster", nil
-		},
-	}
-}
+//func (o *Server) StateClusterChange(res *schema.ResourceData) *resource.StateChangeConf {
+//	return &resource.StateChangeConf{
+//		Timeout:      res.Timeout(schema.TimeoutCreate),
+//		PollInterval: 15 * time.Second,
+//		Pending:      []string{"WaitForCluster"},
+//		Target:       []string{"InCluster"},
+//		Refresh: func() (interface{}, string, error) {
+//			responseBytes, err := o.ReadDI()
+//			if err != nil {
+//				return nil, "error", err
+//			}
+//			err = o.Deserialize(responseBytes)
+//			if err != nil {
+//				return nil, "error", err
+//			}
+//			log.Printf("[DEBUG] Refresh state for [%s]", o.Id.String())
+//			if o.ClusterUuid.ID() != uint32(0) {
+//				log.Printf("[DEBUG] Got cluster uuid: %s", o.ClusterUuid)
+//				return o, "InCluster", nil
+//			}
+//			return o, "WaitForCluster", nil
+//		},
+//	}
+//}
 
 func (o *Server) ToHCL() []byte {
+
 	type HCLServerRoot struct {
 		Resources *Server `hcl:"resource,block"`
 	}
@@ -609,6 +597,7 @@ func (o *Server) ToHCL() []byte {
 }
 
 func (o *Server) GetGroup() string {
+
 	group := o.Object.GetGroup()
 	if group == "" {
 		return utils.Reformat(o.ServiceName)
@@ -616,35 +605,36 @@ func (o *Server) GetGroup() string {
 	return group
 }
 
-func (o *Server) GetAnsibleVaultPassword() (string, error) {
-	if o.Password == "" {
-		return "", fmt.Errorf("no/blank password")
-	}
-	isEnabled, ok := os.LookupEnv("DI_ANSIBLE_PASSWORD")
-	if ok {
-		isEnabledBool, err := strconv.ParseBool(isEnabled)
-		if err != nil {
-			return "", err
-		}
-		if !isEnabledBool {
-			return "", fmt.Errorf("ansible_password disabled")
-		}
-	}
-	vaultPasswordFileLocation := os.Getenv("DI_VAULT_PASSWORD_FILE")
-	// TODO: check vaultPasswordFileLocation != ""
-	vaultPasswordFileBytes, err := ioutil.ReadFile(vaultPasswordFileLocation)
-	// if last byte is '\n'- remove it
-	if vaultPasswordFileBytes[len(vaultPasswordFileBytes)-1] == 0x0a {
-		vaultPasswordFileBytes = vaultPasswordFileBytes[:len(vaultPasswordFileBytes)-1]
-	}
-	passwordEncrypted, err := vault.Encrypt(o.Password, string(vaultPasswordFileBytes))
-	if err != nil {
-		return "", err
-	}
-	return passwordEncrypted, nil
-}
+//func (o *Server) GetAnsibleVaultPassword() (string, error) {
+//	if o.Password == "" {
+//		return "", fmt.Errorf("no/blank password")
+//	}
+//	isEnabled, ok := os.LookupEnv("DI_ANSIBLE_PASSWORD")
+//	if ok {
+//		isEnabledBool, err := strconv.ParseBool(isEnabled)
+//		if err != nil {
+//			return "", err
+//		}
+//		if !isEnabledBool {
+//			return "", fmt.Errorf("ansible_password disabled")
+//		}
+//	}
+//	vaultPasswordFileLocation := os.Getenv("DI_VAULT_PASSWORD_FILE")
+//	TODO: check vaultPasswordFileLocation != ""
+//	vaultPasswordFileBytes, err := ioutil.ReadFile(vaultPasswordFileLocation)
+// if last byte is '\n'- remove it
+//if vaultPasswordFileBytes[len(vaultPasswordFileBytes)-1] == 0x0a {
+//	vaultPasswordFileBytes = vaultPasswordFileBytes[:len(vaultPasswordFileBytes)-1]
+//}
+//passwordEncrypted, err := vault.Encrypt(o.Password, string(vaultPasswordFileBytes))
+//if err != nil {
+//	return "", err
+//}
+//return passwordEncrypted, nil
+//}
 
 func (o *Server) GetHCLRoot() *HCLRoot {
+
 	root := &HCLRoot{Resources: &HCL{
 		// Id:             o.Id.String(),
 		// Name:           o.Name,
@@ -678,6 +668,7 @@ func (o *Server) GetHCLRoot() *HCLRoot {
 }
 
 func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
+
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(root, f.Body())
 	// return utils.Regexp(f.Bytes())
@@ -685,6 +676,7 @@ func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
 }
 
 func (o *Server) SetObject() bool {
+
 	if o.IrGroup == "" {
 		return false
 	}
@@ -717,6 +709,7 @@ func (o *Server) SetObject() bool {
 // "patroni":     "di_patroni",
 
 func (o *Server) HCLHeader() []byte {
+
 	return []byte(fmt.Sprintf(
 		"resource \"%s\" \"%s\" {}\n",
 		o.Object.GetType(),
@@ -725,6 +718,7 @@ func (o *Server) HCLHeader() []byte {
 }
 
 func (o *Server) ImportCmd() []byte {
+
 	return []byte(fmt.Sprintf(
 		"terraform import %s.%s %s\n",
 		o.Object.GetType(),

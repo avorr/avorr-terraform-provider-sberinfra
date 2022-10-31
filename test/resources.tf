@@ -1,10 +1,31 @@
+# m1.tiny   = 1/1
+# m1.medium = 4/4
+# m1.large	= 8/8
+# m2.small	= 2/4
+# m2.medium = 4/8
+# m2.large	= 8/16
+# m2.xlarge = 16/32
+# m4.small	= 2/8
+# m4.medium = 4/16
+# m4.large	= 8/32
+# m4.xlarge = 16/64
+# m6.medium = 4/24
+# m8.medium = 4/32
+# m8.large	= 8/64
+
+
+# storage_type = "rbd-1"           ------> SLOW
+# storage_type = "rbd-2"           ------> SLOW BACKUP
+# storage_type = "iscsi_common"    ------> FAST
+# storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
+
 data "di_domain" "domain" {
-    name = "ГосТех"
+  name = "ГосТех"
 }
 
 data "di_group" "group" {
   domain_id = data.di_domain.domain.id
-    name      = "Common"
+  name      = "Common"
 }
 
 output "domain_id" {
@@ -22,8 +43,7 @@ resource di_project "project" {
   virtualization = "openstack"
   name           = "Test-terraform-project" //requared false
   group_id       = data.di_group.group.id
-#  datacenter     = "okvm1"
-  datacenter     = "PD24R3PROM"
+  datacenter     = "PD24R3PROM" //"okvm1"
   jump_host      = false
   desc           = "test-di.dns.zone"
   limits {
@@ -64,16 +84,21 @@ resource "di_vm" "vm1" {
   zone            = "internal"
   network_uuid    = local.networks["internal-network"]
   tag_ids         = [
-#    di_tag.jenkins.id
+    di_tag.nolabel.id
   ]
-
   volume {
     size = 50
-    #    storage_type = "rbd-1"
   }
-  count = 0
+  volume {
+    size         = 50
+    storage_type = "iscsi_common"
+  }
+  volume {
+    size         = 50
+    storage_type = "rbd-1"
+  }
+  count = 1
 }
 
-#output "ni" {
-#  value = local.networks["internal-network"]
+#resource "di_vm" "import" {
 #}

@@ -7,11 +7,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"io/ioutil"
 	"log"
 )
 
@@ -305,31 +303,31 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 		}
 
 		// openshift only
-		if server.Object.GetType() == "di_openshift" && (res.HasChange("ram") || res.HasChange("cpu")) {
-			_, ram := res.GetChange("ram")
-			_, cpu := res.GetChange("cpu")
-			changes := map[string]map[string]int{
-				"resize": {
-					"ram": ram.(int),
-					"cpu": cpu.(int),
-				},
-			}
-			objBytes, err := json.Marshal(changes)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			_, err = server.ResizeDI(objBytes)
-			if err != nil {
-				return diag.FromErr(err)
-			}
-			server.StateResize = "resizing"
-			server.WriteTF(res)
-
-			_, err = server.StateResizeChange(res).WaitForStateContext(ctx)
-			if err != nil {
-				log.Printf("[INFO] timeout on resize for instance (%s), save current state: %s", server.Id.String(), server.StateResize)
-			}
-		}
+		//if server.Object.GetType() == "di_openshift" && (res.HasChange("ram") || res.HasChange("cpu")) {
+		//	_, ram := res.GetChange("ram")
+		//	_, cpu := res.GetChange("cpu")
+		//	changes := map[string]map[string]int{
+		//		"resize": {
+		//			"ram": ram.(int),
+		//			"cpu": cpu.(int),
+		//		},
+		//	}
+		//	objBytes, err := json.Marshal(changes)
+		//	if err != nil {
+		//		return diag.FromErr(err)
+		//	}
+		//	_, err = server.ResizeDI(objBytes)
+		//	if err != nil {
+		//		return diag.FromErr(err)
+		//	}
+		//	server.StateResize = "resizing"
+		//	server.WriteTF(res)
+		//
+		//	_, err = server.StateResizeChange(res).WaitForStateContext(ctx)
+		//	if err != nil {
+		//		log.Printf("[INFO] timeout on resize for instance (%s), save current state: %s", server.Id.String(), server.StateResize)
+		//	}
+		//}
 
 		if res.HasChange("volume") {
 			v1, v2 := res.GetChange("volume")
@@ -377,6 +375,7 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 					if err != nil {
 						return diag.FromErr(err)
 					}
+					_, err = server.StateResizeChange(res).WaitForStateContext(ctx)
 				}
 				server.WriteTF(res)
 			}
@@ -436,7 +435,6 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		//_, err := objRes.StateChange(res).WaitForStateContext(ctx)
 		_, err = server.StateChange(res).WaitForStateContext(ctx)
 		if err != nil {
-			//log.Printf("[INFO] timeout on remove for instance (%s), save current state: %s", objRes.Id.String(), objRes.State)
 			log.Printf("[INFO] timeout on remove for instance (%s), save current state: %s", server.Id.String(), server.State)
 		}
 		//os.Exit(3)
@@ -484,7 +482,6 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 		// state := res.State()
 		// log.Println(pp.Sprint(state.Ephemeral.Type))
 		server := &models.Server{Object: obj, Id: uuid.MustParse(res.Id())}
-		// log.Println(pp.Sprint(server))
 		err := server.GetPubKey()
 		if err != nil {
 			return nil, err
@@ -515,21 +512,20 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 		// log.Println(string(objBytes))
 
 		// TODO: file names
-		fileName := "imports.tf"
-		fileBytes, err := ioutil.ReadFile(fileName)
-		if err != nil {
-			return nil, err
-		}
+		//fileName := "imports.tf"
+		//fileBytes, err := ioutil.ReadFile(fileName)
+		//if err != nil {
+		//	return nil, err
+		//}
 
-		toReplace := []byte(fmt.Sprintf("%s}", firstString))
-		newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
-		// log.Println(string(newBytes))
-		err = ioutil.WriteFile(fileName, newBytes, 0600)
-		if err != nil {
-			return nil, err
-		}
+		//toReplace := []byte(fmt.Sprintf("%s}", firstString))
+		//newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
+		//err = ioutil.WriteFile(fileName, newBytes, 0600)
+		//if err != nil {
+		//	return nil, err
+		//}
 		if len(server.TagIds) > 0 {
-			tags := []string{}
+			var tags []string
 			for _, v := range server.TagIds {
 				tags = append(tags, v.String())
 			}
