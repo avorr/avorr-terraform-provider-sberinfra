@@ -19,12 +19,21 @@
 # storage_type = "iscsi_common"    ------> FAST
 # storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
 
+<<<<<<< HEAD
 data "si_domain" "domain" {
   name = "ГосТех"
 }
 
 data "si_group" "group" {
   domain_id = data.si_domain.domain.id
+=======
+data "di_domain" "domain" {
+  name = "ГосТех"
+}
+
+data "di_group" "group" {
+  domain_id = data.di_domain.domain.id
+>>>>>>> master
   name      = "Common"
 }
 
@@ -42,7 +51,11 @@ resource si_project "project" {
   ir_type        = "vdc_openstack"
   virtualization = "openstack"
   name           = "Test-terraform-project" //requared false
+<<<<<<< HEAD
   group_id       = data.si_group.group.id
+=======
+  group_id       = data.di_group.group.id
+>>>>>>> master
   datacenter     = "PD24R3PROM" //"okvm1"
   jump_host      = false
   desc           = "test-di.dns.zone"
@@ -92,14 +105,14 @@ resource "si_vm" "vm1" {
   volume {
     size = 50
   }
-#  volume {
-#    size         = 50
-#    storage_type = "iscsi_common"
-#  }
-#  volume {
-#    size         = 50
-#    storage_type = "rbd-1"
-#  }
+  volume {
+    size         = 50
+    storage_type = "iscsi_common"
+  }
+  volume {
+    size         = 50
+    storage_type = "rbd-1"
+  }
   count = 1
 }
 
