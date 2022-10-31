@@ -19,21 +19,12 @@
 # storage_type = "iscsi_common"    ------> FAST
 # storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
 
-<<<<<<< HEAD
 data "si_domain" "domain" {
   name = "ГосТех"
 }
 
 data "si_group" "group" {
   domain_id = data.si_domain.domain.id
-=======
-data "di_domain" "domain" {
-  name = "ГосТех"
-}
-
-data "di_group" "group" {
-  domain_id = data.di_domain.domain.id
->>>>>>> master
   name      = "Common"
 }
 
@@ -46,19 +37,15 @@ output "group_id" {
 }
 
 resource si_project "project" {
-  ir_group       = "vdc"
-  type           = "vdc"
-  ir_type        = "vdc_openstack"
-  virtualization = "openstack"
   name           = "Test-terraform-project" //requared false
-<<<<<<< HEAD
   group_id       = data.si_group.group.id
-=======
-  group_id       = data.di_group.group.id
->>>>>>> master
   datacenter     = "PD24R3PROM" //"okvm1"
   jump_host      = false
   desc           = "test-di.dns.zone"
+#  ir_group       = "vdc"
+#  type           = "vdc"
+#  ir_type        = "vdc_openstack"
+#  virtualization = "openstack"
   limits {
     cores_vcpu_count  = 100    //
     ram_gb_amount     = 10000   // requared false
@@ -84,24 +71,22 @@ locals {
 }
 
 resource "si_vm" "vm1" {
+  service_name    = "terraform-test-si-vm-0${count.index + 1}"
   group_id        = data.si_group.group.id
   project_id      = si_project.project.id
-  service_name    = "terraform-test-di-vm-0${count.index + 1}"
-  ir_group        = "vm"
   os_name         = "rhel"
   os_version      = "7.9"
-  virtualization  = "openstack"
-  fault_tolerance = "Stand-alone"
   flavor          = "m1.tiny"
   disk            = 50
-  zone            = "internal"
   network_uuid    = local.networks["internal-network"]
+#  ir_group        = "vm"
+#  virtualization  = "openstack"
+#  fault_tolerance = "Stand-alone"
+#  zone            = "internal"
+
   tag_ids         = [
     si_tag.nolabel.id
   ]
-  volume {
-    size = 50
-  }
   volume {
     size = 50
   }
@@ -116,5 +101,5 @@ resource "si_vm" "vm1" {
   count = 1
 }
 
-#resource "di_vm" "import" {
+#resource "si_vm" "import" {
 #}
