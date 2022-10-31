@@ -34,7 +34,6 @@ export DI_TIMEOUT=7000
 #export TF_LOG=INFO
 #export TF_LOG=ERROR
 export DI_ANSIBLE_PASSWORD=False
-#export INVENTORY_DISABLE=False
 
 terraform init
 ls -l ~/.terraform.d/plugins/sberbank/devops/di/${version}/${platform}/terraform-provider-di_v${version}_${platform}
