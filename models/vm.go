@@ -18,7 +18,7 @@ type VM struct {
 //	log.Println(pp.Sprintf("RUN FUNC %s", runtime.FuncForPC(pc).Name()))
 
 func (o *VM) GetType() string {
-	return "di_vm"
+	return "si_vm"
 }
 
 func (o *VM) GetFile() string {

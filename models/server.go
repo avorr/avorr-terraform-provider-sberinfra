@@ -609,7 +609,7 @@ func (o *Server) GetGroup() string {
 //	if o.Password == "" {
 //		return "", fmt.Errorf("no/blank password")
 //	}
-//	isEnabled, ok := os.LookupEnv("DI_ANSIBLE_PASSWORD")
+//	isEnabled, ok := os.LookupEnv("SI_ANSIBLE_PASSWORD")
 //	if ok {
 //		isEnabledBool, err := strconv.ParseBool(isEnabled)
 //		if err != nil {
@@ -619,7 +619,7 @@ func (o *Server) GetGroup() string {
 //			return "", fmt.Errorf("ansible_password disabled")
 //		}
 //	}
-//	vaultPasswordFileLocation := os.Getenv("DI_VAULT_PASSWORD_FILE")
+//	vaultPasswordFileLocation := os.Getenv("SI_VAULT_PASSWORD_FILE")
 //	TODO: check vaultPasswordFileLocation != ""
 //	vaultPasswordFileBytes, err := ioutil.ReadFile(vaultPasswordFileLocation)
 // if last byte is '\n'- remove it

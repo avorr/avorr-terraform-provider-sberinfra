@@ -27,7 +27,7 @@ type Domain struct {
 }
 
 func (o *Domain) NewObj() DIDataResource {
-	return &Domain{ResType: "di_domain"}
+	return &Domain{ResType: "si_domain"}
 }
 
 func (o *Domain) ReadTF(res *schema.ResourceData) {
@@ -136,7 +136,7 @@ func (o *Domain) GetDomainId() uuid.UUID {
 }
 
 func (o *Domain) GetResType() string {
-	return "di_domain"
+	return "si_domain"
 }
 
 func (o *Domain) GetResName() string {

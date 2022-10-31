@@ -19,30 +19,30 @@
 # storage_type = "iscsi_common"    ------> FAST
 # storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
 
-data "di_domain" "domain" {
+data "si_domain" "domain" {
   name = "ГосТех"
 }
 
-data "di_group" "group" {
-  domain_id = data.di_domain.domain.id
+data "si_group" "group" {
+  domain_id = data.si_domain.domain.id
   name      = "Common"
 }
 
 output "domain_id" {
-  value = data.di_domain.domain.id
+  value = data.si_domain.domain.id
 }
 
 output "group_id" {
-  value = data.di_group.group.id
+  value = data.si_group.group.id
 }
 
-resource di_project "project" {
+resource si_project "project" {
   ir_group       = "vdc"
   type           = "vdc"
   ir_type        = "vdc_openstack"
   virtualization = "openstack"
   name           = "Test-terraform-project" //requared false
-  group_id       = data.di_group.group.id
+  group_id       = data.si_group.group.id
   datacenter     = "PD24R3PROM" //"okvm1"
   jump_host      = false
   desc           = "test-di.dns.zone"
@@ -67,12 +67,12 @@ resource di_project "project" {
 }
 
 locals {
-  networks = {for k, v in di_project.project.network : k.network_name => v.network_uuid}
+  networks = {for k, v in si_project.project.network : k.network_name => v.network_uuid}
 }
 
-resource "di_vm" "vm1" {
-  group_id        = data.di_group.group.id
-  project_id      = di_project.project.id
+resource "si_vm" "vm1" {
+  group_id        = data.si_group.group.id
+  project_id      = si_project.project.id
   service_name    = "terraform-test-di-vm-0${count.index + 1}"
   ir_group        = "vm"
   os_name         = "rhel"
@@ -84,19 +84,22 @@ resource "di_vm" "vm1" {
   zone            = "internal"
   network_uuid    = local.networks["internal-network"]
   tag_ids         = [
-    di_tag.nolabel.id
+    si_tag.nolabel.id
   ]
   volume {
     size = 50
   }
   volume {
-    size         = 50
-    storage_type = "iscsi_common"
+    size = 50
   }
-  volume {
-    size         = 50
-    storage_type = "rbd-1"
-  }
+#  volume {
+#    size         = 50
+#    storage_type = "iscsi_common"
+#  }
+#  volume {
+#    size         = 50
+#    storage_type = "rbd-1"
+#  }
   count = 1
 }
 

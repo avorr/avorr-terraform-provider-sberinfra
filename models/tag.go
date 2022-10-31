@@ -23,7 +23,7 @@ type Tag struct {
 }
 
 func (o *Tag) GetType() string {
-	return "di_tag"
+	return "si_tag"
 }
 
 func (o *Tag) NewObj() DIResource {

@@ -130,7 +130,7 @@ func (o *Group) GetDomainId() uuid.UUID {
 }
 
 func (o *Group) GetResType() string {
-	return "di_group"
+	return "si_group"
 }
 
 func (o *Group) GetResName() string {

@@ -45,7 +45,7 @@ func Regexp(data []byte) []byte {
 		regexp.MustCompile(` stand_type_id(\s)*= "(.*)"`),
 		regexp.MustCompile(` project_id(\s)*= "(.*)"`),
 		regexp.MustCompile(` value(\s)*= "data.(.*)"`),
-		regexp.MustCompile(` value(\s)*= "di_(.*)"`),
+		regexp.MustCompile(` value(\s)*= "si_(.*)"`),
 		regexp.MustCompile(` postgres_db_password(\s)*= "data.vault(.*)"`),
 		regexp.MustCompile(` gg_client_password(\s)*= "data.vault(.*)"`),
 		regexp.MustCompile(` ise_client_password(\s)*= "data.vault(.*)"`),

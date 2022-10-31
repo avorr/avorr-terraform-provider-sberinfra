@@ -218,7 +218,7 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 }
 
 func (o *Project) GetType() string {
-	return "di_project"
+	return "si_project"
 }
 
 //func (o *Project) NewObj() DIDataResource {
@@ -234,7 +234,7 @@ func (o *Project) GetDomainId() uuid.UUID {
 }
 
 func (o *Project) GetResType() string {
-	return "di_group"
+	return "si_group"
 }
 
 func (o *Project) GetResName() string {
