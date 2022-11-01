@@ -1,7 +1,7 @@
-#export DI_URL=https://cs.cloud.sberbank.ru/api/v1
+#export SI_URL=https://cs.cloud.sberbank.ru/api/v1
 #https://iftpdi.ift.esrt.cloud.sbrf.ru/client/orders/stands
-#export DI_TOKEN=supersecrettoken
-#export DI_DEBUG=0
+#export SI_TOKEN=supersecrettoken
+#export SI_DEBUG=0
 #export AWS_S3_ENDPOINT=http://miniohost:9000
 #export AWS_DEFAULT_REGION=no-region
 #export AWS_ACCESS_KEY_ID=

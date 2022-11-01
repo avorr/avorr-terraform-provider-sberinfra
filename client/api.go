@@ -24,8 +24,8 @@ func NewApi() *Api {
 		debug = true
 	}
 	return &Api{
-		Host:  os.Getenv("DI_URL"),
-		Token: os.Getenv("DI_TOKEN"),
+		Host:  os.Getenv("SI_URL"),
+		Token: os.Getenv("SI_TOKEN"),
 		Debug: debug,
 	}
 }

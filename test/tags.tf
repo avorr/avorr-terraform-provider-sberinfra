@@ -1,4 +1,4 @@
-resource "di_tag" "nolabel" {
+resource "si_tag" "nolabel" {
   name = "nolabel"
 }
 

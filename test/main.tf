@@ -1,7 +1,7 @@
-#export DI_URL=https://cs.cloud.sberbank.ru/api/v1
+#export SI_URL=https://cs.cloud.sberbank.ru/api/v1
 #https://iftpdi.ift.esrt.cloud.sbrf.ru/client/orders/stands
-#export DI_TOKEN=supersecrettoken
-#export DI_DEBUG=0
+#export SI_TOKEN=supersecrettoken
+#export SI_DEBUG=0
 #export AWS_S3_ENDPOINT=http://miniohost:9000
 #export AWS_DEFAULT_REGION=no-region
 #export AWS_ACCESS_KEY_ID=
@@ -12,9 +12,9 @@
 terraform {
   required_version = ">= 0.14.9"
   required_providers {
-    di = {
-      source  = "sberbank/devops/di"
-      version = "0.3.15"
+    si = {
+      source  = "sberbank/devops/si"
+      version = "0.4.0"
     }
 #    vault = {
 #      version = "3.3.0"
@@ -29,7 +29,7 @@ terraform {
 #    force_path_style            = true
 #  }
 }
-provider "di" {}
+provider "si" {}
 
 
 #provider "vault" {

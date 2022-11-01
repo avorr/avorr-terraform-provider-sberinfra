@@ -19,33 +19,33 @@
 # storage_type = "iscsi_common"    ------> FAST
 # storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
 
-data "di_domain" "domain" {
+data "si_domain" "domain" {
   name = "ГосТех"
 }
 
-data "di_group" "group" {
-  domain_id = data.di_domain.domain.id
+data "si_group" "group" {
+  domain_id = data.si_domain.domain.id
   name      = "Common"
 }
 
 output "domain_id" {
-  value = data.di_domain.domain.id
+  value = data.si_domain.domain.id
 }
 
 output "group_id" {
-  value = data.di_group.group.id
+  value = data.si_group.group.id
 }
 
-resource di_project "project" {
-  ir_group       = "vdc"
-  type           = "vdc"
-  ir_type        = "vdc_openstack"
-  virtualization = "openstack"
+resource si_project "project" {
   name           = "Test-terraform-project" //requared false
-  group_id       = data.di_group.group.id
+  group_id       = data.si_group.group.id
   datacenter     = "PD24R3PROM" //"okvm1"
   jump_host      = false
   desc           = "test-di.dns.zone"
+#  ir_group       = "vdc"
+#  type           = "vdc"
+#  ir_type        = "vdc_openstack"
+#  virtualization = "openstack"
   limits {
     cores_vcpu_count  = 100    //
     ram_gb_amount     = 10000   // requared false
@@ -67,24 +67,25 @@ resource di_project "project" {
 }
 
 locals {
-  networks = {for k, v in di_project.project.network : k.network_name => v.network_uuid}
+  networks = {for k, v in si_project.project.network : k.network_name => v.network_uuid}
 }
 
-resource "di_vm" "vm1" {
-  group_id        = data.di_group.group.id
-  project_id      = di_project.project.id
-  service_name    = "terraform-test-di-vm-0${count.index + 1}"
-  ir_group        = "vm"
+resource "si_vm" "vm1" {
+  service_name    = "terraform-test-si-vm-0${count.index + 1}"
+  group_id        = data.si_group.group.id
+  project_id      = si_project.project.id
   os_name         = "rhel"
   os_version      = "7.9"
-  virtualization  = "openstack"
-  fault_tolerance = "Stand-alone"
   flavor          = "m1.tiny"
   disk            = 50
-  zone            = "internal"
   network_uuid    = local.networks["internal-network"]
+#  ir_group        = "vm"
+#  virtualization  = "openstack"
+#  fault_tolerance = "Stand-alone"
+#  zone            = "internal"
+
   tag_ids         = [
-    di_tag.nolabel.id
+    si_tag.nolabel.id
   ]
   volume {
     size = 50
@@ -100,5 +101,5 @@ resource "di_vm" "vm1" {
   count = 1
 }
 
-#resource "di_vm" "import" {
+#resource "si_vm" "import" {
 #}

@@ -37,7 +37,7 @@ func runPlugin() {
 
 func ProviderFunc() *schema.Provider {
 	timeout := 300 * time.Second
-	envTimeout := os.Getenv("DI_TIMEOUT")
+	envTimeout := os.Getenv("SI_TIMEOUT")
 	if envTimeout != "" {
 		duration, err := strconv.ParseUint(envTimeout, 10, 64)
 		if err != nil {
@@ -61,11 +61,11 @@ func ProviderFunc() *schema.Provider {
 		// 	return nil, nil
 		// },
 		DataSourcesMap: map[string]*schema.Resource{
-			"di_domain": {
+			"si_domain": {
 				ReadContext: ReadDataResource(&models.Domain{}),
 				Schema:      models.SchemaDomain,
 			},
-			"di_group": {
+			"si_group": {
 				ReadContext: ReadDataResource(&models.Group{}),
 				Schema:      models.SchemaGroup,
 			},
@@ -86,7 +86,7 @@ func ProviderFunc() *schema.Provider {
 			//},
 			//},
 
-			"di_project": {
+			"si_project": {
 				//Importer: &schema.ResourceImporter{
 				//	State:        schema.ImportStatePassthrough,
 				//	StateContext: views.SiProjectImport,
@@ -101,7 +101,7 @@ func ProviderFunc() *schema.Provider {
 				},
 			},
 
-			"di_vm": {
+			"si_vm": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
 					StateContext: views.ImportResource(&models.VM{}),
@@ -115,7 +115,7 @@ func ProviderFunc() *schema.Provider {
 					Create: schema.DefaultTimeout(timeout),
 				},
 			},
-			"di_tag": {
+			"si_tag": {
 				Importer: &schema.ResourceImporter{
 					State: schema.ImportStatePassthrough,
 				},
