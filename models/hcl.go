@@ -89,24 +89,24 @@ func ToHCLOutput(res DIDataResource) []byte {
 type HCLTags []string
 
 type HCL struct {
-	Type           string        `hcl:"type,label"`
-	Name           string        `hcl:"name,label"`
-	GroupId        string        `hcl:"group_id"`
-	ProjectId      string        `hcl:"project_id"`
-	ServiceName    string        `hcl:"service_name"`
-	IrGroup        string        `hcl:"ir_group"`
-	OsName         string        `hcl:"os_name"`
-	OsVersion      string        `hcl:"os_version"`
-	Virtualization string        `hcl:"virtualization"`
-	FaultTolerance string        `hcl:"fault_tolerance"`
-	Region         string        `hcl:"region"`
-	Disk           int           `hcl:"disk"`
-	Flavor         string        `hcl:"flavor"`
-	Zone           string        `hcl:"zone"`
-	PublicSshName  string        `hcl:"public_ssh_name,optional"`
-	AppParams      *HCLAppParams `hcl:"app_params,block"`
-	Volumes        []*HCLVolume  `hcl:"volume,block"`
-	TagIds         *HCLTags      `hcl:"tag_ids,optional"`
+	Type           string `hcl:"type,label"`
+	Name           string `hcl:"name,label"`
+	GroupId        string `hcl:"group_id"`
+	ProjectId      string `hcl:"project_id"`
+	ServiceName    string `hcl:"service_name"`
+	IrGroup        string `hcl:"ir_group"`
+	OsName         string `hcl:"os_name"`
+	OsVersion      string `hcl:"os_version"`
+	Virtualization string `hcl:"virtualization"`
+	FaultTolerance string `hcl:"fault_tolerance"`
+	//Region         string        `hcl:"region"`
+	Disk          int           `hcl:"disk"`
+	Flavor        string        `hcl:"flavor"`
+	Zone          string        `hcl:"zone"`
+	PublicSshName string        `hcl:"public_ssh_name,optional"`
+	AppParams     *HCLAppParams `hcl:"app_params,block"`
+	Volumes       []*HCLVolume  `hcl:"volume,block"`
+	TagIds        *HCLTags      `hcl:"tag_ids,optional"`
 }
 
 type HCLRoot struct {

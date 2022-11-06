@@ -2,6 +2,7 @@ package views
 
 import (
 	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -9,8 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 )
-
-//"github.com/k0kubun/pp/v3"
 
 func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
@@ -258,7 +257,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 			Limits  struct {
 				CoresVcpuCount  int `json:"cores_vcpu_count"`
 				StorageGbAmount int `json:"storage_gb_amount"`
-				RAMGbAmount     int `json:"ram_gb_amount"`
+				RamGbAmount     int `json:"ram_gb_amount"`
 			} `json:"limits"`
 		}
 
@@ -266,7 +265,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		objProjectLimits.GroupID = obj.Project.GroupID
 		objProjectLimits.Limits.CoresVcpuCount = obj.Project.Limits.CoresVcpuCount
 		objProjectLimits.Limits.StorageGbAmount = obj.Project.Limits.StorageGbAmount
-		objProjectLimits.Limits.RAMGbAmount = obj.Project.Limits.RAMGbAmount
+		objProjectLimits.Limits.RamGbAmount = obj.Project.Limits.RamGbAmount
 
 		requestBytes, err := json.Marshal(objProjectLimits)
 		responseBytes, err := obj.UpdateProjectLimits(requestBytes)
@@ -322,25 +321,75 @@ func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
+func JsonRead(responseBytes []uint8) {
+	var out bytes.Buffer
+	err := json.Indent(&out, responseBytes, "", "  ")
+	if err != nil {
+		panic(err)
+	}
+	log.Printf("#####\n\n\n")
+	log.Println(out.String())
+	log.Printf("#####\n\n\n")
+}
+
 func SiProjectImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	//obj := models.SIProject{GroupId: uuid.MustParse(res.Id())}
-	//responseBytes, err := obj.ReadDI()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//err = obj.Deserialize(responseBytes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//obj.WriteTF(res)
 
+	obj := models.Project{}
+	obj.Project.ID = uuid.MustParse(res.Id())
+	responseBytes, err := obj.ReadDI()
+	if err != nil {
+		return nil, err
+	}
+	err = obj.Deserialize(responseBytes)
+
+	bytes, err := obj.GetProjectQuota()
+
+	type LimitsImport struct {
+		Limits struct {
+			RamGbAmount     int `json:"ram_gb_amount"`
+			CoresVcpuCount  int `json:"cores_vcpu_count"`
+			StorageGbAmount int `json:"storage_gb_amount"`
+		} `json:"limits"`
+	}
+
+	limits := map[string]*LimitsImport{}
+	err = json.Unmarshal(bytes, &limits)
+
+	if err != nil {
+		return nil, err
+	}
+
+	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
+	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
+	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
+
+	if err != nil {
+		return nil, err
+	}
+
+	obj.WriteTF(res)
+
+	//obj := models.ResProject{}
+	//obj.Project.ID = uuid.MustParse(res.Id())
+	//responseBytes, err := obj.ReadDIRes()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//err = obj.DeserializeRead(responseBytes)
+	//if err != nil {
+	//	return nil, err
+	//}
+	//obj.WriteTFRes(res)
+
+	//
 	//objBytes, _ := obj.ToHCL(nil)
-	// log.Println(string(objBytes))
-
+	//log.Println(string(objBytes))
+	//
 	//index := bytes.IndexByte(objBytes, byte('{'))
-
+	//
 	//firstString := objBytes[:index+1]
-
+	//
 	//fileBytes, err := ioutil.ReadFile("project.tf")
 	//if err != nil {
 	//	return nil, err

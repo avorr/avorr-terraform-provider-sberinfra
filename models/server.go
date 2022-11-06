@@ -18,23 +18,22 @@ import (
 )
 
 type Server struct {
-	Id               uuid.UUID     `json:"id"`
-	Object           DIResource    `json:"-"`
-	GroupId          uuid.UUID     `json:"group_id"`
-	ProjectId        uuid.UUID     `json:"project_id"`
-	ClusterUuid      uuid.UUID     `json:"cluster_uuid"`
-	State            string        `json:"state"`
-	StateResize      string        `json:"state_resize"`
-	Step             string        `json:"step"`
-	Name             string        `json:"name"`
-	ServiceName      string        `json:"service_name" hcl:"service_name"`
-	IrGroup          string        `json:"ir_group" hcl:"ir_group"`
-	IrType           string        `json:"ir_type"`
-	OsName           string        `json:"os_name" hcl:"os_name"`
-	OsVersion        string        `json:"os_version" hcl:"os_version"`
-	Virtualization   string        `json:"virtualization" hcl:"virtualization"`
-	FaultTolerance   string        `json:"fault_tolerance" hcl:"fault_tolerance"`
-	Region           string        `json:"region" hcl:"region"`
+	Id             uuid.UUID  `json:"id"`
+	Object         DIResource `json:"-"`
+	GroupId        uuid.UUID  `json:"group_id"`
+	ProjectId      uuid.UUID  `json:"project_id"`
+	State          string     `json:"state"`
+	StateResize    string     `json:"state_resize"`
+	Step           string     `json:"step"`
+	Name           string     `json:"name"`
+	ServiceName    string     `json:"service_name" hcl:"service_name"`
+	IrGroup        string     `json:"ir_group" hcl:"ir_group"`
+	IrType         string     `json:"ir_type"`
+	OsName         string     `json:"os_name" hcl:"os_name"`
+	OsVersion      string     `json:"os_version" hcl:"os_version"`
+	Virtualization string     `json:"virtualization" hcl:"virtualization"`
+	FaultTolerance string     `json:"fault_tolerance" hcl:"fault_tolerance"`
+	//Region         string    `json:"region" hcl:"region"`
 	NetworkUuid      uuid.UUID     `json:"network_uuid,omitempty" hcl:"network_uuid"`
 	User             string        `json:"user"`
 	Password         string        `json:"password,omitempty"`
@@ -44,11 +43,8 @@ type Server struct {
 	Flavor           string        `json:"flavor"`
 	Zone             string        `json:"zone" hcl:"zone"`
 	Ip               string        `json:"ip"`
-	DNS              string        `json:"dns"`
-	DNSName          string        `json:"dns_name"`
 	PublicSshName    string        `json:"public_ssh_name,omitempty" hcl:"public_ssh_name"`
 	PublicSsh        string        `json:"public_ssh,omitempty"`
-	Group            string        `json:"group,omitempty"`
 	ResId            string        `json:"-" hcl:"id"`
 	ResType          string        `json:"-" hcl:"type,label"`
 	ResName          string        `json:"-" hcl:"name,label"`
@@ -97,10 +93,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if ok {
 		o.Disk = disk.(int)
 	}
-	_, ok = res.GetOk("cluster_uuid")
-	if ok {
-		o.ClusterUuid = uuid.MustParse(res.Get("cluster_uuid").(string))
-	}
 	irType, ok := res.GetOk("ir_type")
 	if ok {
 		o.IrType = irType.(string)
@@ -125,8 +117,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	// o.Cpu = res.Get("cpu").(int)
 	// o.Ram = res.Get("ram").(int)
 	o.Name = res.Get("name").(string)
-	o.DNS = res.Get("dns").(string)
-	o.DNSName = res.Get("dns_name").(string)
 	o.Ip = res.Get("ip").(string)
 	o.State = res.Get("state").(string)
 	o.StateResize = res.Get("state_resize").(string)
@@ -134,10 +124,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	publicSshName, ok := res.GetOk("public_ssh_name")
 	if ok {
 		o.PublicSshName = publicSshName.(string)
-	}
-	group, ok := res.GetOk("group")
-	if ok {
-		o.Group = group.(string)
 	}
 	tags, ok := res.GetOk("tag_ids")
 	if ok {
@@ -197,8 +183,6 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("cpu", o.Cpu)
 	res.Set("ram", o.Ram)
 	res.Set("disk", o.Disk)
-	res.Set("dns", o.DNS)
-	res.Set("dns_name", o.DNSName)
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
@@ -222,14 +206,8 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 			res.Set("password", o.Password)
 		}
 	}
-	if o.ClusterUuid.ID() != uint32(0) {
-		res.Set("cluster_uuid", o.ClusterUuid.String())
-	}
 	if o.PublicSshName != "" {
 		res.Set("public_ssh_name", o.PublicSshName)
-	}
-	if o.Group != "" {
-		res.Set("group", o.Group)
 	}
 	o.Object.OnWriteTF(res, o)
 }
@@ -252,23 +230,17 @@ func (o *Server) ToMap() map[string]interface{} {
 		"fault_tolerance": o.FaultTolerance,
 		"id":              o.Id.String(),
 		"name":            o.Name,
-		"cluster_uuid":    o.ClusterUuid.String(),
 		"ir_type":         o.IrType,
 		"flavor":          o.Flavor,
 		"state":           o.State,
 		"state_resize":    o.StateResize,
 		"ip":              o.Ip,
-		"dns":             o.DNS,
-		"dns_name":        o.DNSName,
 		"step":            o.Step,
 		"user":            o.User,
 	}
 	if o.PublicSshName != "" {
 		serverMap["public_ssh_name"] = o.PublicSshName
 		serverMap["public_ssh"] = o.PublicSsh
-	}
-	if o.Group != "" {
-		serverMap["group"] = o.Group
 	}
 	return serverMap
 }
@@ -277,7 +249,6 @@ func (o *Server) Serialize() ([]byte, error) {
 	serverMap := o.ToMap()
 	delete(serverMap, "id")
 	delete(serverMap, "name")
-	delete(serverMap, "cluster_uuid")
 	delete(serverMap, "ir_type")
 	// delete(serverMap, "flavor")
 	// delete(serverMap, "cpu")
@@ -285,19 +256,9 @@ func (o *Server) Serialize() ([]byte, error) {
 	delete(serverMap, "state")
 	delete(serverMap, "state_resize")
 	delete(serverMap, "ip")
-	delete(serverMap, "dns")
-	delete(serverMap, "dns_name")
 	delete(serverMap, "step")
 	delete(serverMap, "user")
-	delete(serverMap, "group")
 
-	// switch o.Object.GetType() {
-	// case "di_openshift":
-	// 	delete(serverMap, "flavor")
-	// default:
-	// 	delete(serverMap, "cpu")
-	// 	delete(serverMap, "ram")
-	// }
 	serverMap = o.Object.OnSerialize(serverMap, o)
 
 	requestMap := map[string]interface{}{
@@ -328,8 +289,6 @@ func (o *Server) Deserialize(data []byte) error {
 	o.Virtualization = serverMap["virtualization"].(string)
 	o.IrGroup = serverMap["ir_group"].(string)
 	o.FaultTolerance = serverMap["fault_tolerance"].(string)
-	//o.Region = serverMap["region"].(string)
-	//o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
 
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
@@ -343,14 +302,6 @@ func (o *Server) Deserialize(data []byte) error {
 	ip, ok := serverMap["ip"]
 	if ok && ip != nil {
 		o.Ip = ip.(string)
-	}
-	dns, ok := serverMap["dns"]
-	if ok && dns != nil {
-		o.DNS = dns.(string)
-	}
-	dnsName, ok := serverMap["dns-name"]
-	if ok && dnsName != nil {
-		o.DNSName = dnsName.(string)
 	}
 	flavor, ok := serverMap["flavor"]
 	if ok && flavor != nil {
@@ -374,10 +325,6 @@ func (o *Server) Deserialize(data []byte) error {
 		} else {
 			o.StateResize = "resizing"
 		}
-	}
-	clusterUuid, ok := serverMap["cluster_uuid"]
-	if ok && clusterUuid != nil {
-		o.ClusterUuid = uuid.MustParse(clusterUuid.(string))
 	}
 	groupId, ok := serverMap["group_id"]
 	if ok && groupId != nil {
@@ -559,31 +506,6 @@ func (o *Server) StateResizeChange(res *schema.ResourceData) *resource.StateChan
 		},
 	}
 }
-
-//func (o *Server) StateClusterChange(res *schema.ResourceData) *resource.StateChangeConf {
-//	return &resource.StateChangeConf{
-//		Timeout:      res.Timeout(schema.TimeoutCreate),
-//		PollInterval: 15 * time.Second,
-//		Pending:      []string{"WaitForCluster"},
-//		Target:       []string{"InCluster"},
-//		Refresh: func() (interface{}, string, error) {
-//			responseBytes, err := o.ReadDI()
-//			if err != nil {
-//				return nil, "error", err
-//			}
-//			err = o.Deserialize(responseBytes)
-//			if err != nil {
-//				return nil, "error", err
-//			}
-//			log.Printf("[DEBUG] Refresh state for [%s]", o.Id.String())
-//			if o.ClusterUuid.ID() != uint32(0) {
-//				log.Printf("[DEBUG] Got cluster uuid: %s", o.ClusterUuid)
-//				return o, "InCluster", nil
-//			}
-//			return o, "WaitForCluster", nil
-//		},
-//	}
-//}
 
 func (o *Server) ToHCL() []byte {
 

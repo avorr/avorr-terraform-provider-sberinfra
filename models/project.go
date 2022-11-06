@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -37,7 +38,7 @@ type Project struct {
 		DefaultNetwork     uuid.UUID   `json:"default_network"`
 		Limits             struct {
 			CoresVcpuCount  int `json:"cores_vcpu_count"`
-			RAMGbAmount     int `json:"ram_gb_amount"`
+			RamGbAmount     int `json:"ram_gb_amount"`
 			StorageGbAmount int `json:"storage_gb_amount"`
 		} `json:"limits"`
 		Networks struct {
@@ -48,6 +49,17 @@ type Project struct {
 			EnableDhcp     bool      `json:"enable_dhcp"`
 			IsDefault      bool      `json:"is_default"`
 		} `json:"network"`
+		NetworksRes []struct {
+			Cidr           string    `json:"cidr"`
+			Status         string    `json:"status"`
+			EnableDhcp     bool      `json:"enable_dhcp"`
+			SubnetName     string    `json:"subnet_name"`
+			SubnetUUID     uuid.UUID `json:"subnet_uuid"`
+			NetworkName    string    `json:"network_name"`
+			NetworkUUID    uuid.UUID `json:"network_uuid"`
+			DNSNameservers []string  `json:"dns_nameservers"`
+			IsDefault      bool      `json:"is_default"`
+		} `json:"networks"`
 		RealState            string        `json:"real_state"`
 		GroupName            string        `json:"group_name"`
 		DomainID             uuid.UUID     `json:"domain_id"`
@@ -88,7 +100,7 @@ type ResProject struct {
 		DefaultNetwork     uuid.UUID     `json:"default_network"`
 		Limits             struct {
 			CoresVcpuCount  int `json:"cores_vcpu_count"`
-			RAMGbAmount     int `json:"ram_gb_amount"`
+			RamGbAmount     int `json:"ram_gb_amount"`
 			StorageGbAmount int `json:"storage_gb_amount"`
 		} `json:"limits"`
 		Networks []struct {
@@ -188,6 +200,15 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 	}
 
 	return diag.Diagnostics{}
+}
+
+func (o *Project) GetProjectQuota() ([]byte, error) {
+	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.Project.ID, o.Project.GroupID))
+
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }
 
 func (o *Project) SetDefaultNetwork(networkUuid string) error {
@@ -314,7 +335,7 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 		for _, v := range limitsSet.List() {
 			values := v.(map[string]interface{})
 			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RAMGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
 			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
 		}
 	}
@@ -389,7 +410,7 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 			values := v.(map[string]interface{})
 
 			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RAMGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
 			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
 		}
 	}
@@ -432,31 +453,24 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 
 func (o *Project) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
-	res.Set("ir_group", o.Project.IrGroup)
+
+	res.Set("datacenter", o.Project.Datacenter)
+	res.Set("ir_type", o.Project.IrType)
+	res.Set("desc", o.Project.Desc)
 	res.Set("group_id", o.Project.GroupID.String())
-	//res.Set("domain_id", o.Project.GroupID.String())
-	//res.Set("state", o.State)
-	res.Set("type", o.Project.Type)
-	//res.Set("network", o.Project.Networks)
+	res.Set("jump_host", strconv.FormatBool(o.Project.JumpHost))
+	res.Set("name", o.Project.Name)
+	res.Set("virtualization", o.Project.Virtualization)
 
-	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {
-	//sort.Sort(ByPath(o.Project.Networks))
+	limits := make([]map[string]int, 1)
 
-	//networks := make([]map[string]interface{}, 0)
-	//for _, v := range o.Project.Networks {
-	//	volume := map[string]interface{}{
-	//		"size":         v.Size,
-	//		"path":         v.Path,
-	//		"storage_type": v.StorageType,
-	//	}
-	//	networks = append(networks, volume)
-	//}
-	//err := res.Set("network", networks)
-	//if err != nil {
-	//	log.Println(err)
-	//}
+	limits[0] = map[string]int{
+		"cores_vcpu_count":  o.Project.Limits.CoresVcpuCount,
+		"ram_gb_amount":     o.Project.Limits.RamGbAmount,
+		"storage_gb_amount": o.Project.Limits.StorageGbAmount,
+	}
 
-	//}
+	res.Set("limits", limits)
 
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
@@ -600,22 +614,27 @@ func (o *Project) DeserializeOld(responseBytes []byte) error {
 func (o *Project) Deserialize(responseBytes []byte) error {
 	//response := make(map[string]map[string]interface{})
 	//response := make(map[string]interface{})
-	response := Project{}
-	err := json.Unmarshal(responseBytes, &response)
+	//response := Project{}
+	//err := json.Unmarshal(responseBytes, &response)
+	err := json.Unmarshal(responseBytes, &o)
 	if err != nil {
 		return err
 	}
 
-	o.Project.ID = response.Project.ID
-	o.Project.DomainID = response.Project.DomainID
-	o.Project.GroupID = response.Project.GroupID
+	//o.Project.ID = response.Project.ID
+	//o.Project.Datacenter = response.Project.Datacenter
+	//o.Project.DomainID = response.Project.DomainID
+	//o.Project.GroupID = response.Project.GroupID
+
 	//o.Project. = value["group_id"].(string)
 	//o.Project.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
 	//o.Project.ResStandTypeId = value["stand_type_id"].(string)
 	//o.Project.StandType = value["stand_type"].(string)
-	o.Project.Name = response.Project.Name
-	o.Project.Type = response.Project.Type
-	o.Project.State = response.Project.State
+
+	//o.Project.Name = response.Project.Name
+	//o.Project.Type = response.Project.Type
+	//o.Project.State = response.Project.State
+
 	//o.Project.AppSystemsCi = value["app_systems_ci"].(string)
 
 	//objMap, ok := response["projects"].([]interface{})

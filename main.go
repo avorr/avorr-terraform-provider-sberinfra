@@ -87,10 +87,10 @@ func ProviderFunc() *schema.Provider {
 			//},
 
 			"si_project": {
-				//Importer: &schema.ResourceImporter{
-				//	State:        schema.ImportStatePassthrough,
-				//	StateContext: views.SiProjectImport,
-				//},
+				Importer: &schema.ResourceImporter{
+					//State:        schema.ImportStatePassthrough,
+					StateContext: views.SiProjectImport,
+				},
 				CreateContext: views.ProjectCreate,
 				ReadContext:   views.ProjectRead,
 				UpdateContext: views.ProjectUpdate,

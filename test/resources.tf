@@ -13,6 +13,8 @@
 # m8.medium = 4/32
 # m8.large	= 8/64
 
+#"os_name": "rhel" or "altlinux"
+#"os_version": "7.9" or "altlinux"
 
 # storage_type = "rbd-1"           ------> SLOW
 # storage_type = "rbd-2"           ------> SLOW BACKUP
@@ -28,24 +30,17 @@ data "si_group" "group" {
   name      = "Common"
 }
 
-output "domain_id" {
-  value = data.si_domain.domain.id
-}
-
-output "group_id" {
-  value = data.si_group.group.id
-}
-
 resource si_project "project" {
-  name           = "Test-terraform-project" //requared false
-  group_id       = data.si_group.group.id
-  datacenter     = "PD24R3PROM" //"okvm1"
-  jump_host      = false
-  desc           = "test-di.dns.zone"
-#  ir_group       = "vdc"
-#  type           = "vdc"
-#  ir_type        = "vdc_openstack"
-#  virtualization = "openstack"
+  #  ir_group       = "vdc"
+  #  type           = "vdc"
+  #  ir_type        = "vdc_openstack"
+  #  virtualization = "openstack"
+
+  name       = "Test-terraform-project" //requared false
+  group_id   = data.si_group.group.id
+  datacenter = "PD24R3PROM" //"okvm1"
+  jump_host  = false
+  desc       = "test-di.dns.zone"
   limits {
     cores_vcpu_count  = 100    //
     ram_gb_amount     = 10000   // requared false
@@ -71,20 +66,20 @@ locals {
 }
 
 resource "si_vm" "vm1" {
-  service_name    = "terraform-test-si-vm-0${count.index + 1}"
-  group_id        = data.si_group.group.id
-  project_id      = si_project.project.id
-  os_name         = "rhel"
-  os_version      = "7.9"
-  flavor          = "m1.tiny"
-  disk            = 50
-  network_uuid    = local.networks["internal-network"]
-#  ir_group        = "vm"
-#  virtualization  = "openstack"
-#  fault_tolerance = "Stand-alone"
-#  zone            = "internal"
+  #  ir_group        = "vm"
+  #  virtualization  = "openstack"
+  #  fault_tolerance = "Stand-alone"
+  #  zone            = "internal"
 
-  tag_ids         = [
+  service_name = "terraform-test-si-vm-0${count.index + 1}"
+  group_id     = data.si_group.group.id
+  project_id   = si_project.project.id
+  os_name      = "rhel"
+  os_version   = "7.9"
+  flavor       = "m1.tiny"
+  disk         = 50
+  network_uuid = local.networks["internal-network"]
+  tag_ids      = [
     si_tag.nolabel.id
   ]
   volume {
@@ -100,6 +95,9 @@ resource "si_vm" "vm1" {
   }
   count = 1
 }
+
+#resource "si_project" "import" {
+#}
 
 #resource "si_vm" "import" {
 #}

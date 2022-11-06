@@ -3,7 +3,7 @@ set -ex
 cd ..
 echo `date`
 name=terraform-provider-si
-version=0.4.0
+version=0.4.1
 platform=darwin_amd64; goos="darwin"
 #platform=linux_amd64; goos="linux"
 #platform=windows; goos="windows"
@@ -20,10 +20,12 @@ go mod tidy -v
 GOOS=${goos} go build -v -o ${binary}
 #./${binary} import
 #rm test-di/.terraform.lock.hcl || true
+
 cp ${binary} ${binary_dir}/${binary}
 #mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 #cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
+cd test
 
 rm -rf .terraform/ || true
 #rm terraform.tfstate* || true
@@ -36,7 +38,9 @@ export SI_TIMEOUT=7000
 #export TF_LOG=ERROR
 
 terraform init
+clear
 ls -l ~/.terraform.d/plugins/sberbank/devops/si/${version}/${platform}/terraform-provider-si_v${version}_${platform}
+
 #./imports.sh
 #terraform plan
 #terraform apply

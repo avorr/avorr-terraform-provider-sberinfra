@@ -1,4 +1,4 @@
-terraform-provider-di
+terraform-provider-si
 ----
 <img src="https://learn.hashicorp.com/img/terraform/providers/core-plugins-api.png">
 ----

@@ -35,10 +35,10 @@ func (o *Servers) Read() error {
 		return err
 	}
 
-	err = o.filter()
-	if err != nil {
-		return err
-	}
+	//err = o.filter()
+	//if err != nil {
+	//	return err
+	//}
 
 	return nil
 }
@@ -63,28 +63,6 @@ func (o *Servers) Read() error {
 
 func (o *Servers) deserialize(data []byte) error {
 	return json.Unmarshal(data, &o)
-}
-
-func (o *Servers) filter() error {
-	for _, v := range o.Servers {
-		if v.ClusterUuid.ID() != 0 {
-			if o.ClusterIds == nil {
-				o.ClusterIds = make(map[string]bool)
-			}
-			o.ClusterIds[v.ClusterUuid.String()] = true
-		} else {
-			o.NonCluster = append(o.NonCluster, v)
-			v.SetObject()
-		}
-	}
-
-	//for k, _ := range o.ClusterIds {
-	//	err := o.ReadCluster(k)
-	//	if err != nil {
-	//		return err
-	//	}
-	//}
-	return nil
 }
 
 func (o *Servers) read(url string) ([]byte, error) {
