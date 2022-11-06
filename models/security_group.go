@@ -1,0 +1,740 @@
+package models
+
+import (
+	"github.com/google/uuid"
+)
+
+type SecurityGroup struct {
+	GroupName     string    `json:"group_name"`
+	ServerUUID    uuid.UUID `json:"server_uuid"`
+	SecurityRules []struct {
+		Direction      string `json:"direction"`
+		Ethertype      string `json:"ethertype"`
+		Protocol       string `json:"protocol"`
+		PortRangeMin   int    `json:"port_range_min"`
+		PortRangeMax   int    `json:"port_range_max"`
+		RemoteIPPrefix string `json:"remote_ip_prefix"`
+		RemoteGroupID  string `json:"remote_group_id"`
+	} `json:"security_rules"`
+}
+
+type SecurityRule struct {
+	SecurityGroupID uuid.UUID `json:"security_group_id"`
+	Direction       string    `json:"direction"`
+	Ethertype       string    `json:"ethertype"`
+	Protocol        string    `json:"protocol"`
+	PortRangeMin    int       `json:"port_range_min"`
+	PortRangeMax    int       `json:"port_range_max"`
+	RemoteIPPrefix  string    `json:"remote_ip_prefix"`
+	RemoteGroupID   string    `json:"remote_group_id"`
+}
+
+/*
+func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []interface{}) diag.Diagnostics {
+
+	body := Networks{}
+
+	for _, v := range additionalNets {
+		v := v.(map[string]interface{})
+		body.Network.Cidr = v["cidr"].(string)
+		body.Network.EnableDhcp = v["enable_dhcp"].(bool)
+		body.Network.IsDefault = v["is_default"].(bool)
+		body.Network.NetworkName = v["network_name"].(string)
+
+		dnsNameServers := make([]string, 0)
+
+		for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
+			dnsNameServers = append(dnsNameServers, dnsIp.(string))
+		}
+		body.Network.DNSNameservers = dnsNameServers
+		result, err := json.Marshal(body)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		resBody, err := Api.NewRequestCreate(fmt.Sprintf("projects/%s/networks", o.Project.ID), result)
+
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		deserializeResBody := ResProject{}
+		err = json.Unmarshal(resBody, &deserializeResBody)
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+		_, err = deserializeResBody.StateChangeNetwork(res, body.Network.NetworkName, body.Network.IsDefault).WaitForStateContext(ctx)
+	}
+
+	return diag.Diagnostics{}
+}
+
+func (o *Project) GetProjectQuota() ([]byte, error) {
+	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.Project.ID, o.Project.GroupID))
+
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (o *Project) SetDefaultNetwork(networkUuid string) error {
+	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
+	if err != nil {
+		return err
+	}
+
+	_, err = Api.NewRequestUpdate(fmt.Sprintf("projects/%s/networks/set_default", o.Project.ID), body)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
+	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
+	if err != nil {
+		return err
+	}
+	_, err = Api.NewRequestUpdate(fmt.Sprintf("projects/%s/networks/set_default", o.Project.ID), body)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *Project) GetType() string {
+	return "si_project"
+}
+
+//func (o *Project) NewObj() DIDataResource {
+//	return &Project{}
+//}
+
+func (o *Project) GetId() string {
+	return o.Project.ID.String()
+}
+
+func (o *Project) GetDomainId() uuid.UUID {
+	return o.Project.DomainID
+}
+
+func (o *Project) GetResType() string {
+	return "si_group"
+}
+
+func (o *Project) GetResName() string {
+	return o.Project.Name
+}
+
+func (o *Project) GetOutput() (string, string) {
+	//return o.ResOutputName, o.ResOutputValue
+	return "", ""
+}
+
+//func (o *Project) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
+//	m := make(map[string][]*Project)
+//	err := json.Unmarshal(responseBytes, &m)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	m2 := make([]DIDataResource, len(m["groups"]))
+//	for k, v := range m["groups"] {
+//		m2[k] = v
+//	}
+//	return m2, nil
+//}
+
+//func (o *Project) NewObj() DIResource {
+//	return &Project{}
+//}
+
+func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
+
+	if res.Id() != "" {
+		o.Project.ID = uuid.MustParse(res.Id())
+	}
+
+	o.Project.IrGroup = res.Get("ir_group").(string)
+	o.Project.Type = res.Get("type").(string)
+	o.Project.IrType = res.Get("ir_type").(string)
+	o.Project.Virtualization = res.Get("virtualization").(string)
+	o.Project.Name = res.Get("name").(string)
+	o.Project.GroupID = uuid.MustParse(res.Get("group_id").(string))
+	//o.Project.ID = uuid.MustParse(res.Id())
+	o.Project.Datacenter = res.Get("datacenter").(string)
+	o.Project.Desc = res.Get("desc").(string)
+	//o.JumpHost = res.Get("jump_host")
+
+	if res.Get("jump_host") == "true" {
+		o.Project.JumpHost = true
+	} else {
+		o.Project.JumpHost = false
+	}
+
+	limits, ok := res.GetOk("limits")
+
+	if ok {
+		limitsSet := limits.(*schema.Set)
+
+		for _, v := range limitsSet.List() {
+			values := v.(map[string]interface{})
+			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
+			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
+		}
+	}
+
+	network := res.Get("network")
+
+	var existDefaultNetwork bool
+
+	networkSet := network.(*schema.Set)
+	for i, v := range networkSet.List() {
+		v := v.(map[string]interface{})
+
+		if v["is_default"].(bool) {
+			existDefaultNetwork = v["is_default"].(bool)
+		}
+		if existDefaultNetwork == false && networkSet.Len() == i+1 {
+			return diag.Errorf("There must be one default network. [is_default = true]")
+		}
+
+		if networkSet.Len() == 1 || v["is_default"].(bool) {
+			o.Project.Networks.NetworkName = v["network_name"].(string)
+			o.Project.Networks.Cidr = v["cidr"].(string)
+			o.Project.Networks.EnableDhcp = v["enable_dhcp"].(bool)
+			o.Project.Networks.IsDefault = true
+			var dnsNameServers []string
+			for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
+				dnsNameServers = append(dnsNameServers, dnsIp.(string))
+			}
+			o.Project.Networks.DNSNameservers = dnsNameServers
+		}
+	}
+	return diag.Diagnostics{}
+}
+
+func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
+
+	if res.Id() != "" {
+		o.Project.ID = uuid.MustParse(res.Id())
+	}
+
+	o.Project.IrGroup = res.Get("ir_group").(string)
+	o.Project.Type = res.Get("type").(string)
+	o.Project.IrType = res.Get("ir_type").(string)
+	o.Project.Virtualization = res.Get("virtualization").(string)
+	o.Project.Name = res.Get("name").(string)
+	o.Project.GroupID = uuid.MustParse(res.Get("group_id").(string))
+	//o.Project.ID = uuid.MustParse(res.Id())
+	o.Project.Datacenter = res.Get("datacenter").(string)
+	o.Project.Desc = res.Get("desc").(string)
+	//o.JumpHost = res.Get("jump_host")
+
+	if res.Get("jump_host") == "true" {
+		o.Project.JumpHost = true
+	} else {
+		o.Project.JumpHost = false
+	}
+
+	//net, ok := res.GetOk("network")
+
+	//if ok {
+	//	if limits.(*schema.Set).Len() > 1 {
+	//		res.Get("limits").(*schema.Set).Len()
+	//		return diag.Errorf("Limits set should not be more than one")
+	//	}
+	//}
+
+	limits, ok := res.GetOk("limits")
+	if ok {
+		limitsSet := limits.(*schema.Set)
+
+		for _, v := range limitsSet.List() {
+			values := v.(map[string]interface{})
+
+			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
+			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
+			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
+		}
+	}
+
+	//networks := make([]map[string]interface{}, 0)
+	//for _, v := range o.Project.Networks {
+	//	volume := map[string]interface{}{
+	//		"size":         v.Size,
+	//		"path":         v.Path,
+	//		"storage_type": v.StorageType,
+	//	}
+	//	networks = append(networks, volume)
+	//}
+	//err := res.Set("network", networks)
+	//if err != nil {
+	//	log.Println(err)
+	//}
+
+	//network, ok := res.GetOk("network")
+
+	//if ok {
+	//	networkSet := network.(*schema.Set).List()
+	//	for _, v := range networkSet {
+	//		if v.(map[string]interface{})["is_default"].(bool) {
+	//			o.Project.Networks.NetworkName = v.(map[string]interface{})["network_name"].(string)
+	//			o.Project.Networks.Cidr = v.(map[string]interface{})["cidr"].(string)
+	//			o.Project.Networks.EnableDhcp = v.(map[string]interface{})["enable_dhcp"].(bool)
+	//			o.Project.Networks.IsDefault = true
+	//			var dnsNameServers = []string{}
+	//			for _, dnsIp := range v.(map[string]interface{})["dns_nameservers"].(*schema.Set).List() {
+	//				dnsNameServers = append(dnsNameServers, dnsIp.(string))
+	//			}
+	//			o.Project.Networks.DNSNameservers = dnsNameServers
+	//		}
+	//	}
+	//}
+
+	return diag.Diagnostics{}
+}
+
+func (o *Project) WriteTF(res *schema.ResourceData) {
+	res.SetId(o.Project.ID.String())
+
+	res.Set("datacenter", o.Project.Datacenter)
+	res.Set("ir_type", o.Project.IrType)
+	res.Set("desc", o.Project.Desc)
+	res.Set("group_id", o.Project.GroupID.String())
+	res.Set("jump_host", strconv.FormatBool(o.Project.JumpHost))
+	res.Set("name", o.Project.Name)
+	res.Set("virtualization", o.Project.Virtualization)
+
+	limits := make([]map[string]int, 1)
+
+	limits[0] = map[string]int{
+		"cores_vcpu_count":  o.Project.Limits.CoresVcpuCount,
+		"ram_gb_amount":     o.Project.Limits.RamGbAmount,
+		"storage_gb_amount": o.Project.Limits.StorageGbAmount,
+	}
+
+	res.Set("limits", limits)
+
+	//res.SetConnInfo("network")
+	//res.ConnInfo()
+	//res.Set("network_uuid")
+}
+
+func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
+	res.SetId(o.Project.ID.String())
+	res.Set("ir_group", o.Project.IrGroup)
+	res.Set("group_id", o.Project.GroupID.String())
+	//res.Set("domain_id", o.Project.DomainID.String())
+	//res.Set("state", o.Project.State)
+	res.Set("type", o.Project.Type)
+
+	res.Set("default_network", o.Project.DefaultNetwork.String())
+
+	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {sort.Sort(ByPath(o.Project.Networks))
+
+	networks := make([]map[string]interface{}, 0)
+	for _, v := range o.Project.Networks {
+		if v.NetworkUUID == o.Project.DefaultNetwork {
+			volume := map[string]interface{}{
+				"cidr":            v.Cidr,
+				"dns_nameservers": v.DNSNameservers,
+				"enable_dhcp":     v.EnableDhcp,
+				"is_default":      true,
+				"network_name":    v.NetworkName,
+				"network_uuid":    v.NetworkUUID.String(),
+			}
+			networks = append(networks, volume)
+		} else {
+			volume := map[string]interface{}{
+				"cidr":            v.Cidr,
+				"dns_nameservers": v.DNSNameservers,
+				"enable_dhcp":     v.EnableDhcp,
+				"is_default":      false,
+				"network_name":    v.NetworkName,
+				"network_uuid":    v.NetworkUUID.String(),
+			}
+			networks = append(networks, volume)
+		}
+	}
+
+	err := res.Set("network", networks)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func (o *Project) Serialize() ([]byte, error) {
+	//requestMap := map[string]map[string]interface{}{
+	//	"project": {
+	//		"ir_group":       o.IrGroup,
+	//		"type":           o.Type,
+	//		"ir_type":        o.IrType,
+	//		"virtualization": o.Virtualization,
+	//		"name":           o.Name,
+	//		"group_id":       o.GroupId,
+	//		"datacenter":     o.Datacenter,
+	//		"jump_host":      o.JumpHost,
+	//		"limits":         o.Limits,
+	//		"network":        o.Network,
+	//	},
+	//}
+
+	//type FullSiProject struct {
+	//	Project Project `json:"project"`
+	//}
+
+	//requestMap := Project{}
+	//
+	//	IrGroup:        o.Project.IrGroup,
+	//	Type:           o.Project.Type,
+	//	IrType:         o.Project.IrType,
+	//	Virtualization: o.Project.Virtualization,
+	//	Name:           o.Project.Name,
+	//	GroupId:        o.Project.GroupID,
+	//	Datacenter:     o.Project.Datacenter,
+	//	JumpHost:       o.Project.JumpHost,
+	//	Limits:         o.Project.Limits,
+	//	Networks:       o.Project.Networks,
+	//},
+	//}
+
+	//requestBytes, err := json.Marshal(FullSiProject{Project: requestMap})
+	requestBytes, err := json.Marshal(o)
+
+	if err != nil {
+		return nil, err
+	}
+	return requestBytes, nil
+}
+
+func (o *Project) DeserializeOld(responseBytes []byte) error {
+	//response := make(map[string]map[string]interface{})
+	response := make(map[string]interface{})
+	err := json.Unmarshal(responseBytes, &response)
+	if err != nil {
+		return err
+	}
+
+	objMap, ok := response["projects"].([]interface{})
+	if !ok {
+		return errors.New("no project in response")
+	}
+
+	for _, v := range objMap {
+		value := v.(map[string]interface{})
+
+		if value["name"].(string) == o.Project.Name {
+			o.Project.GroupID = uuid.MustParse(value["group_id"].(string))
+			//o.ResId = value["id"].(string)
+			//o.DomainId = uuid.MustParse(value["domain_id"].(string))
+			//o.GroupId = uuid.MustParse(value["group_id"].(string))
+			//o.ResGroupId = value["group_id"].(string)
+			//o.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
+			//o.ResStandTypeId = value["stand_type_id"].(string)
+			//o.StandType = value["stand_type"].(string)
+			//o.Name = value["name"].(string)
+			//o.Type = value["type"].(string)
+			//o.State = value["state"].(string)
+			//o.AppSystemsCi = value["app_systems_ci"].(string)
+		}
+	}
+
+	//o.Id = uuid.MustParse(objMap["id"].(string))
+	//o.ResId = objMap["id"].(string)
+	//o.DomainId = uuid.MustParse(objMap["domain_id"].(string))
+	//o.GroupId = uuid.MustParse(objMap["group_id"].(string))
+	//o.ResGroupId = objMap["group_id"].(string)
+	//o.StandTypeId = uuid.MustParse(objMap["stand_type_id"].(string))
+	//o.ResStandTypeId = objMap["stand_type_id"].(string)
+	//o.StandType = objMap["stand_type"].(string)
+	//o.Name = objMap["name"].(string)
+	//o.Type = objMap["type"].(string)
+	//o.State = objMap["state"].(string)
+	//o.AppSystemsCi = objMap["app_systems_ci"].(string)
+	return nil
+}
+
+func (o *Project) Deserialize(responseBytes []byte) error {
+	//response := make(map[string]map[string]interface{})
+	//response := make(map[string]interface{})
+	//response := Project{}
+	//err := json.Unmarshal(responseBytes, &response)
+	err := json.Unmarshal(responseBytes, &o)
+	if err != nil {
+		return err
+	}
+
+	//o.Project.ID = response.Project.ID
+	//o.Project.Datacenter = response.Project.Datacenter
+	//o.Project.DomainID = response.Project.DomainID
+	//o.Project.GroupID = response.Project.GroupID
+
+	//o.Project. = value["group_id"].(string)
+	//o.Project.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
+	//o.Project.ResStandTypeId = value["stand_type_id"].(string)
+	//o.Project.StandType = value["stand_type"].(string)
+
+	//o.Project.Name = response.Project.Name
+	//o.Project.Type = response.Project.Type
+	//o.Project.State = response.Project.State
+
+	//o.Project.AppSystemsCi = value["app_systems_ci"].(string)
+
+	//objMap, ok := response["projects"].([]interface{})
+	//if !ok {
+	//	return errors.New("no project in response")
+	//}
+
+	//for _, v := range objMap {
+	//	value := v.(map[string]interface{})
+
+	//if value["name"].(string) == o.Project.Name {
+	//	o.Project.GroupID = uuid.MustParse(value["group_id"].(string))
+	//o.ResId = value["id"].(string)
+	//o.DomainId = uuid.MustParse(value["domain_id"].(string))
+	//o.GroupId = uuid.MustParse(value["group_id"].(string))
+	//o.ResGroupId = value["group_id"].(string)
+	//o.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
+	//o.ResStandTypeId = value["stand_type_id"].(string)
+	//o.StandType = value["stand_type"].(string)
+	//o.Name = value["name"].(string)
+	//o.Type = value["type"].(string)
+	//o.State = value["state"].(string)
+	//o.AppSystemsCi = value["app_systems_ci"].(string)
+	//}
+	//}
+
+	//o.Id = uuid.MustParse(objMap["id"].(string))
+	//o.ResId = objMap["id"].(string)
+	//o.DomainId = uuid.MustParse(objMap["domain_id"].(string))
+	//o.GroupId = uuid.MustParse(objMap["group_id"].(string))
+	//o.ResGroupId = objMap["group_id"].(string)
+	//o.StandTypeId = uuid.MustParse(objMap["stand_type_id"].(string))
+	//o.ResStandTypeId = objMap["stand_type_id"].(string)
+	//o.StandType = objMap["stand_type"].(string)
+	//o.Name = objMap["name"].(string)
+	//o.Type = objMap["type"].(string)
+	//o.State = objMap["state"].(string)
+	//o.AppSystemsCi = objMap["app_systems_ci"].(string)
+	return nil
+}
+
+func (o *ResProject) DeserializeRead(responseBytes []byte) error {
+
+	err := json.Unmarshal(responseBytes, &o)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *Project) ParseIdFromCreateResponse(data []byte) error {
+	response := make(map[string]map[string]interface{})
+	err := json.Unmarshal(data, &response)
+	if err != nil {
+		return err
+	}
+	objMap, ok := response["project"]
+	if !ok {
+		return errors.New("no project in response")
+	}
+
+	//o2 := &Project{}
+	o.Project.ID = uuid.MustParse(objMap["id"].(string))
+	o.Project.GroupID = uuid.MustParse(objMap["group_id"].(string))
+
+	return nil
+}
+
+func (o *Project) CreateDI(data []byte) ([]byte, error) {
+	return Api.NewRequestCreate("/v2/projects", data)
+}
+
+func (o *Project) ReadDI() ([]byte, error) {
+	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Project.ID))
+	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
+}
+
+func (o *ResProject) ReadDIRes() ([]byte, error) {
+	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.Project.ID))
+	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
+}
+
+func (o *Project) UpdateDI(data []byte) ([]byte, error) {
+	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
+}
+
+func (o *Project) UpdateProjectName(data []byte) ([]byte, error) {
+	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
+}
+
+func (o *Project) UpdateProjectDesc(data []byte) ([]byte, error) {
+	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.Project.ID), data)
+}
+
+func (o *Project) UpdateProjectLimits(data []byte) ([]byte, error) {
+	return Api.NewRequestUpdate(fmt.Sprintf("/v2/projects/%s/quota", o.Project.ID), data)
+}
+
+func (o *Project) DeleteDI() error {
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.Project.ID), nil, 204)
+}
+
+func (o *Project) DeleteNetwork(NetworkUuid string) error {
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.Project.ID, NetworkUuid), nil, 200)
+}
+
+func (o *Project) ReadAll() ([]byte, error) {
+	return Api.NewRequestRead("projects/")
+}
+
+func (o *Project) StateChange(res *schema.ResourceData) *resource.StateChangeConf {
+	return &resource.StateChangeConf{
+		Timeout:      res.Timeout(schema.TimeoutCreate),
+		PollInterval: 15 * time.Second,
+		Pending:      []string{"Creating", "Pending"},
+		Target:       []string{"Running", "Damaged"},
+		Refresh: func() (interface{}, string, error) {
+
+			responseBytes, err := o.ReadDI()
+			if err != nil {
+				return nil, "error", err
+			}
+
+			err = o.Deserialize(responseBytes)
+			if err != nil {
+				return nil, "error", err
+			}
+
+			log.Printf("[DEBUG] Refresh state for [%s]: state: %s", o.Project.ID.String(), o.Project.State)
+			// write to TF state
+			o.WriteTF(res)
+
+			if o.Project.State == "ready" {
+				return o, "Running", nil
+			}
+			if o.Project.State == "damaged" {
+				return o, "Damaged", nil
+			}
+			if o.Project.State == "pending" {
+				return o, "Pending", nil
+			}
+			return o, "Creating", nil
+		},
+	}
+}
+
+func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName string, isDefault bool) *resource.StateChangeConf {
+	return &resource.StateChangeConf{
+		Timeout:      res.Timeout(schema.TimeoutCreate),
+		PollInterval: 15 * time.Second,
+		Pending:      []string{"Creating", "Pending"},
+		Target:       []string{"Running", "Damaged"},
+		Refresh: func() (interface{}, string, error) {
+
+			responseBytes, err := o.ReadDIRes()
+			if err != nil {
+				return nil, "error", err
+			}
+
+			err = o.DeserializeRead(responseBytes)
+			if err != nil {
+				return nil, "error", err
+			}
+
+			log.Printf("[DEBUG] Refresh state for [%s]: state: %s", o.Project.ID, o.Project.State)
+			// write to TF state
+			//o.WriteTFRes(res)
+
+			for _, net := range o.Project.Networks {
+				if net.NetworkName == networkName {
+					if net.Status == "ready" {
+						if isDefault {
+							err := o.SetDefaultNetwork(net.NetworkUUID.String())
+							if err != nil {
+								return o, "Running", err
+							}
+						}
+						return o, "Running", nil
+
+					} else if net.Status == "pending" {
+						return o, "Pending", nil
+					}
+				}
+			}
+
+			return o, "Creating", nil
+		},
+	}
+}
+
+func (o *Project) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
+	return nil
+}
+func (o *Project) OnDeserialize(map[string]interface{}, *Server) {}
+func (o *Project) Urls(string) string {
+	return ""
+}
+func (o *Project) OnReadTF(*schema.ResourceData, *Server)  {}
+func (o *Project) OnWriteTF(*schema.ResourceData, *Server) {}
+
+func (o *Project) ToHCLOutput() []byte {
+	dataRoot := &HCLOutputRoot{
+		Resources: &HCLOutput{
+			ResName: fmt.Sprintf(
+				"%s_id",
+				//o.ResType,
+				o.Project.IrType,
+			),
+			Value: fmt.Sprintf(
+				"%s.%s.id",
+				//o.ResType,
+				o.Project.IrType,
+				//o.ResName,
+				o.Project.IrType,
+			),
+		},
+	}
+	f := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(dataRoot, f.Body())
+	return utils.Regexp(f.Bytes())
+}
+
+//func (o *Project) HostVars(server *Server) map[string]interface{} {
+//	return nil
+//}
+
+func (o *Project) GetGroup() string {
+	return ""
+}
+
+func (o *Project) ToHCL(server *Server) ([]byte, error) {
+	//o.ResType = o.GetType()
+	o.Project.IrType = o.GetType()
+	//o.ResName = utils.Reformat(o.Name)
+	o.Project.IrType = utils.Reformat(o.Project.Name)
+	type HCLServerRoot struct {
+		Resources *Project `hcl:"resource,block"`
+	}
+	root := &HCLServerRoot{Resources: o}
+	f := hclwrite.NewEmptyFile()
+	gohcl.EncodeIntoBody(root, f.Body())
+	// return utils.Regexp(f.Bytes())
+	return f.Bytes(), nil
+}
+
+func (o *Project) HCLAppParams() *HCLAppParams {
+	return nil
+}
+
+func (o *Project) HCLVolumes() []*HCLVolume {
+	return nil
+}
+*/

@@ -2,7 +2,6 @@ package views
 
 import (
 	"base.sw.sbc.space/pid/terraform-provider-si/models"
-	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -11,7 +10,7 @@ import (
 	"log"
 )
 
-func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
@@ -90,7 +89,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
-func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func SecurityGroupRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
@@ -115,7 +114,7 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 	return diags
 }
 
-func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	obj := models.Project{}
@@ -308,7 +307,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 	//return diags
 }
 
-func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func SecurityGroupDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	obj := models.Project{}
 	obj.ReadTF(res)
@@ -321,18 +320,7 @@ func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
-func JsonRead(responseBytes []uint8) {
-	var out bytes.Buffer
-	err := json.Indent(&out, responseBytes, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("#####\n\n\n")
-	log.Println(out.String())
-	log.Printf("#####\n\n\n")
-}
-
-func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func SecurityGroupImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	//obj := models.SIProject{GroupId: uuid.MustParse(res.Id())}
 
 	obj := models.Project{}

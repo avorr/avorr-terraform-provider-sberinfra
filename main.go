@@ -89,7 +89,7 @@ func ProviderFunc() *schema.Provider {
 			"si_project": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
-					StateContext: views.SiProjectImport,
+					StateContext: views.ProjectImport,
 				},
 				CreateContext: views.ProjectCreate,
 				ReadContext:   views.ProjectRead,
@@ -100,7 +100,6 @@ func ProviderFunc() *schema.Provider {
 					Create: schema.DefaultTimeout(timeout),
 				},
 			},
-
 			"si_vm": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
@@ -111,6 +110,20 @@ func ProviderFunc() *schema.Provider {
 				UpdateContext: views.UpdateResource(&models.VM{}),
 				DeleteContext: views.DeleteResource(&models.VM{}),
 				Schema:        models.SchemaVM,
+				Timeouts: &schema.ResourceTimeout{
+					Create: schema.DefaultTimeout(timeout),
+				},
+			},
+			"si_security_group": {
+				Importer: &schema.ResourceImporter{
+					//State:        schema.ImportStatePassthrough,
+					StateContext: views.SecurityGroupImport,
+				},
+				CreateContext: views.SecurityGroupCreate,
+				ReadContext:   views.SecurityGroupRead,
+				UpdateContext: views.SecurityGroupUpdate,
+				DeleteContext: views.SecurityGroupDelete,
+				Schema:        models.SchemaSecurityGroup,
 				Timeouts: &schema.ResourceTimeout{
 					Create: schema.DefaultTimeout(timeout),
 				},

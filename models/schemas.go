@@ -11,9 +11,10 @@ var (
 	SchemaGroup  map[string]*schema.Schema
 
 	//// resource
-	SchemaProject map[string]*schema.Schema
-	SchemaVM      map[string]*schema.Schema
-	SchemaTag     map[string]*schema.Schema
+	SchemaProject       map[string]*schema.Schema
+	SchemaVM            map[string]*schema.Schema
+	SchemaSecurityGroup map[string]*schema.Schema
+	SchemaTag           map[string]*schema.Schema
 )
 
 func init() {
@@ -134,7 +135,62 @@ func init() {
 		"tag_ids": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 	}
 
+	//{
+	//  "security_group": {
+	//    "group_name": "string",
+	//    "server_uuid": "string",
+	//    "security_rules": [
+	//      {
+	//        "direction": "ingress",
+	//        "ethertype": "IPv4",
+	//        "protocol": "tcp",
+	//        "port_range_min": 0,
+	//        "port_range_max": 0,
+	//        "remote_ip_prefix": "string",
+	//        "remote_group_id": "string"
+	//      }
+	//    ]
+	//  }
+	//}
+	SchemaSecurityGroup = map[string]*schema.Schema{
+		"group_name":  {Type: schema.TypeString, Optional: true, Default: "vdc"},
+		"server_uuid": {Type: schema.TypeString, Optional: true, Default: "vdc"},
+		"security_rules": {
+			Type:     schema.TypeSet,
+			Optional: true,
+			MaxItems: 1,
+			Elem: &schema.Resource{
+				Schema: map[string]*schema.Schema{
+					"cores_vcpu_count":  {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(1, 1000)},
+					"ram_gb_amount":     {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(500, 1000000)},
+					"storage_gb_amount": {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(50, 1000000000)},
+				},
+			},
+		},
+		//"network": {
+		//	Type:     schema.TypeSet,
+		//	Required: true,
+		//	MinItems: 1,
+		//	Elem: &schema.Resource{
+		//
+		//		Schema: map[string]*schema.Schema{
+		//			"network_name": {Type: schema.TypeString, Required: true},
+		//			"network_uuid": {Type: schema.TypeString, Computed: true},
+		//			"cidr":         {Type: schema.TypeString, Required: true},
+		//			"dns_nameservers": {
+		//				Type:     schema.TypeSet,
+		//				Required: true,
+		//				Elem:     &schema.Schema{Type: schema.TypeString},
+		//			},
+		//			"enable_dhcp": {Type: schema.TypeBool, Required: true},
+		//			"is_default":  {Type: schema.TypeBool, Optional: true, Default: false},
+		//		},
+		//	},
+		//},
+	}
+
 	SchemaTag = map[string]*schema.Schema{
 		"name": {Type: schema.TypeString, Required: true, ForceNew: true},
 	}
+
 }
