@@ -51,9 +51,9 @@ func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[
 	serverData["hdd"] = map[string]int{
 		"size": server.Disk,
 	}
-	if server.Region == "" {
-		delete(serverData, "region")
-	}
+	//if server.Region == "" {
+	//	delete(serverData, "region")
+	//}
 	if server.NetworkUuid == uuid.Nil {
 		delete(serverData, "network_uuid")
 	}
@@ -159,7 +159,6 @@ func (o *VM) HostVars(server *Server) map[string]interface{} {
 	m := map[string]interface{}{
 		"ansible_host": server.Ip,
 		"ansible_user": server.User,
-		"dns_name":     server.DNSName,
 		"name":         server.Name,
 	}
 	return m

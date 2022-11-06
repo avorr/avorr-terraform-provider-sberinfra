@@ -94,7 +94,6 @@ func init() {
 		"service_name": {Type: schema.TypeString, Optional: true},
 		"group_id":     {Type: schema.TypeString, Required: true},
 		"project_id":   {Type: schema.TypeString, Required: true},
-		"cluster_uuid": {Type: schema.TypeString, Computed: true},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
 		"ir_group":     {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
 		"ir_type":      {Type: schema.TypeString, Computed: true},
@@ -102,7 +101,6 @@ func init() {
 		"ram":          {Type: schema.TypeInt, Computed: true},
 		"disk":         {Type: schema.TypeInt, Required: true},
 		"flavor":       {Type: schema.TypeString, Required: true},
-		"region":       {Type: schema.TypeString, Optional: true},
 		"network_uuid": {Type: schema.TypeString, Optional: true},
 		//"virtualization":  {Type: schema.TypeString, Required: true},
 		"virtualization": {Type: schema.TypeString, Optional: true, Default: "openstack"},
@@ -115,11 +113,8 @@ func init() {
 		//"zone":            {Type: schema.TypeString, Required: true},
 		"zone":            {Type: schema.TypeString, Optional: true, Default: "internal"},
 		"ip":              {Type: schema.TypeString, Computed: true},
-		"dns":             {Type: schema.TypeString, Computed: true},
-		"dns_name":        {Type: schema.TypeString, Computed: true},
 		"step":            {Type: schema.TypeString, Computed: true},
 		"public_ssh_name": {Type: schema.TypeString, Optional: true},
-		"group":           {Type: schema.TypeString, Optional: true},
 		"user":            {Type: schema.TypeString, Computed: true},
 		"password":        {Type: schema.TypeString, Computed: true},
 		"volume": {
