@@ -49,7 +49,7 @@ func init() {
 		//"virtualization": {Type: schema.TypeString, Required: true},
 		"virtualization": {Type: schema.TypeString, Optional: true, Default: "openstack"},
 		"name":           {Type: schema.TypeString, Optional: true},
-		"group_id":       {Type: schema.TypeString, Required: true},
+		"group_id":       {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		//"domain_id":       {Type: schema.TypeString, Optional: true},
 		"default_network": {Type: schema.TypeString, Computed: true},
 		"datacenter":      {Type: schema.TypeString, Required: true},
@@ -72,15 +72,14 @@ func init() {
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-
 				Schema: map[string]*schema.Schema{
 					"network_name": {Type: schema.TypeString, Required: true},
 					"network_uuid": {Type: schema.TypeString, Computed: true},
-					"cidr":         {Type: schema.TypeString, Required: true},
+					"cidr":         {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsCIDR},
 					"dns_nameservers": {
 						Type:     schema.TypeSet,
 						Required: true,
-						Elem:     &schema.Schema{Type: schema.TypeString},
+						Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPv4Address},
 					},
 					"enable_dhcp": {Type: schema.TypeBool, Required: true},
 					"is_default":  {Type: schema.TypeBool, Optional: true, Default: false},
@@ -152,18 +151,37 @@ func init() {
 	//    ]
 	//  }
 	//}
+
+	//{
+	// "security_group": {
+	//   "group_name": "dsdsds",
+	//   "security_rules": [
+	//     {
+	//       "ethertype": "IPv4",
+	//       "id": "3",
+	//       "direction": "ingress",
+	//       "protocol": "tcp",
+	//       "remote_ip_prefix": "172.21.21.0/0"
+	//     }
+	//   ]
+	// }
+	//}
+
 	SchemaSecurityGroup = map[string]*schema.Schema{
-		"group_name":  {Type: schema.TypeString, Optional: true, Default: "vdc"},
-		"server_uuid": {Type: schema.TypeString, Optional: true, Default: "vdc"},
-		"security_rules": {
+		"project_id": {Type: schema.TypeString, Required: true},
+		"group_name": {Type: schema.TypeString, Required: true},
+		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,
-			MaxItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"cores_vcpu_count":  {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(1, 1000)},
-					"ram_gb_amount":     {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(500, 1000000)},
-					"storage_gb_amount": {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(50, 1000000000)},
+					"id":               {Type: schema.TypeString, Computed: true},
+					"ethertype":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
+					"direction":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
+					"protocol":         {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
+					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ValidateFunc: validation.IsCIDR},
+					"port_range_min":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
+					"port_range_max":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
 				},
 			},
 		},

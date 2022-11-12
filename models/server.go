@@ -56,6 +56,7 @@ type Server struct {
 	ResVolumes       []*HCLVolume  `json:"-" hcl:"volume,block"`
 	TagIds           []uuid.UUID   `json:"tag_ids" hcl:"-"`
 	ErrMsg           string        `json:"err_msg,omitempty" hcl:"-"`
+	IsImport         bool
 }
 
 func (o *Server) ReadTF(res *schema.ResourceData) {
@@ -70,7 +71,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
-
 	networkId, ok := res.GetOk("network_uuid")
 	if ok {
 		o.NetworkUuid = uuid.MustParse(networkId.(string))
@@ -188,7 +188,7 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	//res.Set("region", o.Region)
 
 	_, ok := res.GetOk("network_uuid")
-	if ok && o.NetworkUuid != uuid.Nil {
+	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
 		res.Set("network_uuid", o.NetworkUuid.String())
 	}
 

@@ -150,12 +150,14 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 	return f
 }
 
+var IsImport bool
+
 func ReadResource(obj models.DIResource) schema.ReadContextFunc {
 	f := func(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 		var diags diag.Diagnostics
 		// server := models.Server{Object: &models.VM{}}
 		newObj := obj.NewObj()
-		server := models.Server{Object: newObj}
+		server := models.Server{Object: newObj, IsImport: IsImport}
 		server.ReadTF(res)
 
 		err := server.GetPubKey()
@@ -480,7 +482,7 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 func ImportResource(obj models.DIResource) schema.StateContextFunc {
 	return func(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 		// state := res.State()
-		// log.Println(pp.Sprint(state.Ephemeral.Type))
+		IsImport = true
 		server := &models.Server{Object: obj, Id: uuid.MustParse(res.Id())}
 		err := server.GetPubKey()
 		if err != nil {

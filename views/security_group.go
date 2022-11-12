@@ -7,6 +7,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/k0kubun/pp/v3"
 	"log"
 )
 
@@ -14,78 +15,61 @@ func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interf
 
 	var diags diag.Diagnostics
 
-	obj := models.Project{}
+	obj := models.SecurityGroup{}
 
-	diags = obj.ReadTF(res)
+	//diags = obj.ReadTF(res)
+	obj.ReadTF(res)
 
-	if diags.HasError() {
-		return diags
-	}
-
-	networks := res.Get("network").(*schema.Set)
-
-	additionalNetworks := make([]interface{}, 0)
-
-	defaultNetworkCount := 0
-	networkNames := make([]string, 0)
-	for _, v := range networks.List() {
-		v := v.(map[string]interface{})
-		for _, name := range networkNames {
-			if v["network_name"].(string) == name {
-				return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["network_name"])
-			}
-		}
-		networkNames = append(networkNames, v["network_name"].(string))
-
-		if v["is_default"] == true {
-			defaultNetworkCount += 1
-			if defaultNetworkCount > 1 {
-				return diag.Errorf("Default networks should not be more than one")
-			}
-		} else {
-			additionalNetworks = append(additionalNetworks, v)
-		}
-	}
+	//log.Println("###", pp.Sprintln(obj))
 
 	requestBytes, err := obj.Serialize()
 
+	//log.Println("###", pp.Sprintln(string(requestBytes)))
+
+	//return diags
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	responseBytes, err := obj.CreateDI(requestBytes)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
-	objRes := models.Project{}
+	responseBytes, err := obj.CreateResource(requestBytes)
 
-	err = objRes.ParseIdFromCreateResponse(responseBytes)
+	log.Println("!!!!###", pp.Sprintln(string(responseBytes)))
 
-	_, err = objRes.StateChange(res).WaitForStateContext(ctx)
-
-	if err != nil {
-		log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", objRes.Project.ID, objRes.Project.State)
-	}
+	_, err = obj.StateChangeSecurityGroup(res).WaitForStateContext(ctx)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	objRes2 := models.ResProject{}
-	objRes2.Project.ID = objRes.Project.ID
-	objRes.AddNetwork(ctx, res, additionalNetworks)
-	responseBytes, err = objRes2.ReadDIRes()
+	return diags
 
-	if err != nil {
-		return diag.FromErr(err)
-	}
+	//objRes := models.Project{}
 
-	err = objRes2.DeserializeRead(responseBytes)
+	//err = objRes.ParseIdFromCreateResponse(responseBytes)
 
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	objRes2.WriteTFRes(res)
+	//if err != nil {
+	//	log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", objRes.Project.ID, objRes.Project.State)
+	//}
+
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
+
+	//objRes2 := models.ResProject{}
+	//objRes2.Project.ID = objRes.Project.ID
+	//objRes.AddNetwork(ctx, res, additionalNetworks)
+	//responseBytes, err = objRes2.ReadDIRes()
+
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
+
+	//err = objRes2.DeserializeRead(responseBytes)
+
+	//if err != nil {
+	//	return diag.FromErr(err)
+	//}
+	//objRes2.WriteTFRes(res)
 	return diags
 }
 

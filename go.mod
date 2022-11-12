@@ -6,6 +6,7 @@ require (
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.12.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.15.0
+	github.com/k0kubun/pp/v3 v3.2.0
 )
 
 require (

@@ -2,7 +2,6 @@ package views
 
 import (
 	"base.sw.sbc.space/pid/terraform-provider-si/models"
-	"bytes"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -319,17 +318,6 @@ func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 	res.SetId("")
 	return diags
-}
-
-func JsonRead(responseBytes []uint8) {
-	var out bytes.Buffer
-	err := json.Indent(&out, responseBytes, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("#####\n\n\n")
-	log.Println(out.String())
-	log.Printf("#####\n\n\n")
 }
 
 func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
