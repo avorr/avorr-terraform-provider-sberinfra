@@ -196,8 +196,9 @@ func init() {
 	//}
 
 	SchemaSecurityGroup = map[string]*schema.Schema{
-		"project_id": {Type: schema.TypeString, Required: true},
-		"group_name": {Type: schema.TypeString, Required: true},
+		"project_id":        {Type: schema.TypeString, Required: true},
+		"group_name":        {Type: schema.TypeString, Required: true},
+		"security_group_id": {Type: schema.TypeString, Computed: true},
 		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,

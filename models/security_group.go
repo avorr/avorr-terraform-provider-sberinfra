@@ -63,10 +63,11 @@ type SecurityRule struct {
 //}
 
 type SecurityGroup struct {
-	ProjectID     string `json:"-"`
-	GroupName     string `json:"group_name"`
-	SecurityRules []Rule `json:"security_rules"`
-	Status        string `json:"-"`
+	ProjectID       string `json:"-"`
+	GroupName       string `json:"group_name"`
+	SecurityRules   []Rule `json:"security_rules"`
+	State           string `json:"-"`
+	SecurityGroupID string "-" //`json:"security_group_id"`
 	//{
 	//Ethertype    string    `json:"ethertype"`
 	//ID           uuid.UUID `json:"id"`
@@ -95,6 +96,8 @@ func (o *SecurityGroup) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
 	o.GroupName = res.Get("group_name").(string)
 	o.ProjectID = res.Get("project_id").(string)
+	//o.SecurityGroupID = res.Get("security_group_id").(string)
+	o.SecurityGroupID = res.Id()
 	rules, ok := res.GetOk("security_rule")
 	if ok {
 		for _, v := range rules.(*schema.Set).List() {
@@ -128,83 +131,59 @@ func (o *SecurityGroup) CreateResource(data []byte) ([]byte, error) {
 	return Api.NewRequestCreate(fmt.Sprintf("projects/%s/security_groups", o.ProjectID), data)
 }
 
-func (o *SecurityGroup) Deserialize(responseBytes []byte) error {
-	//response := make(map[string]map[string]interface{})
-	//response := make(map[string]interface{})
-	response := map[string]ProjectNew{}
-	//err := json.Unmarshal(responseBytes, &response)
+func (o *SecurityGroup) Deserialize(responseBytes []byte, create bool) error {
 
-	//log.Println("##RB", responseBytes)
+	var responseStruct map[string]ProjectNew
+	err := json.Unmarshal(responseBytes, &responseStruct)
+	var allGroupsNames []string
 
-	//var responseMap map[string]map[string]interface{}
+	if create == true {
+		for _, group := range responseStruct["project"].SecurityGroups {
+			allGroupsNames = append(allGroupsNames, group.GroupName)
+			if group.GroupName == o.GroupName {
+				fmt.Println(group.Status)
+				o.State = group.Status
+				o.SecurityGroupID = group.SecurityGroupID
+			}
+		}
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+	for _, group := range responseStruct["project"].SecurityGroups {
+		log.Println("GG", group.GroupName)
+		log.Println("!!", existGroupName(allGroupsNames, group.GroupName))
+		log.Println("!!", !existGroupName(allGroupsNames, group.GroupName))
 
-	err := json.Unmarshal(responseBytes, &response)
-
+		if !existGroupName(allGroupsNames, group.GroupName) {
+			o.State = "deleted"
+		}
+	}
 	if err != nil {
 		return err
 	}
-
-	//o.Project.ID = response.Project.ID
-	//o.Project.Datacenter = response.Project.Datacenter
-	//o.Project.DomainID = response.Project.DomainID
-	//o.Project.GroupID = response.Project.GroupID
-
-	//o.Project. = value["group_id"].(string)
-	//o.Project.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
-	//o.Project.ResStandTypeId = value["stand_type_id"].(string)
-	//o.Project.StandType = value["stand_type"].(string)
-
-	//o.Project.Name = response.Project.Name
-	//o.Project.Type = response.Project.Type
-	//o.Project.State = response.Project.State
-
-	//o.Project.AppSystemsCi = value["app_systems_ci"].(string)
-
-	//objMap, ok := response["projects"].([]interface{})
-	//if !ok {
-	//	return errors.New("no project in response")
-	//}
-
-	//for _, v := range objMap {
-	//	value := v.(map[string]interface{})
-
-	//if value["name"].(string) == o.Project.Name {
-	//	o.Project.GroupID = uuid.MustParse(value["group_id"].(string))
-	//o.ResId = value["id"].(string)
-	//o.DomainId = uuid.MustParse(value["domain_id"].(string))
-	//o.GroupId = uuid.MustParse(value["group_id"].(string))
-	//o.ResGroupId = value["group_id"].(string)
-	//o.StandTypeId = uuid.MustParse(value["stand_type_id"].(string))
-	//o.ResStandTypeId = value["stand_type_id"].(string)
-	//o.StandType = value["stand_type"].(string)
-	//o.Name = value["name"].(string)
-	//o.Type = value["type"].(string)
-	//o.State = value["state"].(string)
-	//o.AppSystemsCi = value["app_systems_ci"].(string)
-	//}
-	//}
-
-	//o.Id = uuid.MustParse(objMap["id"].(string))
-	//o.ResId = objMap["id"].(string)
-	//o.DomainId = uuid.MustParse(objMap["domain_id"].(string))
-	//o.GroupId = uuid.MustParse(objMap["group_id"].(string))
-	//o.ResGroupId = objMap["group_id"].(string)
-	//o.StandTypeId = uuid.MustParse(objMap["stand_type_id"].(string))
-	//o.ResStandTypeId = objMap["stand_type_id"].(string)
-	//o.StandType = objMap["stand_type"].(string)
-	//o.Name = objMap["name"].(string)
-	//o.Type = objMap["type"].(string)
-	//o.State = objMap["state"].(string)
-	//o.AppSystemsCi = objMap["app_systems_ci"].(string)
 	return nil
 }
 
-func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *resource.StateChangeConf {
+func existGroupName(groups []string, groupName string) bool {
+	for _, i := range groups {
+		if i == groupName {
+			log.Println("###", i)
+			log.Println("###", groupName)
+
+			return true
+		}
+	}
+	return false
+}
+
+func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData, create bool) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
-		Pending:      []string{"Creating", "Pending"},
-		Target:       []string{"Running", "Damaged"},
+		Pending:      []string{"Creating", "Pending", "Deleting"},
+		Target:       []string{"Running", "Damaged", "Deleted"},
 		Refresh: func() (interface{}, string, error) {
 
 			responseBytes, err := o.ReadResource()
@@ -212,24 +191,30 @@ func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *reso
 				return nil, "error", err
 			}
 
-			err = o.Deserialize(responseBytes)
+			err = o.Deserialize(responseBytes, create)
 			if err != nil {
 				return nil, "error", err
 			}
 
-			//log.Printf("[DEBUG] Refresh state for [%s]: state: %s", o.ProjectID, o.Project.State)
-			log.Printf("[DEBUG] Refresh state for [%s]: state: %s", o.ProjectID)
-			// write to TF state
+			log.Printf("[DEBUG] Refresh state for [%s]: state: %s", o.GroupName, o.State)
 
+			// write to TF state
 			//o.WriteTF(res)
 
-			//if o.Project.State == "ready" {
+			if o.State == "ready" || o.State == "created" {
+				return o, "Running", nil
+			}
+
+			if o.State == "deleted" {
+				return o, "Deleted", nil
+			}
+			//if o.State == "created" {
 			//	return o, "Running", nil
 			//}
-			//if o.Project.State == "damaged" {
+			//if o.State == "damaged" {
 			//	return o, "Damaged", nil
 			//}
-			//if o.Project.State == "pending" {
+			//if o.State == "pending" {
 			//	return o, "Pending", nil
 			//}
 			return o, "Creating", nil
@@ -237,9 +222,59 @@ func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *reso
 	}
 }
 
+func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
+
+	//		"project_id": {Type: schema.TypeString, Required: true},
+	//		"group_name": {Type: schema.TypeString, Required: true},
+	//	"security_group_id": "1ce9f479-6635-4fd9-b18b-62aaeaac1835"
+	//		"security_rule": {
+	//			Type:     schema.TypeSet,
+	//			Optional: true,
+	//			Elem: &schema.Resource{
+	//				Schema: map[string]*schema.Schema{
+	//					"id":               {Type: schema.TypeString, Computed: true},
+	//					"ethertype":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
+	//					"direction":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
+	//					"protocol":         {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
+	//					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ValidateFunc: validation.IsCIDR},
+	//					"port_range_min":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
+	//					"port_range_max":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
+	//				},
+	//			},
+	//		},
+
+	res.SetId(o.SecurityGroupID)
+	//res.Set("security_group_id", o.SecurityGroupID)
+	//res.Set("security_rule", "")
+	//res.Set("ir_type", o.Project.IrType)
+	//res.Set("desc", o.Project.Desc)
+	//res.Set("group_id", o.Project.GroupID.String())
+	//res.Set("jump_host", strconv.FormatBool(o.Project.JumpHost))
+	//res.Set("name", o.Project.Name)
+	//res.Set("virtualization", o.Project.Virtualization)
+
+	//limits := make([]map[string]int, 1)
+
+	//limits[0] = map[string]int{
+	//	"cores_vcpu_count":  o.Project.Limits.CoresVcpuCount,
+	//	"ram_gb_amount":     o.Project.Limits.RamGbAmount,
+	//	"storage_gb_amount": o.Project.Limits.StorageGbAmount,
+	//}
+
+	//res.Set("limits", limits)
+
+	//res.SetConnInfo("network")
+	//res.ConnInfo()
+	//res.Set("network_uuid")
+}
+
 func (o *SecurityGroup) ReadResource() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ProjectID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
+}
+
+func (o *SecurityGroup) DeleteResource() error {
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/security_groups?security_group[security_group_id]=%s", o.ProjectID, o.SecurityGroupID), nil, 200)
 }
 
 /*
@@ -581,9 +616,7 @@ func (o *Project) UpdateProjectLimits(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("/v2/projects/%s/quota", o.Project.ID), data)
 }
 
-func (o *Project) DeleteDI() error {
-	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.Project.ID), nil, 204)
-}
+
 
 func (o *Project) DeleteNetwork(NetworkUuid string) error {
 	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.Project.ID, NetworkUuid), nil, 200)

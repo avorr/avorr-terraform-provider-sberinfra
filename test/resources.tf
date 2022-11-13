@@ -48,12 +48,12 @@ resource si_project "project" {
     enable_dhcp     = true
     is_default      = true
   }
-#  network {
-#    network_name    = "internal-network2"
-#    cidr            = "172.30.100.0/30"
-#    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
-#    enable_dhcp     = true
-#  }
+  network {
+    network_name    = "internal-network2"
+    cidr            = "172.30.100.0/30"
+    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+    enable_dhcp     = true
+  }
 }
 
 locals {
@@ -73,9 +73,9 @@ resource "si_vm" "vm1" {
     size = 50
 #    storage_type = "iscsi-fast-01"
   }
-  tag_ids      = [
-    si_tag.nolabel.id
-  ]
+#  tag_ids      = [
+#    si_tag.nolabel.id
+#  ]
   volume {
     size = 50
   }
@@ -87,7 +87,7 @@ resource "si_vm" "vm1" {
     size         = 50
     storage_type = "rbd-1"
   }
-  count = 1
+  count = 0
 }
 
 #resource "si_project" "import" {
@@ -95,3 +95,8 @@ resource "si_vm" "vm1" {
 
 #resource "si_vm" "import" {
 #}
+
+resource "si_security_group" "group" {
+  group_name = "test-group"
+  project_id = si_project.project.id
+}

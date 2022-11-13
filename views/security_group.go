@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/k0kubun/pp/v3"
-	"log"
 )
 
 func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -26,20 +24,26 @@ func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interf
 
 	//log.Println("###", pp.Sprintln(string(requestBytes)))
 
+	//log.Println(pp.Sprintln(obj.GroupName))
+	//return diags
+
 	//return diags
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	responseBytes, err := obj.CreateResource(requestBytes)
-
-	log.Println("!!!!###", pp.Sprintln(string(responseBytes)))
-
-	_, err = obj.StateChangeSecurityGroup(res).WaitForStateContext(ctx)
+	_, err = obj.CreateResource(requestBytes)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	_, err = obj.StateChangeSecurityGroup(res, true).WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	obj.WriteTF(res)
 
 	return diags
 
@@ -77,24 +81,21 @@ func SecurityGroupRead(ctx context.Context, res *schema.ResourceData, m interfac
 
 	var diags diag.Diagnostics
 
-	//obj := models.Project{}
-	obj := models.ResProject{}
-	obj.ReadTFRes(res)
+	obj := models.SecurityGroup{}
 
-	responseBytes, err := obj.ReadDIRes()
+	obj.ReadTF(res)
 
+	responseBytes, err := obj.ReadResource()
 	if err != nil {
 		return diag.FromErr(err)
 	}
-
 	//err = obj.Deserialize(responseBytes)
-	err = obj.DeserializeRead(responseBytes)
-
+	err = obj.Deserialize(responseBytes, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}
 
-	obj.WriteTFRes(res)
+	obj.WriteTF(res)
 	return diags
 }
 
@@ -293,13 +294,17 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 
 func SecurityGroupDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	obj := models.Project{}
+	obj := models.SecurityGroup{}
 	obj.ReadTF(res)
-
-	err := obj.DeleteDI()
+	err := obj.DeleteResource()
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	_, err = obj.StateChangeSecurityGroup(res, false).WaitForStateContext(ctx)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
 	res.SetId("")
 	return diags
 }
