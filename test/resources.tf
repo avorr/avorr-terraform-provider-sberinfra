@@ -21,24 +21,18 @@
 # storage_type = "iscsi_common"    ------> FAST
 # storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
 
-#data "si_domain" "domain" {
-#  name = "ГосТех"
-#}
+data "si_domain" "domain" {
+  name = "ГосТех"
+}
 
-#data "si_group" "group" {
-#  domain_id = data.si_domain.domain.id
-#  name      = "Common"
-#}
+data "si_group" "group" {
+  domain_id = data.si_domain.domain.id
+  name      = "Common"
+}
 
 resource si_project "project" {
-  #  ir_group       = "vdc"
-  #  type           = "vdc"
-  #  ir_type        = "vdc_openstack"
-  #  virtualization = "openstack"
-
   name       = "Test-terraform-project" //requared false
-#  group_id   = data.si_group.group.id
-  group_id   = "493afd2f-8547-4d2c-9be0-0c37aba6b08c"
+  group_id   = data.si_group.group.id
   datacenter = "PD24R3PROM" //"okvm1"
   jump_host  = false
   desc       = "test-di.dns.zone"
@@ -67,84 +61,37 @@ locals {
 }
 
 resource "si_vm" "vm1" {
-  #  ir_group        = "vm"
-  #  virtualization  = "openstack"
-  #  fault_tolerance = "Stand-alone"
-  #  zone            = "internal"
-
-  service_name = "terraform-test-si-vm-0${count.index + 1}"
-#  group_id     = data.si_group.group.id
-  group_id     = "493afd2f-8547-4d2c-9be0-0c37aba6b08c"
+  service_name = "terraform-test-hdd-0${count.index + 1}"
+  group_id     = data.si_group.group.id
   project_id   = si_project.project.id
   os_name      = "rhel"
   os_version   = "7.9"
   flavor       = "m1.tiny"
-  disk         = 50
-#  network_uuid = local.networks["internal-network"]
-#  tag_ids      = [
-#    si_tag.nolabel.id
-#  ]
-#  volume {
-#    size = 50
-#  }
-#  volume {
-#    size         = 50
-#    storage_type = "iscsi_common"
-#  }
-#  volume {
-#    size         = 50
-#    storage_type = "rbd-1"
-#  }
-  count = 0
-}
-
-resource "si_security_group" "test_sg" {
-#  project_id = si_project.project.id
-  project_id = "2dc1c80c-2998-424d-b0ce-5c0295b590ff"
-  group_name = "terraform-test-sg"
-#  security_rule {
-#    ethertype = "IPv4"
-#    direction = "ingress"
-#    protocol = "tcp"
-#  }
-#  security_rule {
-#    ethertype = "IPv4"
-#    direction = "ingress"
-#    protocol = "tcp"
-#    remote_ip_prefix = "172.30.100.0/30"
-#    port_range_min = 443
-#    port_range_max = 444
-#  }
+#  disk         = 50 // Optional param | Temporary
+  network_uuid = local.networks["internal-network"]
+  hdd {
+    size = 50
+#    storage_type = "iscsi-fast-01"
+  }
+  tag_ids      = [
+    si_tag.nolabel.id
+  ]
+  volume {
+    size = 50
+  }
+  volume {
+    size         = 50
+    storage_type = "iscsi_common"
+  }
+  volume {
+    size         = 50
+    storage_type = "rbd-1"
+  }
+  count = 1
 }
 
 #resource "si_project" "import" {
 #}
 
 #resource "si_vm" "import" {
-#}
-
-
-#{
-#  "security_group": {
-#    "group_name": "test",
-#    "security_rules": []
-#  }
-#}
-
-
-
-#{
-#"security_group": {
-#"group_name": "test",
-#"security_rules": [
-#{
-#"ethertype": "IPv4",
-#"id": "1",
-#"direction": "ingress",
-#"port_range_min": "443",
-#"port_range_max": "444",
-#"protocol": "tcp"
-#}
-#]
-#}
 #}

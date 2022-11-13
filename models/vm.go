@@ -48,8 +48,17 @@ func (o *VM) NewObj() DIResource {
 func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[string]interface{} {
 	delete(serverData, "cpu")
 	delete(serverData, "ram")
-	serverData["hdd"] = map[string]int{
-		"size": server.Disk,
+	if server.Hdd.StorageType != "" {
+		serverData["hdd"] = map[string]interface{}{
+			//"size": server.Disk,
+			"size":         server.Hdd.Size,
+			"storage_type": server.Hdd.StorageType,
+		}
+	} else {
+		serverData["hdd"] = map[string]int{
+			//"size": server.Disk,
+			"size": server.Hdd.Size,
+		}
 	}
 	//if server.Region == "" {
 	//	delete(serverData, "region")

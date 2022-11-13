@@ -56,7 +56,11 @@ type Server struct {
 	ResVolumes       []*HCLVolume  `json:"-" hcl:"volume,block"`
 	TagIds           []uuid.UUID   `json:"tag_ids" hcl:"-"`
 	ErrMsg           string        `json:"err_msg,omitempty" hcl:"-"`
-	IsImport         bool
+	Hdd              struct {
+		Size        int    `json:"size"`
+		StorageType string `json:"storage_type,omitempty"`
+	} `json:"hdd,omitempty"`
+	IsImport bool
 }
 
 func (o *Server) ReadTF(res *schema.ResourceData) {
@@ -83,7 +87,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	osVersion, ok := res.GetOk("os_version")
 	if ok {
 		o.OsVersion = osVersion.(string)
-
 	}
 	o.FaultTolerance = res.Get("fault_tolerance").(string)
 	o.Virtualization = res.Get("virtualization").(string)
@@ -125,6 +128,13 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if ok {
 		o.PublicSshName = publicSshName.(string)
 	}
+	hdd, ok := res.GetOk("hdd")
+	if ok {
+		hdd = hdd.(*schema.Set).List()[0]
+		o.Hdd.Size = hdd.(map[string]interface{})["size"].(int)
+		o.Hdd.StorageType = hdd.(map[string]interface{})["storage_type"].(string)
+	}
+
 	tags, ok := res.GetOk("tag_ids")
 	if ok {
 		tagSet := tags.(*schema.Set)
@@ -182,12 +192,15 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("flavor", o.Flavor)
 	res.Set("cpu", o.Cpu)
 	res.Set("ram", o.Ram)
-	res.Set("disk", o.Disk)
 	res.Set("ip", o.Ip)
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
 
-	_, ok := res.GetOk("network_uuid")
+	_, ok := res.GetOk("disk")
+	if ok && o.Disk != 0 {
+		res.Set("disk", o.Disk)
+	}
+	_, ok = res.GetOk("network_uuid")
 	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
 		res.Set("network_uuid", o.NetworkUuid.String())
 	}
@@ -209,6 +222,28 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	if o.PublicSshName != "" {
 		res.Set("public_ssh_name", o.PublicSshName)
 	}
+	if o.Hdd.Size != 0 {
+
+		if o.Hdd.StorageType != "" {
+			hdd := make([]map[string]interface{}, 1)
+			hdd[0] = map[string]interface{}{
+				"size":         o.Hdd.Size,
+				"storage_type": o.Hdd.StorageType,
+			}
+			res.Set("hdd", hdd)
+		} else {
+			hdd := make([]map[string]int, 1)
+			hdd[0] = map[string]int{
+				"size": o.Hdd.Size,
+			}
+			res.Set("hdd", hdd)
+		}
+
+		//err := res.Set("hdd", map[string]interface{}{"size": o.Hdd.Size, "storage_type": o.Hdd.StorageType})
+		//if err != nil {
+		//	log.Println("ERR", err)
+		//}
+	}
 	o.Object.OnWriteTF(res, o)
 }
 
@@ -219,11 +254,11 @@ func (o *Server) ToMap() map[string]interface{} {
 		"service_name": o.ServiceName,
 		"ir_group":     o.IrGroup,
 		//"region":          o.Region,
-		"network_uuid":    o.NetworkUuid.String(),
-		"zone":            o.Zone,
-		"cpu":             o.Cpu,
-		"ram":             o.Ram,
-		"disk":            o.Disk,
+		"network_uuid": o.NetworkUuid.String(),
+		"zone":         o.Zone,
+		"cpu":          o.Cpu,
+		"ram":          o.Ram,
+		//"disk":            o.Disk,
 		"virtualization":  o.Virtualization,
 		"os_name":         o.OsName,
 		"os_version":      o.OsVersion,
@@ -238,9 +273,21 @@ func (o *Server) ToMap() map[string]interface{} {
 		"step":            o.Step,
 		"user":            o.User,
 	}
+	if o.Disk != 0 {
+		serverMap["disk"] = o.Disk
+	}
+
 	if o.PublicSshName != "" {
 		serverMap["public_ssh_name"] = o.PublicSshName
 		serverMap["public_ssh"] = o.PublicSsh
+	}
+	if o.Hdd.Size != 0 {
+		if o.Hdd.StorageType != "" {
+			serverMap["hdd"] = map[string]interface{}{"size": o.Hdd.Size, "storage_type": o.Hdd.StorageType}
+		} else {
+			serverMap["hdd"] = map[string]int{"size": o.Hdd.Size}
+		}
+
 	}
 	return serverMap
 }
@@ -344,6 +391,12 @@ func (o *Server) Deserialize(data []byte) error {
 	if ok && publicSshName != "" {
 		o.PublicSshName = publicSshName.(string)
 	}
+	hdd, ok := serverMap["hdd"]
+	if ok && hdd != "" {
+		o.Hdd.Size = hdd.(map[string]interface{})["size"].(int)
+		o.Hdd.StorageType = hdd.(map[string]interface{})["storage_type"].(string)
+	}
+
 	password, ok := serverMap["password"]
 	if ok && password != nil {
 		o.Password = password.(string)
