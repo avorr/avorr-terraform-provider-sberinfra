@@ -76,7 +76,6 @@ func init() {
 			Required: true,
 			MinItems: 1,
 			Elem: &schema.Resource{
-
 				Schema: map[string]*schema.Schema{
 					"network_name": {Type: schema.TypeString, Required: true},
 					"network_uuid": {Type: schema.TypeString, Computed: true},
@@ -162,78 +161,26 @@ func init() {
 		"tag_ids": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 	}
 
-	//{
-	//  "security_group": {
-	//    "group_name": "string",
-	//    "server_uuid": "string",
-	//    "security_rules": [
-	//      {
-	//        "direction": "ingress",
-	//        "ethertype": "IPv4",
-	//        "protocol": "tcp",
-	//        "port_range_min": 0,
-	//        "port_range_max": 0,
-	//        "remote_ip_prefix": "string",
-	//        "remote_group_id": "string"
-	//      }
-	//    ]
-	//  }
-	//}
-
-	//{
-	// "security_group": {
-	//   "group_name": "dsdsds",
-	//   "security_rules": [
-	//     {
-	//       "ethertype": "IPv4",
-	//       "id": "3",
-	//       "direction": "ingress",
-	//       "protocol": "tcp",
-	//       "remote_ip_prefix": "172.21.21.0/0"
-	//     }
-	//   ]
-	// }
-	//}
-
 	SchemaSecurityGroup = map[string]*schema.Schema{
-		"project_id":        {Type: schema.TypeString, Required: true},
-		"group_name":        {Type: schema.TypeString, Required: true},
-		"security_group_id": {Type: schema.TypeString, Computed: true},
+		"id":         {Type: schema.TypeString, Computed: true},
+		"project_id": {Type: schema.TypeString, Required: true},
+		"group_name": {Type: schema.TypeString, Required: true},
 		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
 					"id":               {Type: schema.TypeString, Computed: true},
-					"ethertype":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
-					"direction":        {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
-					"protocol":         {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
-					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ValidateFunc: validation.IsCIDR},
-					"port_range_min":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
-					"port_range_max":   {Type: schema.TypeInt, Optional: true, ValidateFunc: validation.IsPortNumber},
+					"ethertype":        {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
+					"direction":        {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
+					"protocol":         {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
+					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
+					"port_range_min":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
+					"port_range_max":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
+					"remote_group_id":  {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
 				},
 			},
 		},
-		//"network": {
-		//	Type:     schema.TypeSet,
-		//	Required: true,
-		//	MinItems: 1,
-		//	Elem: &schema.Resource{
-		//
-		//		Schema: map[string]*schema.Schema{
-		//			"network_name": {Type: schema.TypeString, Required: true},
-		//			"network_uuid": {Type: schema.TypeString, Computed: true},
-		//			"cidr":         {Type: schema.TypeString, Required: true},
-		//			"dns_nameservers": {
-		//				Type:     schema.TypeSet,
-		//				Required: true,
-		//				Elem:     &schema.Schema{Type: schema.TypeString},
-		//			},
-		//			"enable_dhcp": {Type: schema.TypeBool, Required: true},
-		//			"is_default":  {Type: schema.TypeBool, Optional: true, Default: false},
-		//		},
-		//	},
-		//},
 	}
 
 	SchemaTag = map[string]*schema.Schema{

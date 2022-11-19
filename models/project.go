@@ -139,7 +139,7 @@ type ResProject struct {
 				PortRangeMax    interface{} `json:"port_range_max"`
 				PortRangeMin    interface{} `json:"port_range_min"`
 				RemoteGroupID   interface{} `json:"remote_group_id"`
-				RemoteIPPrefix  interface{} `json:"remote_ip_prefix"`
+				RemoteIpPrefix  interface{} `json:"remote_ip_prefix"`
 				SecurityGroupID string      `json:"security_group_id"`
 			} `json:"rules"`
 			Status           string        `json:"status"`
@@ -202,17 +202,7 @@ type ProjectNew struct {
 	Edge                 interface{}   `json:"edge"`
 	HighAvailability     interface{}   `json:"high_availability"`
 	SecurityGroups       []struct {
-		Rules []struct {
-			ID              string      `json:"id"`
-			Protocol        interface{} `json:"protocol"`
-			Direction       string      `json:"direction"`
-			Ethertype       string      `json:"ethertype"`
-			PortRangeMax    int         `json:"port_range_max"`
-			PortRangeMin    int         `json:"port_range_min"`
-			RemoteGroupID   interface{} `json:"remote_group_id"`
-			RemoteIPPrefix  interface{} `json:"remote_ip_prefix"`
-			SecurityGroupID string      `json:"security_group_id"`
-		} `json:"rules"`
+		Rules            []Rule        `json:"rules"`
 		Status           string        `json:"status"`
 		GroupName        string        `json:"group_name"`
 		SecurityGroupID  string        `json:"security_group_id"`

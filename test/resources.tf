@@ -61,21 +61,21 @@ locals {
 }
 
 resource "si_vm" "vm1" {
-  service_name = "terraform-test-hdd-0${count.index + 1}"
+  service_name = "terraform-test-${format("%02d", count.index + 1)}.${si_project.project.desc}"
   group_id     = data.si_group.group.id
   project_id   = si_project.project.id
   os_name      = "rhel"
   os_version   = "7.9"
   flavor       = "m1.tiny"
-#  disk         = 50 // Optional param | Temporary
+  #  disk         = 50 // Optional param | Temporary
   network_uuid = local.networks["internal-network"]
   hdd {
     size = 50
-#    storage_type = "iscsi-fast-01"
+    #    storage_type = "iscsi-fast-01"
   }
-#  tag_ids      = [
-#    si_tag.nolabel.id
-#  ]
+  tag_ids = [
+    si_tag.nolabel.id
+  ]
   volume {
     size = 50
   }
@@ -84,19 +84,45 @@ resource "si_vm" "vm1" {
     storage_type = "iscsi_common"
   }
   volume {
-    size         = 50
+    size         = 100
     storage_type = "rbd-1"
   }
-  count = 0
+  count = 1
 }
+
+resource "si_security_group" "group" {
+  group_name = "test-group"
+  project_id = si_project.project.id
+  security_rule {
+    ethertype        = "IPv4"            //TypeString "IPv4", "IPv6"
+    direction        = "ingress"         //TypeString "ingress", "egress"
+    protocol         = "tcp"             //TypeString "tcp", "udp", "icmp"
+    remote_ip_prefix = "172.21.21.0/28"  //TypeString
+    port_range_min   = 443               //TypeInt
+    port_range_max   = 444               //TypeInt
+  }
+  security_rule {
+    ethertype        = "IPv4"
+    direction        = "egress"
+    protocol         = "tcp"
+    remote_ip_prefix = "172.21.21.0/28"
+    port_range_min   = 443
+    port_range_max   = 444
+  }
+  security_rule {
+    ethertype        = "IPv4"
+    direction        = "egress"
+    protocol         = "udp"
+    remote_ip_prefix = "172.21.21.0/0"
+    port_range_min   = 443
+    port_range_max   = 444
+  }
+}
+
+
 
 #resource "si_project" "import" {
 #}
 
 #resource "si_vm" "import" {
 #}
-
-resource "si_security_group" "group" {
-  group_name = "test-group"
-  project_id = si_project.project.id
-}
