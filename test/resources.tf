@@ -34,8 +34,7 @@ resource si_project "project" {
   name       = "Test-terraform-project" //requared false
   group_id   = data.si_group.group.id
   datacenter = "PD24R3PROM" //"okvm1"
-  jump_host  = false
-  desc       = "test-di.dns.zone"
+  desc       = "test-si.dns.zone"
   limits {
     cores_vcpu_count  = 100    //
     ram_gb_amount     = 10000   // requared false
@@ -67,14 +66,17 @@ resource "si_vm" "vm1" {
   os_name      = "rhel"
   os_version   = "7.9"
   flavor       = "m1.tiny"
-  #  disk         = 50 // Optional param | Temporary
-  network_uuid = local.networks["internal-network"]
-  hdd {
+  disk = {
     size = 50
-    #    storage_type = "iscsi-fast-01"
+#    storage_type = "iscsi-fast-01"
   }
+  network_uuid = local.networks["internal-network"]
   tag_ids = [
     si_tag.nolabel.id
+  ]
+  security_groups = [
+    si_security_group.iam.id,
+    si_security_group.kafka.id,
   ]
   volume {
     size = 50
@@ -90,36 +92,45 @@ resource "si_vm" "vm1" {
   count = 1
 }
 
-resource "si_security_group" "group" {
-  group_name = "test-group"
+resource "si_security_group" "iam" {
+  name = "iam"
   project_id = si_project.project.id
   security_rule {
-    ethertype        = "IPv4"            //TypeString "IPv4", "IPv6"
-    direction        = "ingress"         //TypeString "ingress", "egress"
-    protocol         = "tcp"             //TypeString "tcp", "udp", "icmp"
-    remote_ip_prefix = "172.21.21.0/28"  //TypeString
-    port_range_min   = 443               //TypeInt
-    port_range_max   = 444               //TypeInt
+    ethertype        = "IPv4"             //TypeString "IPv4", "IPv6"
+    direction        = "ingress"          //TypeString "ingress", "egress"
+    protocol         = "tcp"              //TypeString "tcp", "udp", "icmp"
+    remote_ip_prefix = "172.21.21.10/28"  //TypeString
+    port_range_min   = 443                //TypeInt
+    port_range_max   = 444                //TypeInt
   }
   security_rule {
     ethertype        = "IPv4"
-    direction        = "egress"
+    direction        = "ingress"
     protocol         = "tcp"
-    remote_ip_prefix = "172.21.21.0/28"
-    port_range_min   = 443
-    port_range_max   = 444
-  }
-  security_rule {
-    ethertype        = "IPv4"
-    direction        = "egress"
-    protocol         = "udp"
-    remote_ip_prefix = "172.21.21.0/0"
-    port_range_min   = 443
-    port_range_max   = 444
+    remote_ip_prefix = "172.21.21.10/28"
+    port_range_min   = 80
+    port_range_max   = 80
   }
 }
 
-
+resource "si_security_group" "kafka" {
+  name = "kafka"
+  project_id = si_project.project.id
+  security_rule {
+    ethertype        = "IPv4"
+    direction        = "ingress"
+    protocol         = "tcp"
+    port_range_min   = 9092
+    port_range_max   = 9092
+  }
+  security_rule {
+    ethertype        = "IPv4"
+    direction        = "ingress"
+    protocol         = "tcp"
+    port_range_min   = 2181
+    port_range_max   = 2181
+  }
+}
 
 #resource "si_project" "import" {
 #}

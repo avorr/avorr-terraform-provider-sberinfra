@@ -34,33 +34,36 @@ type Server struct {
 	Virtualization string     `json:"virtualization" hcl:"virtualization"`
 	FaultTolerance string     `json:"fault_tolerance" hcl:"fault_tolerance"`
 	//Region         string    `json:"region" hcl:"region"`
-	NetworkUuid      uuid.UUID     `json:"network_uuid,omitempty" hcl:"network_uuid"`
-	User             string        `json:"user"`
-	Password         string        `json:"password,omitempty"`
-	Cpu              int           `json:"cpu" hcl:"cpu"`
-	Ram              int           `json:"ram" hcl:"ram"`
-	Disk             int           `json:"disk" hcl:"disk"`
-	Flavor           string        `json:"flavor"`
-	Zone             string        `json:"zone" hcl:"zone"`
-	Ip               string        `json:"ip"`
-	PublicSshName    string        `json:"public_ssh_name,omitempty" hcl:"public_ssh_name"`
-	PublicSsh        string        `json:"public_ssh,omitempty"`
-	ResId            string        `json:"-" hcl:"id"`
-	ResType          string        `json:"-" hcl:"type,label"`
-	ResName          string        `json:"-" hcl:"name,label"`
-	ResGroupIdUUID   string        `json:"-" hcl:"group_id_uuid"`
-	ResGroupId       string        `json:"-" hcl:"group_id"`
-	ResProjectIdUUID string        `json:"-" hcl:"project_id_uuid"`
-	ResProjectId     string        `json:"-" hcl:"project_id"`
-	ResAppParams     *HCLAppParams `json:"-" hcl:"app_params,block"`
-	ResVolumes       []*HCLVolume  `json:"-" hcl:"volume,block"`
-	TagIds           []uuid.UUID   `json:"tag_ids" hcl:"-"`
-	ErrMsg           string        `json:"err_msg,omitempty" hcl:"-"`
-	Hdd              struct {
+	NetworkUuid       uuid.UUID       `json:"network_uuid,omitempty" hcl:"network_uuid"`
+	User              string          `json:"user"`
+	Password          string          `json:"password,omitempty"`
+	Cpu               int             `json:"cpu" hcl:"cpu"`
+	Ram               int             `json:"ram" hcl:"ram"`
+	Disk              int             `json:"disk" hcl:"disk"`
+	Flavor            string          `json:"flavor"`
+	Zone              string          `json:"zone" hcl:"zone"`
+	Ip                string          `json:"ip"`
+	PublicSshName     string          `json:"public_ssh_name,omitempty" hcl:"public_ssh_name"`
+	PublicSsh         string          `json:"public_ssh,omitempty"`
+	ResId             string          `json:"-" hcl:"id"`
+	ResType           string          `json:"-" hcl:"type,label"`
+	ResName           string          `json:"-" hcl:"name,label"`
+	ResGroupIdUUID    string          `json:"-" hcl:"group_id_uuid"`
+	ResGroupId        string          `json:"-" hcl:"group_id"`
+	ResProjectIdUUID  string          `json:"-" hcl:"project_id_uuid"`
+	ResProjectId      string          `json:"-" hcl:"project_id"`
+	ResAppParams      *HCLAppParams   `json:"-" hcl:"app_params,block"`
+	ResVolumes        []*HCLVolume    `json:"-" hcl:"volume,block"`
+	TagIds            []uuid.UUID     `json:"tag_ids" hcl:"-"`
+	SecurityGroups    []uuid.UUID     `json:"-" hcl:"-"`
+	ResSecurityGroups []SecurityGroup `json:"security_groups" hcl:"-"`
+	//ResSecurityGroups []SecurityGroup `json:"-" hcl:"-"`
+	ErrMsg string `json:"err_msg,omitempty" hcl:"-"`
+	Hdd    struct {
 		Size        int    `json:"size"`
 		StorageType string `json:"storage_type,omitempty"`
 	} `json:"hdd,omitempty"`
-	IsImport bool
+	IsImport bool `json:"-"`
 }
 
 func (o *Server) ReadTF(res *schema.ResourceData) {
@@ -94,7 +97,12 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	o.Zone = res.Get("zone").(string)
 	disk, ok := res.GetOk("disk")
 	if ok {
-		o.Disk = disk.(int)
+		o.Disk, _ = strconv.Atoi(disk.(map[string]interface{})["size"].(string))
+		o.Hdd.Size = o.Disk
+		storageType := disk.(map[string]interface{})["storage_type"]
+		if storageType != nil {
+			o.Hdd.StorageType = disk.(map[string]interface{})["storage_type"].(string)
+		}
 	}
 	irType, ok := res.GetOk("ir_type")
 	if ok {
@@ -128,12 +136,6 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if ok {
 		o.PublicSshName = publicSshName.(string)
 	}
-	hdd, ok := res.GetOk("hdd")
-	if ok {
-		hdd = hdd.(*schema.Set).List()[0]
-		o.Hdd.Size = hdd.(map[string]interface{})["size"].(int)
-		o.Hdd.StorageType = hdd.(map[string]interface{})["storage_type"].(string)
-	}
 
 	tags, ok := res.GetOk("tag_ids")
 	if ok {
@@ -145,6 +147,16 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 				log.Println(err)
 			}
 			o.TagIds = append(o.TagIds, id)
+		}
+	}
+	securityGroups, ok := res.GetOk("security_groups")
+	if ok {
+		for _, v := range securityGroups.(*schema.Set).List() {
+			id, err := uuid.Parse(v.(string))
+			if err != nil {
+				log.Println(err)
+			}
+			o.SecurityGroups = append(o.SecurityGroups, id)
 		}
 	}
 	o.Object.OnReadTF(res, o)
@@ -197,9 +209,9 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	//res.Set("region", o.Region)
 
 	_, ok := res.GetOk("disk")
-	if ok && o.Disk != 0 {
-		res.Set("disk", o.Disk)
-	}
+	//if ok && o.Disk != 0 {
+	//	res.Set("disk", o.Disk)
+	//}
 	_, ok = res.GetOk("network_uuid")
 	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
 		res.Set("network_uuid", o.NetworkUuid.String())
@@ -225,18 +237,24 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	if o.Hdd.Size != 0 {
 
 		if o.Hdd.StorageType != "" {
-			hdd := make([]map[string]interface{}, 1)
-			hdd[0] = map[string]interface{}{
-				"size":         o.Hdd.Size,
-				"storage_type": o.Hdd.StorageType,
+			//hdd := make([]map[string]interface{}, 1)
+			//hdd[0] = map[string]interface{}{
+			//	"size":         o.Hdd.Size,
+			//	"storage_type": o.Hdd.StorageType,
+			//}
+			err := res.Set("disk", map[string]interface{}{"size": o.Disk, "storage_type": o.Hdd.StorageType})
+			if err != nil {
+				log.Println(err)
 			}
-			res.Set("hdd", hdd)
 		} else {
-			hdd := make([]map[string]int, 1)
-			hdd[0] = map[string]int{
-				"size": o.Hdd.Size,
+			//hdd := make([]map[string]int, 1)
+			//hdd[0] = map[string]int{
+			//	"size": o.Hdd.Size,
+			//}
+			err := res.Set("disk", map[string]int{"size": o.Disk})
+			if err != nil {
+				log.Println(err)
 			}
-			res.Set("hdd", hdd)
 		}
 
 		//err := res.Set("hdd", map[string]interface{}{"size": o.Hdd.Size, "storage_type": o.Hdd.StorageType})
@@ -281,13 +299,10 @@ func (o *Server) ToMap() map[string]interface{} {
 		serverMap["public_ssh_name"] = o.PublicSshName
 		serverMap["public_ssh"] = o.PublicSsh
 	}
-	if o.Hdd.Size != 0 {
-		if o.Hdd.StorageType != "" {
-			serverMap["hdd"] = map[string]interface{}{"size": o.Hdd.Size, "storage_type": o.Hdd.StorageType}
-		} else {
-			serverMap["hdd"] = map[string]int{"size": o.Hdd.Size}
-		}
-
+	if o.Hdd.StorageType != "" {
+		serverMap["hdd"] = map[string]interface{}{"size": o.Disk, "storage_type": o.Hdd.StorageType}
+	} else {
+		serverMap["hdd"] = map[string]int{"size": o.Disk}
 	}
 	return serverMap
 }
@@ -418,8 +433,31 @@ func (o *Server) Deserialize(data []byte) error {
 			}
 		}
 	}
+	o.SecurityGroups = make([]uuid.UUID, 0)
+	securityGroups, ok := serverMap["security_groups"]
+
+	if ok && securityGroups != nil {
+		for _, v := range securityGroups.([]interface{}) {
+			id, err := uuid.Parse(v.(map[string]interface{})["security_group_id"].(string))
+			if err != nil {
+				log.Println(err)
+			} else {
+				o.SecurityGroups = append(o.SecurityGroups, id)
+			}
+		}
+	}
 	o.Object.OnDeserialize(serverMap, o)
 
+	return nil
+}
+
+func (o *Server) DeserializeSecurityGroups(data []byte) error {
+	response := make(map[string]Server)
+	err := json.Unmarshal(data, &response)
+	if err != nil {
+		return err
+	}
+	o.ResSecurityGroups = response["server"].ResSecurityGroups
 	return nil
 }
 
@@ -470,6 +508,38 @@ func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
 		return nil, err
 	}
 	return Api.NewRequestCreate(fmt.Sprintf(o.Object.Urls("tag_attach"), o.Id), data)
+}
+
+func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, error) {
+
+	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
+	//{
+	//    "security_group": {
+	//        "state": "attach",
+	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
+	//    }
+	//}
+
+	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
+	//{
+	//    "security_group": {
+	//        "state": "detach",
+	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
+	//    }
+	//}
+
+	request := map[string]map[string]string{
+		"security_group": {
+			"state":             state,
+			"security_group_id": securityGroupId,
+		},
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+	//return Api.NewRequestCreate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
+	return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
 }
 
 func (o *Server) TagDetachDI(tagId string) error {
@@ -556,6 +626,46 @@ func (o *Server) StateResizeChange(res *schema.ResourceData) *resource.StateChan
 				return o, "Stable", nil
 			}
 			return o, "Resizing", nil
+		},
+	}
+}
+
+func (o *Server) StateSecurityGroupChange(res *schema.ResourceData) *resource.StateChangeConf {
+	return &resource.StateChangeConf{
+		Timeout:      res.Timeout(schema.TimeoutCreate),
+		PollInterval: 15 * time.Second,
+		Pending:      []string{"Attaching", "Detaching"},
+		Target:       []string{"Attached"},
+		Refresh: func() (interface{}, string, error) {
+			responseBytes, err := o.ReadDI()
+			if err != nil {
+				return nil, "error", err
+			}
+
+			err = o.DeserializeSecurityGroups(responseBytes)
+			if err != nil {
+				return nil, "error", err
+			}
+
+			log.Printf("[DEBUG] Refresh state for [%s]: %s", o.Id.String(), o.StateResize)
+
+			for _, i := range o.ResSecurityGroups {
+				for _, i2 := range i.AttachedToServer {
+					if o.Id == i2.ServerUUID {
+						if i2.Status == "attaching" {
+							return o, "Attaching", nil
+						} else if i2.Status == "detaching" {
+							return o, "Detaching", nil
+						}
+					}
+				}
+			}
+
+			//if o.StateResize == "stable" {
+			//	o.WriteTF(res)
+			//	return o, "Stable", nil
+			//}
+			return o, "Attached", nil
 		},
 	}
 }

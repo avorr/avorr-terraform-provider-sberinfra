@@ -27,16 +27,17 @@ func (o *VM) GetFile() string {
 
 func (o *VM) Urls(action string) string {
 	urls := map[string]string{
-		"create":        "servers",
-		"read":          "servers/%s",
-		"update":        "servers/%s",
-		"delete":        "servers/%s",
-		"resize":        "servers/%s/resize",
-		"move":          "servers/moving_vms",
-		"volume_create": "servers/%s/volume_attachments",
-		"volume_remove": "servers/%s/volume_detachments",
-		"tag_attach":    "servers/%s/tags",
-		"tag_detach":    "servers/%s/tags/%s",
+		"create":         "servers",
+		"read":           "servers/%s",
+		"update":         "servers/%s",
+		"delete":         "servers/%s",
+		"resize":         "servers/%s/resize",
+		"move":           "servers/moving_vms",
+		"volume_create":  "servers/%s/volume_attachments",
+		"volume_remove":  "servers/%s/volume_detachments",
+		"tag_attach":     "servers/%s/tags",
+		"tag_detach":     "servers/%s/tags/%s",
+		"security_group": "servers/%s/action",
 	}
 	return urls[action]
 }
@@ -51,13 +52,13 @@ func (o *VM) OnSerialize(serverData map[string]interface{}, server *Server) map[
 	if server.Hdd.StorageType != "" {
 		serverData["hdd"] = map[string]interface{}{
 			//"size": server.Disk,
-			"size":         server.Hdd.Size,
+			"size":         server.Disk,
 			"storage_type": server.Hdd.StorageType,
 		}
 	} else {
 		serverData["hdd"] = map[string]int{
 			//"size": server.Disk,
-			"size": server.Hdd.Size,
+			"size": server.Disk,
 		}
 	}
 	//if server.Region == "" {

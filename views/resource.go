@@ -145,6 +145,20 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 				}
 			}
 		}
+		if res.HasChange("security_groups") {
+			_, securityGroups := res.GetChange("security_groups")
+			for _, v := range securityGroups.(*schema.Set).List() {
+				_, err := server.SecurityGroupVM(v.(string), "attach")
+				if err != nil {
+					return diag.FromErr(err)
+				}
+
+				_, err = server.StateSecurityGroupChange(res).WaitForStateContext(ctx)
+				if err != nil {
+					return diag.FromErr(err)
+				}
+			}
+		}
 		return diags
 	}
 	return f
@@ -401,6 +415,42 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 			for _, v := range l2 {
 				if !utils.ArrContainsStr(l1, v) {
 					_, err := server.TagAttachDI(v)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+				}
+			}
+			server.WriteTF(res)
+		}
+
+		if res.HasChange("security_groups") {
+			v1, v2 := res.GetChange("security_groups")
+			securityGroupSet1 := v1.(*schema.Set)
+			securityGroupSet2 := v2.(*schema.Set)
+			l1 := utils.ArrInterfaceToArrStr(securityGroupSet1.List())
+			l2 := utils.ArrInterfaceToArrStr(securityGroupSet2.List())
+
+			for _, v := range l1 {
+				if !utils.ArrContainsStr(l2, v) {
+					_, err := server.SecurityGroupVM(v, "detach")
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					_, err = server.StateSecurityGroupChange(res).WaitForStateContext(ctx)
+					if err != nil {
+						return diag.FromErr(err)
+					}
+				}
+			}
+			for _, v := range l2 {
+				if !utils.ArrContainsStr(l1, v) {
+					_, err := server.SecurityGroupVM(v, "attach")
+					if err != nil {
+						return diag.FromErr(err)
+					}
+
+					_, err = server.StateSecurityGroupChange(res).WaitForStateContext(ctx)
 					if err != nil {
 						return diag.FromErr(err)
 					}

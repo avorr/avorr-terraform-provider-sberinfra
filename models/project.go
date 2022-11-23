@@ -139,7 +139,7 @@ type ResProject struct {
 				PortRangeMax    interface{} `json:"port_range_max"`
 				PortRangeMin    interface{} `json:"port_range_min"`
 				RemoteGroupID   interface{} `json:"remote_group_id"`
-				RemoteIpPrefix  interface{} `json:"remote_ip_prefix"`
+				RemoteIpPrefix  interface{} `json:"remote_ip_prefix,omitempty"`
 				SecurityGroupID string      `json:"security_group_id"`
 			} `json:"rules"`
 			Status           string        `json:"status"`
@@ -379,19 +379,17 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
 	o.Project.Desc = res.Get("desc").(string)
-	//o.JumpHost = res.Get("jump_host")
+	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	if res.Get("jump_host") == "true" {
-		o.Project.JumpHost = true
-	} else {
-		o.Project.JumpHost = false
-	}
+	//if res.Get("jump_host") == "true" {
+	//	o.Project.JumpHost = true
+	//} else {
+	//	o.Project.JumpHost = false
+	//}
 
 	limits, ok := res.GetOk("limits")
-
 	if ok {
 		limitsSet := limits.(*schema.Set)
-
 		for _, v := range limitsSet.List() {
 			values := v.(map[string]interface{})
 			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
@@ -445,13 +443,13 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
 	o.Project.Desc = res.Get("desc").(string)
-	//o.JumpHost = res.Get("jump_host")
+	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	if res.Get("jump_host") == "true" {
-		o.Project.JumpHost = true
-	} else {
-		o.Project.JumpHost = false
-	}
+	//if res.Get("jump_host") == "true" {
+	//	o.Project.JumpHost = true
+	//} else {
+	//	o.Project.JumpHost = false
+	//}
 
 	//net, ok := res.GetOk("network")
 

@@ -1,10 +1,15 @@
 package models
 
 import (
+	"github.com/hashicorp/go-cty/cty"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"strconv"
+
 	//"github.com/hashicorp/go-cty/cty"
 	//"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"regexp"
 	//"sort"
 	//"strconv"
 )
@@ -57,7 +62,7 @@ func init() {
 		//"domain_id":       {Type: schema.TypeString, Optional: true},
 		"default_network": {Type: schema.TypeString, Computed: true},
 		"datacenter":      {Type: schema.TypeString, Required: true},
-		"jump_host":       {Type: schema.TypeString, Required: true},
+		"jump_host":       {Type: schema.TypeBool, Optional: true, Default: false},
 		"desc":            {Type: schema.TypeString, Optional: true},
 		"limits": {
 			Type:     schema.TypeSet,
@@ -99,11 +104,11 @@ func init() {
 		"group_id":     {Type: schema.TypeString, Required: true},
 		"project_id":   {Type: schema.TypeString, Required: true},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
-		"ir_group":     {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
-		"ir_type":      {Type: schema.TypeString, Computed: true},
-		"cpu":          {Type: schema.TypeInt, Computed: true},
-		"ram":          {Type: schema.TypeInt, Computed: true},
-		"disk":         {Type: schema.TypeInt, Optional: true},
+		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
+		"ir_type":  {Type: schema.TypeString, Computed: true},
+		"cpu":      {Type: schema.TypeInt, Computed: true},
+		"ram":      {Type: schema.TypeInt, Computed: true},
+		//"disk":         {Type: schema.TypeInt, Optional: true},
 		"flavor":       {Type: schema.TypeString, Required: true},
 		"network_uuid": {Type: schema.TypeString, Optional: true},
 		//"virtualization":  {Type: schema.TypeString, Required: true},
@@ -122,28 +127,28 @@ func init() {
 		"user":            {Type: schema.TypeString, Computed: true},
 		"password":        {Type: schema.TypeString, Computed: true},
 
-		//"hdd": {
-		//	Type:     schema.TypeMap,
-		//	Optional: true,
-		//	Elem:     &schema.Schema{Type: schema.TypeString, Required: true},
-		//	ValidateDiagFunc: allDiagFunc(
-		//		validation.MapKeyMatch(regexp.MustCompile("(^size$)|(^storage_type$)"), "An argument is not expected here"),
-		//		validateMapValue(),
-		//	),
-		//},
-
-		"hdd": {
-			Type:     schema.TypeSet,
+		"disk": {
+			Type:     schema.TypeMap,
 			Required: true,
-			ForceNew: false,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"size":         {Type: schema.TypeInt, Required: true, ForceNew: false},
-					"storage_type": {Type: schema.TypeString, Optional: true, ForceNew: false},
-				},
-			},
+			Elem:     &schema.Schema{Type: schema.TypeString, Required: true},
+			ValidateDiagFunc: allDiagFunc(
+				validation.MapKeyMatch(regexp.MustCompile("(^size$)|(^storage_type$)"), "An argument is not expected here"),
+				validateMapValue(),
+			),
 		},
+
+		//"hdd": {
+		//	Type:     schema.TypeSet,
+		//	Required: true,
+		//	ForceNew: false,
+		//	MaxItems: 1,
+		//	Elem: &schema.Resource{
+		//		Schema: map[string]*schema.Schema{
+		//			"size":         {Type: schema.TypeInt, Required: true, ForceNew: false},
+		//			"storage_type": {Type: schema.TypeString, Optional: true, ForceNew: false},
+		//		},
+		//	},
+		//},
 
 		"volume": {
 			Type:     schema.TypeSet,
@@ -158,13 +163,15 @@ func init() {
 				},
 			},
 		},
-		"tag_ids": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+		"tag_ids":         {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+		"security_groups": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 	}
 
 	SchemaSecurityGroup = map[string]*schema.Schema{
 		"id":         {Type: schema.TypeString, Computed: true},
-		"project_id": {Type: schema.TypeString, Required: true},
-		"group_name": {Type: schema.TypeString, Required: true},
+		"project_id": {Type: schema.TypeString, Required: true, ForceNew: false},
+		//"name":       {Type: schema.TypeString, Required: true, ForceNew: true},
+		"name": {Type: schema.TypeString, Required: true},
 		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,
@@ -188,7 +195,6 @@ func init() {
 	}
 }
 
-/*
 func allDiagFunc(validators ...schema.SchemaValidateDiagFunc) schema.SchemaValidateDiagFunc {
 	return func(i interface{}, k cty.Path) diag.Diagnostics {
 		var diags diag.Diagnostics
@@ -228,17 +234,17 @@ func validateMapValue() schema.SchemaValidateDiagFunc {
 		return diags
 	}
 }
-func sortedKeys(m map[string]interface{}) []string {
-	keys := make([]string, len(m))
 
-	i := 0
-	for key := range m {
-		keys[i] = key
-		i++
-	}
+//func sortedKeys(m map[string]interface{}) []string {
+//	keys := make([]string, len(m))
+//
+//	i := 0
+//	for key := range m {
+//		keys[i] = key
+//		i++
+//	}
 
-	sort.Strings(keys)
-
-	return keys
-}
-*/
+//sort.Strings(keys)
+//
+//return keys
+//}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -13,11 +14,15 @@ import (
 )
 
 type SecurityGroup struct {
-	ProjectID       string `json:"-"`
-	GroupName       string `json:"group_name"`
-	SecurityRules   []Rule `json:"security_rules"`
-	State           string `json:"-"`
-	SecurityGroupID string `json:"-"` //`json:"security_group_id"`
+	ProjectID        string `json:"-"`
+	GroupName        string `json:"group_name"`
+	SecurityRules    []Rule `json:"security_rules"`
+	State            string `json:"-"`
+	SecurityGroupID  string `json:"-"` //`json:"security_group_id"`
+	AttachedToServer []struct {
+		Status     string    `json:"status"`
+		ServerUUID uuid.UUID `json:"server_uuid"`
+	} `json:"attached_to_server"`
 }
 
 type Rule struct {
@@ -28,12 +33,12 @@ type Rule struct {
 	Protocol       string `json:"protocol"`
 	PortRangeMin   int    `json:"port_range_min"`
 	PortRangeMax   int    `json:"port_range_max"`
-	RemoteIpPrefix string `json:"remote_ip_prefix"`
+	RemoteIpPrefix string `json:"remote_ip_prefix,omitempty"`
 	RemoteGroupID  string `json:"remote_group_id,omitempty"`
 }
 
 func (o *SecurityGroup) ReadTF(res *schema.ResourceData) diag.Diagnostics {
-	o.GroupName = res.Get("group_name").(string)
+	o.GroupName = res.Get("name").(string)
 	o.ProjectID = res.Get("project_id").(string)
 	//o.SecurityGroupID = res.Get("security_group_id").(string)
 	o.SecurityGroupID = res.Id()
