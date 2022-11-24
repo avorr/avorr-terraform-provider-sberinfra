@@ -139,7 +139,7 @@ type ResProject struct {
 				PortRangeMax    interface{} `json:"port_range_max"`
 				PortRangeMin    interface{} `json:"port_range_min"`
 				RemoteGroupID   interface{} `json:"remote_group_id"`
-				RemoteIPPrefix  interface{} `json:"remote_ip_prefix"`
+				RemoteIpPrefix  interface{} `json:"remote_ip_prefix,omitempty"`
 				SecurityGroupID string      `json:"security_group_id"`
 			} `json:"rules"`
 			Status           string        `json:"status"`
@@ -150,6 +150,66 @@ type ResProject struct {
 		Routers          interface{} `json:"routers"`
 		RouterInterfaces interface{} `json:"router_interfaces"`
 	} `json:"project"`
+}
+
+type ProjectNew struct {
+	ID                 uuid.UUID     `json:"id"`
+	Name               string        `json:"name"`
+	State              string        `json:"state"`
+	Type               string        `json:"type"`
+	Storages           []interface{} `json:"storages"`
+	IrGroup            string        `json:"ir_group"`
+	IrType             string        `json:"ir_type"`
+	Virtualization     string        `json:"virtualization"`
+	ChecksumMatch      bool          `json:"checksum_match"`
+	Datacenter         string        `json:"datacenter"`
+	DatacenterName     string        `json:"datacenter_name"`
+	HpsmCi             interface{}   `json:"hpsm_ci"`
+	OrderCreatedAt     time.Time     `json:"order_created_at"`
+	SerialNumber       string        `json:"serial_number"`
+	OpenstackProjectID uuid.UUID     `json:"openstack_project_id"`
+	DefaultNetwork     uuid.UUID     `json:"default_network"`
+	Limits             struct {
+		CoresVcpuCount  int `json:"cores_vcpu_count"`
+		RamGbAmount     int `json:"ram_gb_amount"`
+		StorageGbAmount int `json:"storage_gb_amount"`
+	} `json:"limits"`
+	Networks []struct {
+		Cidr           string    `json:"cidr"`
+		Status         string    `json:"status"`
+		EnableDhcp     bool      `json:"enable_dhcp"`
+		SubnetName     string    `json:"subnet_name"`
+		SubnetUUID     uuid.UUID `json:"subnet_uuid"`
+		NetworkName    string    `json:"network_name"`
+		NetworkUUID    uuid.UUID `json:"network_uuid"`
+		DNSNameservers []string  `json:"dns_nameservers"`
+		IsDefault      bool      `json:"is_default"`
+	} `json:"networks"`
+	RealState            string        `json:"real_state"`
+	DomainName           string        `json:"domain_name"`
+	GroupName            string        `json:"group_name"`
+	DomainID             uuid.UUID     `json:"domain_id"`
+	GroupID              uuid.UUID     `json:"group_id"`
+	IsProm               bool          `json:"is_prom"`
+	JumpHost             bool          `json:"jump_host"`
+	Desc                 string        `json:"desc"`
+	JumpHostState        interface{}   `json:"jump_host_state"`
+	JumpHostServiceName  interface{}   `json:"jump_host_service_name"`
+	JumpHostCreatorLogin interface{}   `json:"jump_host_creator_login"`
+	JumpHostCreatedAt    interface{}   `json:"jump_host_created_at"`
+	PublicIPCount        int           `json:"public_ip_count"`
+	PublicIps            []interface{} `json:"public_ips"`
+	Edge                 interface{}   `json:"edge"`
+	HighAvailability     interface{}   `json:"high_availability"`
+	SecurityGroups       []struct {
+		Rules            []Rule        `json:"rules"`
+		Status           string        `json:"status"`
+		GroupName        string        `json:"group_name"`
+		SecurityGroupID  string        `json:"security_group_id"`
+		AttachedToServer []interface{} `json:"attached_to_server"`
+	} `json:"security_groups"`
+	Routers          interface{} `json:"routers"`
+	RouterInterfaces interface{} `json:"router_interfaces"`
 }
 
 type Networks struct {
@@ -319,19 +379,17 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
 	o.Project.Desc = res.Get("desc").(string)
-	//o.JumpHost = res.Get("jump_host")
+	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	if res.Get("jump_host") == "true" {
-		o.Project.JumpHost = true
-	} else {
-		o.Project.JumpHost = false
-	}
+	//if res.Get("jump_host") == "true" {
+	//	o.Project.JumpHost = true
+	//} else {
+	//	o.Project.JumpHost = false
+	//}
 
 	limits, ok := res.GetOk("limits")
-
 	if ok {
 		limitsSet := limits.(*schema.Set)
-
 		for _, v := range limitsSet.List() {
 			values := v.(map[string]interface{})
 			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
@@ -385,13 +443,13 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
 	o.Project.Desc = res.Get("desc").(string)
-	//o.JumpHost = res.Get("jump_host")
+	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	if res.Get("jump_host") == "true" {
-		o.Project.JumpHost = true
-	} else {
-		o.Project.JumpHost = false
-	}
+	//if res.Get("jump_host") == "true" {
+	//	o.Project.JumpHost = true
+	//} else {
+	//	o.Project.JumpHost = false
+	//}
 
 	//net, ok := res.GetOk("network")
 
@@ -862,8 +920,8 @@ func (o *Project) ToHCLOutput() []byte {
 //	return nil
 //}
 
-func (o *Project) GetGroup() string {
-	return ""
+func (o *Project) GetGroup() uuid.UUID {
+	return o.Project.GroupID
 }
 
 func (o *Project) ToHCL(server *Server) ([]byte, error) {
