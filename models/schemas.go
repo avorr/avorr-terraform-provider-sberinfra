@@ -122,8 +122,11 @@ func init() {
 		//"zone":            {Type: schema.TypeString, Required: true},
 		"zone":            {Type: schema.TypeString, Optional: true, Default: "internal"},
 		"ip":              {Type: schema.TypeString, Computed: true},
+		"dns":             {Type: schema.TypeString, Computed: true},
+		"dns_name":        {Type: schema.TypeString, Computed: true},
 		"step":            {Type: schema.TypeString, Computed: true},
 		"public_ssh_name": {Type: schema.TypeString, Optional: true},
+		"group":           {Type: schema.TypeString, Optional: true},
 		"user":            {Type: schema.TypeString, Computed: true},
 		"password":        {Type: schema.TypeString, Computed: true},
 
