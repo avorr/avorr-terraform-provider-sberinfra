@@ -31,14 +31,14 @@ data "si_group" "group" {
 }
 
 resource si_project "project" {
-  name       = "Test-terraform-project" //requared false
+  name       = "terraform-test-project" //requared false
   group_id   = data.si_group.group.id
   datacenter = "PD24R3PROM" //"okvm1"
-  desc       = "test-si.dns.zone"
-  limits {
-    cores_vcpu_count  = 100    //
-    ram_gb_amount     = 10000   // requared false
-    storage_gb_amount = 1000    //
+  desc       = "si.dns.zone"
+  limits = {
+    vcpu    = 100
+    ram     = 10000
+    storage = 1000
   }
   network {
     network_name    = "internal-network"
@@ -59,7 +59,7 @@ locals {
   networks = {for k, v in si_project.project.network : k.network_name => v.network_uuid}
 }
 
-resource "si_vm" "vm1" {
+resource "si_vm" "vm" {
   service_name = "terraform-test-${format("%02d", count.index + 1)}.${si_project.project.desc}"
   group_id     = data.si_group.group.id
   project_id   = si_project.project.id
@@ -132,10 +132,8 @@ resource "si_security_group" "kafka" {
   }
 }
 
-
 #resource "si_project" "import" {
 #}
-
 
 #resource "si_vm" "import" {
 #}

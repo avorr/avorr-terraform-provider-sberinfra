@@ -57,14 +57,14 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	objRes := models.Project{}
+	//objRes := models.Project{}
 
-	err = objRes.ParseIdFromCreateResponse(responseBytes)
+	err = obj.ParseIdFromCreateResponse(responseBytes)
 
-	_, err = objRes.StateChange(res).WaitForStateContext(ctx)
+	_, err = obj.StateChange(res).WaitForStateContext(ctx)
 
 	if err != nil {
-		log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", objRes.Project.ID, objRes.Project.State)
+		log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", obj.Project.ID, obj.Project.State)
 	}
 
 	if err != nil {
@@ -72,8 +72,8 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 
 	objRes2 := models.ResProject{}
-	objRes2.Project.ID = objRes.Project.ID
-	objRes.AddNetwork(ctx, res, additionalNetworks)
+	objRes2.Project.ID = obj.Project.ID
+	obj.AddNetwork(ctx, res, additionalNetworks)
 	responseBytes, err = objRes2.ReadDIRes()
 
 	if err != nil {
@@ -85,6 +85,9 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	objRes2.Project.Limits = obj.Project.Limits
+
 	objRes2.WriteTFRes(res)
 	return diags
 }
@@ -98,17 +101,39 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 	obj.ReadTFRes(res)
 
 	responseBytes, err := obj.ReadDIRes()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = obj.DeserializeRead(responseBytes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	bytes, err := obj.GetProjectQuota()
+
+	type LimitsImport struct {
+		Limits struct {
+			RamGbAmount     int `json:"ram_gb_amount"`
+			CoresVcpuCount  int `json:"cores_vcpu_count"`
+			StorageGbAmount int `json:"storage_gb_amount"`
+		} `json:"limits"`
+	}
+
+	limits := map[string]*LimitsImport{}
+	err = json.Unmarshal(bytes, &limits)
 
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	log.Println("LLL!", limits["data"])
+
+	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
+	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
+	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
 
 	//err = obj.Deserialize(responseBytes)
-	err = obj.DeserializeRead(responseBytes)
-
-	if err != nil {
-		return diag.FromErr(err)
-	}
 
 	obj.WriteTFRes(res)
 	return diags
@@ -276,6 +301,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 	objRes := models.ResProject{}
 	objRes.Project.ID = obj.Project.ID
+	objRes.Project.Limits = obj.Project.Limits
 	responseBytes, err := objRes.ReadDIRes()
 	if err != nil {
 		return diag.FromErr(err)
@@ -351,10 +377,6 @@ func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{})
 	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
 	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
 	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
-
-	if err != nil {
-		return nil, err
-	}
 
 	obj.WriteTF(res)
 

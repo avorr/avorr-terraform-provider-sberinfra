@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -271,6 +270,15 @@ func (o *Project) GetProjectQuota() ([]byte, error) {
 	return body, nil
 }
 
+func (o *ResProject) GetProjectQuota() ([]byte, error) {
+	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.Project.ID, o.Project.GroupID))
+
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
 func (o *Project) SetDefaultNetwork(networkUuid string) error {
 	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
 	if err != nil {
@@ -381,21 +389,12 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	o.Project.Desc = res.Get("desc").(string)
 	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	//if res.Get("jump_host") == "true" {
-	//	o.Project.JumpHost = true
-	//} else {
-	//	o.Project.JumpHost = false
-	//}
-
 	limits, ok := res.GetOk("limits")
 	if ok {
-		limitsSet := limits.(*schema.Set)
-		for _, v := range limitsSet.List() {
-			values := v.(map[string]interface{})
-			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
-			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
-		}
+		limits := limits.(map[string]interface{})
+		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.RamGbAmount = limits["ram"].(int)
+		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
 
 	network := res.Get("network")
@@ -445,34 +444,15 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	o.Project.Desc = res.Get("desc").(string)
 	o.Project.JumpHost = res.Get("jump_host").(bool)
 
-	//if res.Get("jump_host") == "true" {
-	//	o.Project.JumpHost = true
-	//} else {
-	//	o.Project.JumpHost = false
-	//}
-
-	//net, ok := res.GetOk("network")
-
-	//if ok {
-	//	if limits.(*schema.Set).Len() > 1 {
-	//		res.Get("limits").(*schema.Set).Len()
-	//		return diag.Errorf("Limits set should not be more than one")
-	//	}
-	//}
-
 	limits, ok := res.GetOk("limits")
 	if ok {
-		limitsSet := limits.(*schema.Set)
-
-		for _, v := range limitsSet.List() {
-			values := v.(map[string]interface{})
-
-			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
-			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
-		}
+		limits := limits.(map[string]interface{})
+		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.RamGbAmount = limits["ram"].(int)
+		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
 
+	//net, ok := res.GetOk("network")
 	//networks := make([]map[string]interface{}, 0)
 	//for _, v := range o.Project.Networks {
 	//	volume := map[string]interface{}{
@@ -516,19 +496,19 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 	res.Set("ir_type", o.Project.IrType)
 	res.Set("desc", o.Project.Desc)
 	res.Set("group_id", o.Project.GroupID.String())
-	res.Set("jump_host", strconv.FormatBool(o.Project.JumpHost))
+	res.Set("jump_host", o.Project.JumpHost)
 	res.Set("name", o.Project.Name)
 	res.Set("virtualization", o.Project.Virtualization)
 
-	limits := make([]map[string]int, 1)
-
-	limits[0] = map[string]int{
-		"cores_vcpu_count":  o.Project.Limits.CoresVcpuCount,
-		"ram_gb_amount":     o.Project.Limits.RamGbAmount,
-		"storage_gb_amount": o.Project.Limits.StorageGbAmount,
+	limits := map[string]int{
+		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"ram":     o.Project.Limits.RamGbAmount,
+		"storage": o.Project.Limits.StorageGbAmount,
 	}
-
-	res.Set("limits", limits)
+	err := res.Set("limits", limits)
+	if err != nil {
+		log.Println(err)
+	}
 
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
@@ -537,13 +517,26 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 
 func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
+	res.Set("name", o.Project.Name)
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
 	//res.Set("domain_id", o.Project.DomainID.String())
 	//res.Set("state", o.Project.State)
 	res.Set("type", o.Project.Type)
 
+	res.Set("desc", o.Project.Desc)
 	res.Set("default_network", o.Project.DefaultNetwork.String())
+
+	limits := map[string]int{
+		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"ram":     o.Project.Limits.RamGbAmount,
+		"storage": o.Project.Limits.StorageGbAmount,
+	}
+
+	err := res.Set("limits", limits)
+	if err != nil {
+		log.Println(err)
+	}
 
 	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {sort.Sort(ByPath(o.Project.Networks))
 
@@ -572,7 +565,7 @@ func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 		}
 	}
 
-	err := res.Set("network", networks)
+	err = res.Set("network", networks)
 	if err != nil {
 		log.Println(err)
 	}
@@ -735,7 +728,6 @@ func (o *Project) Deserialize(responseBytes []byte) error {
 }
 
 func (o *ResProject) DeserializeRead(responseBytes []byte) error {
-
 	err := json.Unmarshal(responseBytes, &o)
 	if err != nil {
 		return err
