@@ -14,20 +14,20 @@ terraform {
   required_providers {
     si = {
       source  = "sberbank/devops/si"
-      version = "0.4.2"
+      version = "0.4.3"
     }
-#    vault = {
-#      version = "3.3.0"
-#    }
+    #    vault = {
+    #      version = "3.3.0"
+    #    }
   }
-#  backend "s3" {
-#    key                         = "sberdevices/smartapp/asdsadsads.tfstate"
-#    bucket                      = "tfstates"
-#    skip_credentials_validation = true
-#    skip_region_validation      = true
-#    skip_metadata_api_check     = true
-#    force_path_style            = true
-#  }
+  #  backend "s3" {
+  #    key                         = "sberdevices/smartapp/asdsadsads.tfstate"
+  #    bucket                      = "tfstates"
+  #    skip_credentials_validation = true
+  #    skip_region_validation      = true
+  #    skip_metadata_api_check     = true
+  #    force_path_style            = true
+  #  }
 }
 provider "si" {}
 

@@ -71,7 +71,7 @@ func ProviderFunc() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"si_project": {
+			"si_vdc": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
 					StateContext: views.ProjectImport,

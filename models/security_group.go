@@ -39,7 +39,7 @@ type Rule struct {
 
 func (o *SecurityGroup) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	o.GroupName = res.Get("name").(string)
-	o.ProjectID = res.Get("project_id").(string)
+	o.ProjectID = res.Get("vdc_id").(string)
 	//o.SecurityGroupID = res.Get("security_group_id").(string)
 	o.SecurityGroupID = res.Id()
 	rules, ok := res.GetOk("security_rule")

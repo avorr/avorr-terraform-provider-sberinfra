@@ -31,13 +31,13 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	for _, v := range networks.List() {
 		v := v.(map[string]interface{})
 		for _, name := range networkNames {
-			if v["network_name"].(string) == name {
-				return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["network_name"])
+			if v["name"].(string) == name {
+				return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["name"])
 			}
 		}
-		networkNames = append(networkNames, v["network_name"].(string))
+		networkNames = append(networkNames, v["name"].(string))
 
-		if v["is_default"] == true {
+		if v["default"] == true {
 			defaultNetworkCount += 1
 			if defaultNetworkCount > 1 {
 				return diag.Errorf("Default networks should not be more than one")
@@ -127,8 +127,6 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 		return diag.FromErr(err)
 	}
 
-	log.Println("LLL!", limits["data"])
-
 	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
 	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
 	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
@@ -153,7 +151,6 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 	//return diags
 	if res.HasChange("network") {
-
 		v1, v2 := res.GetChange("network")
 		netSet1 := v1.(*schema.Set)
 		netSet2 := v2.(*schema.Set)
@@ -162,23 +159,23 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 			net2 := net2.(map[string]interface{})
 			for _, net1 := range netSet1.List() {
 				net1 := net1.(map[string]interface{})
-				if net1["network_name"] == net2["network_name"] {
-					net2["network_uuid"] = net1["network_uuid"]
+				if net1["name"] == net2["name"] {
+					net2["id"] = net1["id"]
 				}
 			}
 		}
 
 		for i1, net1 := range netSet2.List() {
 			net1 := net1.(map[string]interface{})
-			netIsDefault1 := net1["is_default"]
-			netName1 := net1["network_name"]
+			netIsDefault1 := net1["default"]
+			netName1 := net1["name"]
 			for i2, net2 := range netSet2.List() {
 				net2 := net2.(map[string]interface{})
-				netIsDefault2 := net2["is_default"]
+				netIsDefault2 := net2["default"]
 				if i2-i1 > 0 && netIsDefault2 == true && netIsDefault1 == true {
 					return diag.Errorf("Default networks shouldn't be more than one")
 				}
-				netName2 := net2["network_name"]
+				netName2 := net2["name"]
 				if i2-i1 > 0 && netName1 == netName2 {
 					return diag.Errorf("There mustn't be networks with the same name [%s, %s]", netName1, netName2)
 				}
@@ -190,7 +187,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		var existNetwork func([]interface{}, string) bool
 		existNetwork = func(m []interface{}, networkName string) bool {
 			for _, i := range m {
-				if i.(map[string]interface{})["network_name"] == networkName {
+				if i.(map[string]interface{})["name"] == networkName {
 					return true
 				}
 			}
@@ -202,12 +199,12 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 		for _, net := range netSet2.List() {
 			net := net.(map[string]interface{})
-			if !existNetwork(netSet1.List(), net["network_name"].(string)) {
+			if !existNetwork(netSet1.List(), net["name"].(string)) {
 				addNetSet = append(addNetSet, net)
 			}
 
-			if net["is_default"].(bool) && net["network_uuid"] != res.Get("default_network") && net["network_uuid"] != "" {
-				err := obj.SetDefaultNetwork(net["network_uuid"].(string))
+			if net["default"].(bool) && net["id"] != res.Get("default_network") && net["id"] != "" {
+				err := obj.SetDefaultNetwork(net["id"].(string))
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -216,7 +213,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 		for _, net := range netSet1.List() {
 			net := net.(map[string]interface{})
-			if !existNetwork(netSet2.List(), net["network_name"].(string)) {
+			if !existNetwork(netSet2.List(), net["name"].(string)) {
 				removeNetSet = append(removeNetSet, net)
 			}
 		}
@@ -233,7 +230,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		if len(removeNetSet) > 0 {
 			for _, v := range removeNetSet {
 				vol := v.(map[string]interface{})
-				err := obj.DeleteNetwork(vol["network_uuid"].(string))
+				err := obj.DeleteNetwork(vol["id"].(string))
 				if err != nil {
 					return diag.FromErr(err)
 				}
@@ -258,7 +255,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		}
 	}
 
-	if res.HasChange("desc") {
+	if res.HasChange("description") {
 		type updateProjectDesc struct {
 			Project struct {
 				Action string `json:"action"`

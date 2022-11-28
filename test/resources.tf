@@ -30,48 +30,48 @@ data "si_group" "group" {
   name      = "Common"
 }
 
-resource si_project "project" {
-  name       = "terraform-test-project" //requared false
-  group_id   = data.si_group.group.id
-  datacenter = "PD24R3PROM" //"okvm1"
-  desc       = "si.dns.zone"
-  limits = {
+resource si_vdc "vdc" {
+  name        = "terraform-test-vdc" //requared false
+  group_id    = data.si_group.group.id
+  datacenter  = "PD24R3PROM" //"okvm1"
+  description = "si.dns.zone"
+  limits      = {
     vcpu    = 100
     ram     = 10000
     storage = 1000
   }
   network {
-    network_name    = "internal-network"
-    cidr            = "172.31.0.0/20"
-    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
-    enable_dhcp     = true
-    is_default      = true
+    name    = "internal-network"
+    cidr    = "172.31.0.0/20"
+    dns     = ["8.8.8.8", "8.8.4.4"]
+    dhcp    = true
+    default = true
   }
   network {
-    network_name    = "internal-network2"
-    cidr            = "172.30.100.0/30"
-    dns_nameservers = ["8.8.8.8", "8.8.4.4"]
-    enable_dhcp     = true
+    name = "internal-network2"
+    cidr = "172.30.100.0/30"
+    dns  = ["8.8.8.8", "8.8.4.4"]
+    dhcp = true
   }
 }
 
 locals {
-  networks = {for k, v in si_project.project.network : k.network_name => v.network_uuid}
+  networks = {for k, v in si_vdc.vdc.network : k.name => v.id}
 }
 
 resource "si_vm" "vm" {
-  service_name = "terraform-test-${format("%02d", count.index + 1)}.${si_project.project.desc}"
+  service_name = "terraform-test-${format("%02d", count.index + 1)}.${si_vdc.vdc.description}"
   group_id     = data.si_group.group.id
-  project_id   = si_project.project.id
+  vdc_id       = si_vdc.vdc.id
   os_name      = "rhel"
   os_version   = "7.9"
   flavor       = "m1.tiny"
-  disk = {
+  disk         = {
     size = 50
-#    storage_type = "iscsi-fast-01"
+    #    storage_type = "iscsi-fast-01"
   }
-  network_uuid = local.networks["internal-network"]
-  tag_ids = [
+  network_id = local.networks["internal-network"]
+  tag_ids    = [
     si_tag.nolabel.id
   ]
   security_groups = [
@@ -93,15 +93,15 @@ resource "si_vm" "vm" {
 }
 
 resource "si_security_group" "iam" {
-  name = "iam"
-  project_id = si_project.project.id
+  name   = "iam"
+  vdc_id = si_vdc.vdc.id
   security_rule {
-    ethertype        = "IPv4"             //TypeString "IPv4", "IPv6"
-    direction        = "ingress"          //TypeString "ingress", "egress"
-    protocol         = "tcp"              //TypeString "tcp", "udp", "icmp"
-    remote_ip_prefix = "172.21.21.10/28"  //TypeString
-    port_range_min   = 443                //TypeInt
-    port_range_max   = 444                //TypeInt
+    ethertype        = "IPv4"
+    direction        = "ingress"
+    protocol         = "tcp"
+    remote_ip_prefix = "172.21.21.10/28"
+    port_range_min   = 443
+    port_range_max   = 444
   }
   security_rule {
     ethertype        = "IPv4"
@@ -114,25 +114,25 @@ resource "si_security_group" "iam" {
 }
 
 resource "si_security_group" "kafka" {
-  name = "kafka"
-  project_id = si_project.project.id
+  name   = "kafka"
+  vdc_id = si_vdc.vdc.id
   security_rule {
-    ethertype        = "IPv4"
-    direction        = "ingress"
-    protocol         = "tcp"
-    port_range_min   = 9092
-    port_range_max   = 9092
+    ethertype      = "IPv4"
+    direction      = "ingress"
+    protocol       = "tcp"
+    port_range_min = 9092
+    port_range_max = 9092
   }
   security_rule {
-    ethertype        = "IPv4"
-    direction        = "ingress"
-    protocol         = "tcp"
-    port_range_min   = 2181
-    port_range_max   = 2181
+    ethertype      = "IPv4"
+    direction      = "ingress"
+    protocol       = "tcp"
+    port_range_min = 2181
+    port_range_max = 2181
   }
 }
 
-#resource "si_project" "import" {
+#resource "si_vdc" "import" {
 #}
 
 #resource "si_vm" "import" {

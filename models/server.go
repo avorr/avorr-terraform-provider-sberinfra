@@ -74,11 +74,11 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	if groupId != "" {
 		o.GroupId = uuid.MustParse(groupId.(string))
 	}
-	projectId := res.Get("project_id")
+	projectId := res.Get("vdc_id")
 	if projectId != "" {
 		o.ProjectId = uuid.MustParse(projectId.(string))
 	}
-	networkId, ok := res.GetOk("network_uuid")
+	networkId, ok := res.GetOk("network_id")
 	if ok {
 		o.NetworkUuid = uuid.MustParse(networkId.(string))
 	}
@@ -208,16 +208,30 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
 
-	_, ok := res.GetOk("disk")
+	//_, ok := res.GetOk("disk")
 	//if ok && o.Disk != 0 {
 	//	res.Set("disk", o.Disk)
 	//}
-	_, ok = res.GetOk("network_uuid")
-	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
-		res.Set("network_uuid", o.NetworkUuid.String())
+	if o.IsImport {
+		if o.Hdd.StorageType != "" {
+			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk), "storage_type": o.Hdd.StorageType})
+			if err != nil {
+				log.Println(err)
+			}
+		} else {
+			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk)})
+			if err != nil {
+				log.Println(err)
+			}
+		}
 	}
 
-	res.Set("project_id", o.ProjectId.String())
+	_, ok := res.GetOk("network_id")
+	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
+		res.Set("network_id", o.NetworkUuid.String())
+	}
+
+	res.Set("vdc_id", o.ProjectId.String())
 	res.Set("group_id", o.GroupId.String())
 	res.Set("user", o.User)
 
@@ -234,15 +248,14 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	if o.PublicSshName != "" {
 		res.Set("public_ssh_name", o.PublicSshName)
 	}
-	if o.Hdd.Size != 0 {
-
+	if o.Hdd.Size != 0 && o.Disk == 0 {
 		if o.Hdd.StorageType != "" {
 			//hdd := make([]map[string]interface{}, 1)
 			//hdd[0] = map[string]interface{}{
 			//	"size":         o.Hdd.Size,
 			//	"storage_type": o.Hdd.StorageType,
 			//}
-			err := res.Set("disk", map[string]interface{}{"size": o.Disk, "storage_type": o.Hdd.StorageType})
+			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk), "storage_type": o.Hdd.StorageType})
 			if err != nil {
 				log.Println(err)
 			}
@@ -251,7 +264,7 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 			//hdd[0] = map[string]int{
 			//	"size": o.Hdd.Size,
 			//}
-			err := res.Set("disk", map[string]int{"size": o.Disk})
+			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk)})
 			if err != nil {
 				log.Println(err)
 			}
