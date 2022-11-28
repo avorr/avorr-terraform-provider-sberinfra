@@ -728,6 +728,7 @@ func (o *Project) Deserialize(responseBytes []byte) error {
 }
 
 func (o *ResProject) DeserializeRead(responseBytes []byte) error {
+
 	err := json.Unmarshal(responseBytes, &o)
 	if err != nil {
 		return err
