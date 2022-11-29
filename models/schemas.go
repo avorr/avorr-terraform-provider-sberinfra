@@ -1,10 +1,10 @@
 package models
 
 import (
+	"fmt"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"strconv"
-
 	//"github.com/hashicorp/go-cty/cty"
 	//"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -27,7 +27,6 @@ var (
 )
 
 func init() {
-
 	SchemaDomain = map[string]*schema.Schema{
 		"id":   {Type: schema.TypeString, Computed: true},
 		"name": {Type: schema.TypeString, Required: true},
@@ -63,18 +62,15 @@ func init() {
 		"default_network": {Type: schema.TypeString, Computed: true},
 		"datacenter":      {Type: schema.TypeString, Required: true},
 		"jump_host":       {Type: schema.TypeBool, Optional: true, Default: false},
-		"desc":            {Type: schema.TypeString, Optional: true},
+		"description":     {Type: schema.TypeString, Optional: true},
 		"limits": {
-			Type:     schema.TypeSet,
+			Type:     schema.TypeMap,
 			Optional: true,
-			MaxItems: 1,
-			Elem: &schema.Resource{
-				Schema: map[string]*schema.Schema{
-					"cores_vcpu_count":  {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(1, 1000)},
-					"ram_gb_amount":     {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(500, 1000000)},
-					"storage_gb_amount": {Type: schema.TypeInt, Required: true, ValidateFunc: validation.IntBetween(50, 1000000000)},
-				},
-			},
+			Elem:     &schema.Schema{Type: schema.TypeInt, Required: true},
+			ValidateDiagFunc: allDiagFunc(
+				validation.MapKeyMatch(regexp.MustCompile("(^vcpu$)|(^ram$)|(^storage$)"), "An argument is not expected here"),
+				validateLimitsMapValue(),
+			),
 		},
 		"network": {
 			Type:     schema.TypeSet,
@@ -82,16 +78,16 @@ func init() {
 			MinItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"network_name": {Type: schema.TypeString, Required: true},
-					"network_uuid": {Type: schema.TypeString, Computed: true},
-					"cidr":         {Type: schema.TypeString, Required: true},
-					"dns_nameservers": {
+					"name": {Type: schema.TypeString, Required: true},
+					"id":   {Type: schema.TypeString, Computed: true},
+					"cidr": {Type: schema.TypeString, Required: true},
+					"dns": {
 						Type:     schema.TypeSet,
 						Required: true,
 						Elem:     &schema.Schema{Type: schema.TypeString},
 					},
-					"enable_dhcp": {Type: schema.TypeBool, Required: true},
-					"is_default":  {Type: schema.TypeBool, Optional: true, Default: false},
+					"dhcp":    {Type: schema.TypeBool, Required: true},
+					"default": {Type: schema.TypeBool, Optional: true, Default: false, ValidateDiagFunc: defaultNetworkCount()},
 				},
 			},
 		},
@@ -102,15 +98,15 @@ func init() {
 		//"service_name": {Type: schema.TypeString, Required: true},
 		"service_name": {Type: schema.TypeString, Optional: true},
 		"group_id":     {Type: schema.TypeString, Required: true},
-		"project_id":   {Type: schema.TypeString, Required: true},
+		"vdc_id":       {Type: schema.TypeString, Required: true},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
 		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
 		"ir_type":  {Type: schema.TypeString, Computed: true},
 		"cpu":      {Type: schema.TypeInt, Computed: true},
 		"ram":      {Type: schema.TypeInt, Computed: true},
 		//"disk":         {Type: schema.TypeInt, Optional: true},
-		"flavor":       {Type: schema.TypeString, Required: true},
-		"network_uuid": {Type: schema.TypeString, Optional: true},
+		"flavor":     {Type: schema.TypeString, Required: true},
+		"network_id": {Type: schema.TypeString, Optional: true},
 		//"virtualization":  {Type: schema.TypeString, Required: true},
 		"virtualization": {Type: schema.TypeString, Optional: true, Default: "openstack"},
 		"os_name":        {Type: schema.TypeString, Required: true},
@@ -120,16 +116,15 @@ func init() {
 		"state":           {Type: schema.TypeString, Computed: true},
 		"state_resize":    {Type: schema.TypeString, Computed: true},
 		//"zone":            {Type: schema.TypeString, Required: true},
-		"zone":            {Type: schema.TypeString, Optional: true, Default: "internal"},
-		"ip":              {Type: schema.TypeString, Computed: true},
-		"dns":             {Type: schema.TypeString, Computed: true},
-		"dns_name":        {Type: schema.TypeString, Computed: true},
+		"zone": {Type: schema.TypeString, Optional: true, Default: "internal"},
+		"ip":   {Type: schema.TypeString, Computed: true},
+		//"dns":             {Type: schema.TypeString, Computed: true},
+		//"dns_name":        {Type: schema.TypeString, Computed: true},
 		"step":            {Type: schema.TypeString, Computed: true},
 		"public_ssh_name": {Type: schema.TypeString, Optional: true},
-		"group":           {Type: schema.TypeString, Optional: true},
-		"user":            {Type: schema.TypeString, Computed: true},
-		"password":        {Type: schema.TypeString, Computed: true},
-
+		//"group":           {Type: schema.TypeString, Optional: true},
+		"user":     {Type: schema.TypeString, Computed: true},
+		"password": {Type: schema.TypeString, Computed: true},
 		"disk": {
 			Type:     schema.TypeMap,
 			Required: true,
@@ -169,10 +164,9 @@ func init() {
 		"tag_ids":         {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 		"security_groups": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
 	}
-
 	SchemaSecurityGroup = map[string]*schema.Schema{
-		"id":         {Type: schema.TypeString, Computed: true},
-		"project_id": {Type: schema.TypeString, Required: true, ForceNew: false},
+		"id":     {Type: schema.TypeString, Computed: true},
+		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false},
 		//"name":       {Type: schema.TypeString, Required: true, ForceNew: true},
 		"name": {Type: schema.TypeString, Required: true},
 		"security_rule": {
@@ -192,9 +186,75 @@ func init() {
 			},
 		},
 	}
-
 	SchemaTag = map[string]*schema.Schema{
 		"name": {Type: schema.TypeString, Required: true, ForceNew: true},
+	}
+}
+
+func validateLimitsMapValue() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		for key, value := range v.(map[string]interface{}) {
+			if key == "vcpu" {
+				if !(value.(int) >= 1 && value.(int) <= 200000) {
+					diags = append(diags, diag.Diagnostic{
+						Severity:      diag.Error,
+						Summary:       "vcpu value is not in range",
+						Detail:        fmt.Sprintf("expected limits.vcpu to be in the range (1 - 1000), got %d", value),
+						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+					})
+				}
+			} else if key == "ram" {
+				if !(value.(int) >= 500 && value.(int) <= 1000000) {
+					diags = append(diags, diag.Diagnostic{
+						Severity:      diag.Error,
+						Summary:       "ram value is not in range",
+						Detail:        fmt.Sprintf("expected limits.ram to be in the range (500 - 1000000), got %d", value),
+						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+					})
+				}
+			} else if key == "storage" {
+				if !(value.(int) >= 50 && value.(int) <= 1000000000) {
+					diags = append(diags, diag.Diagnostic{
+						Severity:      diag.Error,
+						Summary:       "storage value is not in range",
+						Detail:        fmt.Sprintf("expected limits.storage to be in the range (50 - 1000000000), got %d", value),
+						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+					})
+				}
+
+			}
+		} //else if key == "storage_type" {
+		//if value != "iscsi-fast-01" {
+		//	diags = append(diags, diag.Diagnostic{
+		//		Severity:      diag.Error,
+		//		Summary:       "Invalid map key",
+		//		Detail:        detail,
+		//		AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+		//	})
+		//}
+		//}
+		return diags
+	}
+}
+
+var count int
+
+func defaultNetworkCount() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		if v.(bool) {
+			count++
+		}
+		if count == 2 {
+			diags = append(diags, diag.Diagnostic{
+				Severity:      diag.Error,
+				Summary:       "Default networks should not be more than one",
+				Detail:        fmt.Sprintf("\"default = true\", this parameter must be on one network only"),
+				AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
+			})
+		}
+		return diags
 	}
 }
 

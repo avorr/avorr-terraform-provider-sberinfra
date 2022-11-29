@@ -71,22 +71,7 @@ func ProviderFunc() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			//"di_project": {
-			//	Importer: &schema.ResourceImporter{
-			//// State:        schema.ImportStatePassthrough,
-			//StateContext: views.ProjectImport,
-			//},
-			//CreateContext: views.ProjectCreate,
-			//ReadContext:   views.ProjectRead,
-			//UpdateContext: views.ProjectUpdate,
-			//DeleteContext: views.ProjectDelete,
-			//Schema:        models.SchemaProject,
-			//Timeouts: &schema.ResourceTimeout{
-			//	Create: schema.DefaultTimeout(timeout),
-			//},
-			//},
-
-			"si_project": {
+			"si_vdc": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
 					StateContext: views.ProjectImport,

@@ -11,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -229,13 +228,13 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 	for _, v := range additionalNets {
 		v := v.(map[string]interface{})
 		body.Network.Cidr = v["cidr"].(string)
-		body.Network.EnableDhcp = v["enable_dhcp"].(bool)
-		body.Network.IsDefault = v["is_default"].(bool)
-		body.Network.NetworkName = v["network_name"].(string)
+		body.Network.EnableDhcp = v["dhcp"].(bool)
+		body.Network.IsDefault = v["default"].(bool)
+		body.Network.NetworkName = v["name"].(string)
 
 		dnsNameServers := make([]string, 0)
 
-		for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
+		for _, dnsIp := range v["dns"].(*schema.Set).List() {
 			dnsNameServers = append(dnsNameServers, dnsIp.(string))
 		}
 		body.Network.DNSNameservers = dnsNameServers
@@ -263,6 +262,15 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 }
 
 func (o *Project) GetProjectQuota() ([]byte, error) {
+	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.Project.ID, o.Project.GroupID))
+
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (o *ResProject) GetProjectQuota() ([]byte, error) {
 	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.Project.ID, o.Project.GroupID))
 
 	if err != nil {
@@ -299,7 +307,7 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 }
 
 func (o *Project) GetType() string {
-	return "si_project"
+	return "si_vdc"
 }
 
 //func (o *Project) NewObj() DIDataResource {
@@ -378,24 +386,15 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	o.Project.GroupID = uuid.MustParse(res.Get("group_id").(string))
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
-	o.Project.Desc = res.Get("desc").(string)
+	o.Project.Desc = res.Get("description").(string)
 	o.Project.JumpHost = res.Get("jump_host").(bool)
-
-	//if res.Get("jump_host") == "true" {
-	//	o.Project.JumpHost = true
-	//} else {
-	//	o.Project.JumpHost = false
-	//}
 
 	limits, ok := res.GetOk("limits")
 	if ok {
-		limitsSet := limits.(*schema.Set)
-		for _, v := range limitsSet.List() {
-			values := v.(map[string]interface{})
-			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
-			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
-		}
+		limits := limits.(map[string]interface{})
+		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.RamGbAmount = limits["ram"].(int)
+		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
 
 	network := res.Get("network")
@@ -406,20 +405,20 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	for i, v := range networkSet.List() {
 		v := v.(map[string]interface{})
 
-		if v["is_default"].(bool) {
-			existDefaultNetwork = v["is_default"].(bool)
+		if v["default"].(bool) {
+			existDefaultNetwork = v["default"].(bool)
 		}
 		if existDefaultNetwork == false && networkSet.Len() == i+1 {
-			return diag.Errorf("There must be one default network. [is_default = true]")
+			return diag.Errorf("There must be one default network. [default = true]")
 		}
 
-		if networkSet.Len() == 1 || v["is_default"].(bool) {
-			o.Project.Networks.NetworkName = v["network_name"].(string)
+		if networkSet.Len() == 1 || v["default"].(bool) {
+			o.Project.Networks.NetworkName = v["name"].(string)
 			o.Project.Networks.Cidr = v["cidr"].(string)
-			o.Project.Networks.EnableDhcp = v["enable_dhcp"].(bool)
+			o.Project.Networks.EnableDhcp = v["dhcp"].(bool)
 			o.Project.Networks.IsDefault = true
 			var dnsNameServers []string
-			for _, dnsIp := range v["dns_nameservers"].(*schema.Set).List() {
+			for _, dnsIp := range v["dns"].(*schema.Set).List() {
 				dnsNameServers = append(dnsNameServers, dnsIp.(string))
 			}
 			o.Project.Networks.DNSNameservers = dnsNameServers
@@ -442,37 +441,18 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	o.Project.GroupID = uuid.MustParse(res.Get("group_id").(string))
 	//o.Project.ID = uuid.MustParse(res.Id())
 	o.Project.Datacenter = res.Get("datacenter").(string)
-	o.Project.Desc = res.Get("desc").(string)
+	o.Project.Desc = res.Get("description").(string)
 	o.Project.JumpHost = res.Get("jump_host").(bool)
-
-	//if res.Get("jump_host") == "true" {
-	//	o.Project.JumpHost = true
-	//} else {
-	//	o.Project.JumpHost = false
-	//}
-
-	//net, ok := res.GetOk("network")
-
-	//if ok {
-	//	if limits.(*schema.Set).Len() > 1 {
-	//		res.Get("limits").(*schema.Set).Len()
-	//		return diag.Errorf("Limits set should not be more than one")
-	//	}
-	//}
 
 	limits, ok := res.GetOk("limits")
 	if ok {
-		limitsSet := limits.(*schema.Set)
-
-		for _, v := range limitsSet.List() {
-			values := v.(map[string]interface{})
-
-			o.Project.Limits.CoresVcpuCount = values["cores_vcpu_count"].(int)
-			o.Project.Limits.RamGbAmount = values["ram_gb_amount"].(int)
-			o.Project.Limits.StorageGbAmount = values["storage_gb_amount"].(int)
-		}
+		limits := limits.(map[string]interface{})
+		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.RamGbAmount = limits["ram"].(int)
+		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
 
+	//net, ok := res.GetOk("network")
 	//networks := make([]map[string]interface{}, 0)
 	//for _, v := range o.Project.Networks {
 	//	volume := map[string]interface{}{
@@ -492,13 +472,13 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	//if ok {
 	//	networkSet := network.(*schema.Set).List()
 	//	for _, v := range networkSet {
-	//		if v.(map[string]interface{})["is_default"].(bool) {
-	//			o.Project.Networks.NetworkName = v.(map[string]interface{})["network_name"].(string)
+	//		if v.(map[string]interface{})["default"].(bool) {
+	//			o.Project.Networks.NetworkName = v.(map[string]interface{})["name"].(string)
 	//			o.Project.Networks.Cidr = v.(map[string]interface{})["cidr"].(string)
-	//			o.Project.Networks.EnableDhcp = v.(map[string]interface{})["enable_dhcp"].(bool)
+	//			o.Project.Networks.EnableDhcp = v.(map[string]interface{})["dhcp"].(bool)
 	//			o.Project.Networks.IsDefault = true
 	//			var dnsNameServers = []string{}
-	//			for _, dnsIp := range v.(map[string]interface{})["dns_nameservers"].(*schema.Set).List() {
+	//			for _, dnsIp := range v.(map[string]interface{})["dns"].(*schema.Set).List() {
 	//				dnsNameServers = append(dnsNameServers, dnsIp.(string))
 	//			}
 	//			o.Project.Networks.DNSNameservers = dnsNameServers
@@ -514,21 +494,21 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 
 	res.Set("datacenter", o.Project.Datacenter)
 	res.Set("ir_type", o.Project.IrType)
-	res.Set("desc", o.Project.Desc)
+	res.Set("description", o.Project.Desc)
 	res.Set("group_id", o.Project.GroupID.String())
-	res.Set("jump_host", strconv.FormatBool(o.Project.JumpHost))
+	res.Set("jump_host", o.Project.JumpHost)
 	res.Set("name", o.Project.Name)
 	res.Set("virtualization", o.Project.Virtualization)
 
-	limits := make([]map[string]int, 1)
-
-	limits[0] = map[string]int{
-		"cores_vcpu_count":  o.Project.Limits.CoresVcpuCount,
-		"ram_gb_amount":     o.Project.Limits.RamGbAmount,
-		"storage_gb_amount": o.Project.Limits.StorageGbAmount,
+	limits := map[string]int{
+		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"ram":     o.Project.Limits.RamGbAmount,
+		"storage": o.Project.Limits.StorageGbAmount,
 	}
-
-	res.Set("limits", limits)
+	err := res.Set("limits", limits)
+	if err != nil {
+		log.Println(err)
+	}
 
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
@@ -537,13 +517,26 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 
 func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.Project.ID.String())
+	res.Set("name", o.Project.Name)
 	res.Set("ir_group", o.Project.IrGroup)
 	res.Set("group_id", o.Project.GroupID.String())
 	//res.Set("domain_id", o.Project.DomainID.String())
 	//res.Set("state", o.Project.State)
 	res.Set("type", o.Project.Type)
 
+	res.Set("description", o.Project.Desc)
 	res.Set("default_network", o.Project.DefaultNetwork.String())
+
+	limits := map[string]int{
+		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"ram":     o.Project.Limits.RamGbAmount,
+		"storage": o.Project.Limits.StorageGbAmount,
+	}
+
+	err := res.Set("limits", limits)
+	if err != nil {
+		log.Println(err)
+	}
 
 	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {sort.Sort(ByPath(o.Project.Networks))
 
@@ -551,28 +544,28 @@ func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	for _, v := range o.Project.Networks {
 		if v.NetworkUUID == o.Project.DefaultNetwork {
 			volume := map[string]interface{}{
-				"cidr":            v.Cidr,
-				"dns_nameservers": v.DNSNameservers,
-				"enable_dhcp":     v.EnableDhcp,
-				"is_default":      true,
-				"network_name":    v.NetworkName,
-				"network_uuid":    v.NetworkUUID.String(),
+				"cidr":    v.Cidr,
+				"dns":     v.DNSNameservers,
+				"dhcp":    v.EnableDhcp,
+				"default": true,
+				"name":    v.NetworkName,
+				"id":      v.NetworkUUID.String(),
 			}
 			networks = append(networks, volume)
 		} else {
 			volume := map[string]interface{}{
-				"cidr":            v.Cidr,
-				"dns_nameservers": v.DNSNameservers,
-				"enable_dhcp":     v.EnableDhcp,
-				"is_default":      false,
-				"network_name":    v.NetworkName,
-				"network_uuid":    v.NetworkUUID.String(),
+				"cidr":    v.Cidr,
+				"dns":     v.DNSNameservers,
+				"dhcp":    v.EnableDhcp,
+				"default": false,
+				"name":    v.NetworkName,
+				"id":      v.NetworkUUID.String(),
 			}
 			networks = append(networks, volume)
 		}
 	}
 
-	err := res.Set("network", networks)
+	err = res.Set("network", networks)
 	if err != nil {
 		log.Println(err)
 	}

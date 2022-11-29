@@ -274,8 +274,8 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 			server.WriteTF(res)
 		}
 
-		if res.HasChange("project_id") {
-			_, projectId := res.GetChange("project_id")
+		if res.HasChange("vdc_id") {
+			_, projectId := res.GetChange("vdc_id")
 			changes := map[string]interface{}{
 				"uuids":        []string{server.Id.String()},
 				"project_uuid": projectId.(string),
