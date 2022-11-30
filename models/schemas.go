@@ -186,6 +186,7 @@ func init() {
 			},
 		},
 	}
+
 	SchemaTag = map[string]*schema.Schema{
 		"name": {Type: schema.TypeString, Required: true, ForceNew: true},
 	}
