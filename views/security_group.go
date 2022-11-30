@@ -148,16 +148,15 @@ func SecurityGroupDelete(ctx context.Context, res *schema.ResourceData, m interf
 func SecurityGroupImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	obj := models.SecurityGroup{}
 	obj.SecurityGroupID = res.Id()
-	//obj.ReadTF(res)
 
 	responseBytes, err := obj.ReadAllVdc()
 	if err != nil {
 		return nil, err
 	}
 	err = obj.DeserializeImport(responseBytes)
+	obj.IsImport = true
 
 	obj.WriteTF(res)
 
 	return []*schema.ResourceData{res}, nil
-
 }

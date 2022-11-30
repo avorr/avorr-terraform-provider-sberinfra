@@ -17,12 +17,14 @@ type SecurityGroup struct {
 	ProjectID        string `json:"-"`
 	GroupName        string `json:"group_name"`
 	SecurityRules    []Rule `json:"security_rules"`
+	Rules            []Rule `json:"rules,omitempty"`
 	State            string `json:"-"`
-	SecurityGroupID  string `json:"security_group_id"`
+	SecurityGroupID  string `json:"security_group_id,omitempty"`
 	AttachedToServer []struct {
 		Status     string    `json:"status"`
 		ServerUUID uuid.UUID `json:"server_uuid"`
-	} `json:"attached_to_server"`
+	} `json:"attached_to_server,omitempty"`
+	IsImport bool `json:"-"`
 }
 
 type Rule struct {
@@ -118,13 +120,11 @@ out:
 }
 
 func (o *SecurityGroup) DeserializeImport(responseBytes []byte) error {
-	type Projects struct {
-		ID             string          `json:"id"`
-		SecurityGroups []SecurityGroup `json:"security_groups"`
-	}
-
 	type allProjects struct {
-		Projects []Projects `json:"projects"`
+		Projects []struct {
+			ID             string          `json:"id"`
+			SecurityGroups []SecurityGroup `json:"security_groups"`
+		} `json:"projects"`
 	}
 
 	var allVdc allProjects
@@ -133,14 +133,11 @@ func (o *SecurityGroup) DeserializeImport(responseBytes []byte) error {
 		return err
 	}
 
-	for _, v := range allVdc.Projects {
-		for _, group := range v.SecurityGroups {
+	for _, vdc := range allVdc.Projects {
+		for _, group := range vdc.SecurityGroups {
 			if group.SecurityGroupID == o.SecurityGroupID {
-				log.Println("!!!", group.SecurityRules)
-				o.ProjectID = group.ProjectID
-				o.GroupName = group.GroupName
-				o.SecurityRules = group.SecurityRules
-				o.AttachedToServer = group.AttachedToServer
+				*o = group
+				o.ProjectID = vdc.ID
 			}
 		}
 	}
@@ -193,23 +190,44 @@ func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *reso
 
 func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.SecurityGroupID)
+	err := res.Set("name", o.GroupName)
+	err = res.Set("vdc_id", o.ProjectID)
 
 	rules := make([]map[string]interface{}, 0)
-	for _, v := range o.SecurityRules {
-		rule := map[string]interface{}{
-			"id":               v.ID,
-			"direction":        v.Direction,
-			"ethertype":        v.Ethertype,
-			"protocol":         v.Protocol,
-			"port_range_min":   v.PortRangeMin,
-			"port_range_max":   v.PortRangeMax,
-			"remote_ip_prefix": v.RemoteIpPrefix,
-			"remote_group_id":  v.RemoteGroupID,
+
+	if o.IsImport {
+		for _, v := range o.Rules {
+			if v.Protocol != "" {
+				rule := map[string]interface{}{
+					"id":               v.ID,
+					"direction":        v.Direction,
+					"ethertype":        v.Ethertype,
+					"protocol":         v.Protocol,
+					"port_range_min":   v.PortRangeMin,
+					"port_range_max":   v.PortRangeMax,
+					"remote_ip_prefix": v.RemoteIpPrefix,
+					"remote_group_id":  v.RemoteGroupID,
+				}
+				rules = append(rules, rule)
+			}
 		}
-		rules = append(rules, rule)
+	} else {
+		for _, v := range o.SecurityRules {
+			rule := map[string]interface{}{
+				"id":               v.ID,
+				"direction":        v.Direction,
+				"ethertype":        v.Ethertype,
+				"protocol":         v.Protocol,
+				"port_range_min":   v.PortRangeMin,
+				"port_range_max":   v.PortRangeMax,
+				"remote_ip_prefix": v.RemoteIpPrefix,
+				"remote_group_id":  v.RemoteGroupID,
+			}
+			rules = append(rules, rule)
+		}
 	}
 
-	err := res.Set("security_rule", rules)
+	err = res.Set("security_rule", rules)
 	if err != nil {
 		log.Println(err)
 	}

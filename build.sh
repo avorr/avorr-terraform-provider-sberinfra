@@ -2,7 +2,7 @@
 set -ex
 echo `date`
 name=terraform-provider-si
-version=0.4.3
+version=0.4.4
 platform=darwin_amd64; goos="darwin"
 #platform=linux_amd64; goos="linux"
 #platform=windows; goos="windows"
