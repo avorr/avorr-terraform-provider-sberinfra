@@ -392,7 +392,7 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	limits, ok := res.GetOk("limits")
 	if ok {
 		limits := limits.(map[string]interface{})
-		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.CoresVcpuCount = limits["cores"].(int)
 		o.Project.Limits.RamGbAmount = limits["ram"].(int)
 		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
@@ -447,7 +447,7 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	limits, ok := res.GetOk("limits")
 	if ok {
 		limits := limits.(map[string]interface{})
-		o.Project.Limits.CoresVcpuCount = limits["vcpu"].(int)
+		o.Project.Limits.CoresVcpuCount = limits["cores"].(int)
 		o.Project.Limits.RamGbAmount = limits["ram"].(int)
 		o.Project.Limits.StorageGbAmount = limits["storage"].(int)
 	}
@@ -501,7 +501,7 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 	res.Set("virtualization", o.Project.Virtualization)
 
 	limits := map[string]int{
-		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"cores":   o.Project.Limits.CoresVcpuCount,
 		"ram":     o.Project.Limits.RamGbAmount,
 		"storage": o.Project.Limits.StorageGbAmount,
 	}
@@ -528,7 +528,7 @@ func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	res.Set("default_network", o.Project.DefaultNetwork.String())
 
 	limits := map[string]int{
-		"vcpu":    o.Project.Limits.CoresVcpuCount,
+		"cores":   o.Project.Limits.CoresVcpuCount,
 		"ram":     o.Project.Limits.RamGbAmount,
 		"storage": o.Project.Limits.StorageGbAmount,
 	}

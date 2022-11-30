@@ -36,7 +36,7 @@ resource si_vdc "vdc" {
   datacenter  = "PD24R3PROM" //"okvm1"
   description = "si.dns.zone"
   limits      = {
-    vcpu    = 100
+    cores    = 100
     ram     = 10000
     storage = 1000
   }
@@ -136,4 +136,7 @@ resource "si_security_group" "kafka" {
 #}
 
 #resource "si_vm" "import" {
+#}
+
+#resource "si_security_group" "import" {
 #}

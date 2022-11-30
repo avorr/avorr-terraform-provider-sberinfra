@@ -39,11 +39,8 @@ func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interf
 }
 
 func SecurityGroupRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
-
 	var diags diag.Diagnostics
-
 	obj := models.SecurityGroup{}
-
 	obj.ReadTF(res)
 
 	responseBytes, err := obj.ReadResource()
@@ -149,44 +146,18 @@ func SecurityGroupDelete(ctx context.Context, res *schema.ResourceData, m interf
 }
 
 func SecurityGroupImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	/*
-		obj := models.Project{}
-		obj.Project.ID = uuid.MustParse(res.Id())
-		responseBytes, err := obj.ReadDI()
-		if err != nil {
-			return nil, err
-		}
-		err = obj.Deserialize(responseBytes)
+	obj := models.SecurityGroup{}
+	obj.SecurityGroupID = res.Id()
+	//obj.ReadTF(res)
 
-		bytes, err := obj.GetProjectQuota()
+	responseBytes, err := obj.ReadAllVdc()
+	if err != nil {
+		return nil, err
+	}
+	err = obj.DeserializeImport(responseBytes)
 
-		type LimitsImport struct {
-			Limits struct {
-				RamGbAmount     int `json:"ram_gb_amount"`
-				CoresVcpuCount  int `json:"cores_vcpu_count"`
-				StorageGbAmount int `json:"storage_gb_amount"`
-			} `json:"limits"`
-		}
+	obj.WriteTF(res)
 
-		limits := map[string]*LimitsImport{}
-		err = json.Unmarshal(bytes, &limits)
-
-		if err != nil {
-			return nil, err
-		}
-
-		obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
-		obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
-		obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
-
-		if err != nil {
-			return nil, err
-		}
-
-		obj.WriteTF(res)
-
-		return []*schema.ResourceData{res}, nil
-
-	*/
 	return []*schema.ResourceData{res}, nil
+
 }

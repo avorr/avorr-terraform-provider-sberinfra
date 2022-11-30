@@ -18,7 +18,7 @@ type SecurityGroup struct {
 	GroupName        string `json:"group_name"`
 	SecurityRules    []Rule `json:"security_rules"`
 	State            string `json:"-"`
-	SecurityGroupID  string `json:"-"` //`json:"security_group_id"`
+	SecurityGroupID  string `json:"security_group_id"`
 	AttachedToServer []struct {
 		Status     string    `json:"status"`
 		ServerUUID uuid.UUID `json:"server_uuid"`
@@ -117,6 +117,36 @@ out:
 	return nil
 }
 
+func (o *SecurityGroup) DeserializeImport(responseBytes []byte) error {
+	type Projects struct {
+		ID             string          `json:"id"`
+		SecurityGroups []SecurityGroup `json:"security_groups"`
+	}
+
+	type allProjects struct {
+		Projects []Projects `json:"projects"`
+	}
+
+	var allVdc allProjects
+	err := json.Unmarshal(responseBytes, &allVdc)
+	if err != nil {
+		return err
+	}
+
+	for _, v := range allVdc.Projects {
+		for _, group := range v.SecurityGroups {
+			if group.SecurityGroupID == o.SecurityGroupID {
+				log.Println("!!!", group.SecurityRules)
+				o.ProjectID = group.ProjectID
+				o.GroupName = group.GroupName
+				o.SecurityRules = group.SecurityRules
+				o.AttachedToServer = group.AttachedToServer
+			}
+		}
+	}
+	return nil
+}
+
 func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
@@ -190,6 +220,10 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 
 func (o *SecurityGroup) ReadResource() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ProjectID))
+}
+
+func (o *SecurityGroup) ReadAllVdc() ([]byte, error) {
+	return Api.NewRequestRead("projects")
 }
 
 func (o *SecurityGroup) DeleteResource() error {
