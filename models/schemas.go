@@ -40,7 +40,7 @@ func init() {
 		// "id":   {Type: schema.TypeString, Required: true},
 		"name": {Type: schema.TypeString, Required: true},
 		// "portal_id":   {Type: schema.TypeInt, Computed: true},
-		"domain_id": {Type: schema.TypeString, Required: true},
+		"domain_id": {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		// "domain_name": {Type: schema.TypeString, Computed: true},
 		// "limit":   {Type: schema.TypeFloat, Computed: true},
 		"is_prom": {Type: schema.TypeBool, Computed: true},
@@ -68,7 +68,7 @@ func init() {
 			Optional: true,
 			Elem:     &schema.Schema{Type: schema.TypeInt, Required: true},
 			ValidateDiagFunc: allDiagFunc(
-				validation.MapKeyMatch(regexp.MustCompile("(^vcpu$)|(^ram$)|(^storage$)"), "An argument is not expected here"),
+				validation.MapKeyMatch(regexp.MustCompile("(^cores$)|(^ram$)|(^storage$)"), "An argument is not expected here"),
 				validateLimitsMapValue(),
 			),
 		},
@@ -80,11 +80,11 @@ func init() {
 				Schema: map[string]*schema.Schema{
 					"name": {Type: schema.TypeString, Required: true},
 					"id":   {Type: schema.TypeString, Computed: true},
-					"cidr": {Type: schema.TypeString, Required: true},
+					"cidr": {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsCIDR},
 					"dns": {
 						Type:     schema.TypeSet,
 						Required: true,
-						Elem:     &schema.Schema{Type: schema.TypeString},
+						Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPv4Address},
 					},
 					"dhcp":    {Type: schema.TypeBool, Required: true},
 					"default": {Type: schema.TypeBool, Optional: true, Default: false, ValidateDiagFunc: defaultNetworkCount()},
@@ -97,16 +97,16 @@ func init() {
 		"name": {Type: schema.TypeString, Computed: true},
 		//"service_name": {Type: schema.TypeString, Required: true},
 		"service_name": {Type: schema.TypeString, Optional: true},
-		"group_id":     {Type: schema.TypeString, Required: true},
-		"vdc_id":       {Type: schema.TypeString, Required: true},
+		"group_id":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
+		"vdc_id":       {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
 		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
 		"ir_type":  {Type: schema.TypeString, Computed: true},
 		"cpu":      {Type: schema.TypeInt, Computed: true},
 		"ram":      {Type: schema.TypeInt, Computed: true},
 		//"disk":         {Type: schema.TypeInt, Optional: true},
-		"flavor":     {Type: schema.TypeString, Required: true},
-		"network_id": {Type: schema.TypeString, Optional: true},
+		"flavor":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"m1.tiny", "m1.small", "m1.medium", "m1.large", "m1.xlarge", "m2.tiny", "m2.small", "m2.medium", "m2.large", "m2.xlarge", "m2.xxlarge", "m3.medium", "m3.large", "m4.tiny", "m4.small", "m4.medium", "m4.large", "m4.xlarge", "m6.tiny", "m6.small", "m6.medium", "m6.large", "m6.xlarge", "m8.tiny", "m8.small", "m8.medium", "m8.large", "m8.xlarge", "m12.large", "m16.tiny", "m16.small", "m16.large", "m16.xxlarge", "kasper_n2.tiny", "kasper_n2.small", "kasper_n2.medium", "kasper_n2.large", "kasper_n2.xlarge", "kasper_n1.small", "kasper_n1.medium", "kasper_n1.large", "kasper_n3.small", "kasper_n3.medium", "kasper_n3.large", "kasper_n3.xlarge"}, false)},
+		"network_id": {Type: schema.TypeString, Optional: true, ValidateFunc: validation.IsUUID},
 		//"virtualization":  {Type: schema.TypeString, Required: true},
 		"virtualization": {Type: schema.TypeString, Optional: true, Default: "openstack"},
 		"os_name":        {Type: schema.TypeString, Required: true},
@@ -161,12 +161,12 @@ func init() {
 				},
 			},
 		},
-		"tag_ids":         {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
-		"security_groups": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString}},
+		"tag_ids":         {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsUUID}},
+		"security_groups": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsUUID}},
 	}
 	SchemaSecurityGroup = map[string]*schema.Schema{
 		"id":     {Type: schema.TypeString, Computed: true},
-		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false},
+		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.IsUUID},
 		//"name":       {Type: schema.TypeString, Required: true, ForceNew: true},
 		"name": {Type: schema.TypeString, Required: true},
 		"security_rule": {
@@ -186,6 +186,7 @@ func init() {
 			},
 		},
 	}
+
 	SchemaTag = map[string]*schema.Schema{
 		"name": {Type: schema.TypeString, Required: true, ForceNew: true},
 	}
@@ -195,12 +196,12 @@ func validateLimitsMapValue() schema.SchemaValidateDiagFunc {
 	return func(v interface{}, path cty.Path) diag.Diagnostics {
 		var diags diag.Diagnostics
 		for key, value := range v.(map[string]interface{}) {
-			if key == "vcpu" {
+			if key == "cores" {
 				if !(value.(int) >= 1 && value.(int) <= 200000) {
 					diags = append(diags, diag.Diagnostic{
 						Severity:      diag.Error,
-						Summary:       "vcpu value is not in range",
-						Detail:        fmt.Sprintf("expected limits.vcpu to be in the range (1 - 1000), got %d", value),
+						Summary:       "cores value is not in range",
+						Detail:        fmt.Sprintf("expected limits.cores to be in the range (1 - 1000), got %d", value),
 						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
 					})
 				}

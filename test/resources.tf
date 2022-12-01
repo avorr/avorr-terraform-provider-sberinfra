@@ -1,26 +1,3 @@
-# m1.tiny   = 1/1
-# m1.medium = 4/4
-# m1.large	= 8/8
-# m2.small	= 2/4
-# m2.medium = 4/8
-# m2.large	= 8/16
-# m2.xlarge = 16/32
-# m4.small	= 2/8
-# m4.medium = 4/16
-# m4.large	= 8/32
-# m4.xlarge = 16/64
-# m6.medium = 4/24
-# m8.medium = 4/32
-# m8.large	= 8/64
-
-#"os_name": "rhel" or "altlinux"
-#"os_version": "7.9" or "altlinux"
-
-# storage_type = "rbd-1"           ------> SLOW
-# storage_type = "rbd-2"           ------> SLOW BACKUP
-# storage_type = "iscsi_common"    ------> FAST
-# storage_type = "__DEFAULT__"     ------> DEFAULT TYPE
-
 data "si_domain" "domain" {
   name = "ГосТех"
 }
@@ -31,12 +8,12 @@ data "si_group" "group" {
 }
 
 resource si_vdc "vdc" {
-  name        = "terraform-test-vdc" //requared false
+  name        = "terraform-test-vdc"
   group_id    = data.si_group.group.id
   datacenter  = "PD24R3PROM" //"okvm1"
   description = "si.dns.zone"
   limits      = {
-    vcpu    = 100
+    cores   = 100
     ram     = 10000
     storage = 1000
   }
@@ -136,4 +113,7 @@ resource "si_security_group" "kafka" {
 #}
 
 #resource "si_vm" "import" {
+#}
+
+#resource "si_security_group" "import" {
 #}

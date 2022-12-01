@@ -2,7 +2,7 @@
 set -ex
 echo `date`
 name=terraform-provider-si
-version=0.4.3
+version=0.4.4
 platform=darwin_amd64; goos="darwin"
 #platform=linux_amd64; goos="linux"
 #platform=windows; goos="windows"
@@ -42,8 +42,8 @@ ls -l ~/.terraform.d/plugins/sberbank/devops/si/${version}/${platform}/terraform
 #terraform apply -auto-approve
 #terraform destroy -auto-approve
 
-#terraform import si_vdc.terraformtest2 c41a6b76-ddfe-4d49-a762-ea659becf35f
-#terraform state show -no-color si_vdc.terraformtest2
-#terraform state show -no-color si_vdc.terraformtest2 >> project.tf
+#terraform import si_project.terraformtest2 c41a6b76-ddfe-4d49-a762-ea659becf35f
+#terraform state show -no-color si_project.terraformtest2
+#terraform state show -no-color si_project.terraformtest2 >> project.tf
 
 #terraform import si_vm.vm1 e94bea8e-7ea3-49da-b91f-0c71092da6ff
