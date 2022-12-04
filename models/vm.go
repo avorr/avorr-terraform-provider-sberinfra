@@ -27,17 +27,16 @@ func (o *VM) GetFile() string {
 
 func (o *VM) Urls(action string) string {
 	urls := map[string]string{
-		"create":         "servers",
-		"read":           "servers/%s",
-		"update":         "servers/%s",
-		"delete":         "servers/%s",
-		"resize":         "servers/%s/resize",
-		"move":           "servers/moving_vms",
-		"volume_create":  "servers/%s/volume_attachments",
-		"volume_remove":  "servers/%s/volume_detachments",
-		"tag_attach":     "servers/%s/tags",
-		"tag_detach":     "servers/%s/tags/%s",
-		"security_group": "servers/%s/action",
+		"create":        "servers",
+		"read":          "servers/%s",
+		"update":        "servers/%s",
+		"delete":        "servers/%s",
+		"resize":        "servers/%s/resize",
+		"move":          "servers/moving_vms",
+		"volume_create": "servers/%s/volume_attachments",
+		"volume_remove": "servers/%s/volume_detachments",
+		"tag_attach":    "servers/%s/tags",
+		"tag_detach":    "servers/%s/tags/%s",
 	}
 	return urls[action]
 }

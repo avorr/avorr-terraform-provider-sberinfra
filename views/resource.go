@@ -433,8 +433,10 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 			for _, v := range l1 {
 				if !utils.ArrContainsStr(l2, v) {
 					_, err := server.SecurityGroupVM(v, "detach")
+
 					if err != nil {
-						return diag.FromErr(err)
+						//return diag.FromErr(err)
+						log.Println(diag.FromErr(err))
 					}
 
 					_, err = server.StateSecurityGroupChange(res).WaitForStateContext(ctx)

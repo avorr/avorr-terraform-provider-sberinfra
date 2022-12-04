@@ -18,6 +18,10 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 
 	diags = obj.ReadTF(res)
 
+	cores := obj.Limits.CoresVcpuCount
+	ram := obj.Limits.RamGbAmount
+	storage := obj.Limits.StorageGbAmount
+
 	if diags.HasError() {
 		return diags
 	}
@@ -64,7 +68,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	_, err = obj.StateChange(res).WaitForStateContext(ctx)
 
 	if err != nil {
-		log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", obj.Project.ID, obj.Project.State)
+		log.Printf("[INFO] timeout on create for instance (%s), save current state: %s", obj.ID, obj.State)
 	}
 
 	if err != nil {
@@ -72,7 +76,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 
 	objRes2 := models.ResProject{}
-	objRes2.Project.ID = obj.Project.ID
+	objRes2.ID = obj.ID
 	obj.AddNetwork(ctx, res, additionalNetworks)
 	responseBytes, err = objRes2.ReadDIRes()
 
@@ -86,7 +90,11 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	objRes2.Project.Limits = obj.Project.Limits
+	objRes2.Limits.CoresVcpuCount = cores
+	objRes2.Limits.RamGbAmount = ram
+	objRes2.Limits.StorageGbAmount = storage
+
+	//objRes2.Limits = obj.Limits
 
 	objRes2.WriteTFRes(res)
 	return diags
@@ -127,9 +135,9 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 		return diag.FromErr(err)
 	}
 
-	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
-	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
-	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
+	obj.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
+	obj.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
+	obj.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
 
 	//err = obj.Deserialize(responseBytes)
 
@@ -247,7 +255,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		}
 		objProjectUpdate := updateProjectName{}
 		objProjectUpdate.Project.Action = "change_name"
-		objProjectUpdate.Project.Name = obj.Project.Name
+		objProjectUpdate.Project.Name = obj.Name
 		requestBytes, err := json.Marshal(objProjectUpdate)
 		responseBytes, err := obj.UpdateProjectName(requestBytes)
 		if err != nil {
@@ -264,7 +272,7 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		}
 		objProjectUpdate := updateProjectDesc{}
 		objProjectUpdate.Project.Action = "change_desc"
-		objProjectUpdate.Project.Desc = obj.Project.Desc
+		objProjectUpdate.Project.Desc = obj.Desc
 		requestBytes, err := json.Marshal(objProjectUpdate)
 		responseBytes, err := obj.UpdateProjectDesc(requestBytes)
 		if err != nil {
@@ -283,10 +291,10 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 		}
 
 		objProjectLimits := updateProjectLimits{}
-		objProjectLimits.GroupID = obj.Project.GroupID
-		objProjectLimits.Limits.CoresVcpuCount = obj.Project.Limits.CoresVcpuCount
-		objProjectLimits.Limits.StorageGbAmount = obj.Project.Limits.StorageGbAmount
-		objProjectLimits.Limits.RamGbAmount = obj.Project.Limits.RamGbAmount
+		objProjectLimits.GroupID = obj.GroupID
+		objProjectLimits.Limits.CoresVcpuCount = obj.Limits.CoresVcpuCount
+		objProjectLimits.Limits.StorageGbAmount = obj.Limits.StorageGbAmount
+		objProjectLimits.Limits.RamGbAmount = obj.Limits.RamGbAmount
 
 		requestBytes, err := json.Marshal(objProjectLimits)
 		responseBytes, err := obj.UpdateProjectLimits(requestBytes)
@@ -297,8 +305,8 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 
 	objRes := models.ResProject{}
-	objRes.Project.ID = obj.Project.ID
-	objRes.Project.Limits = obj.Project.Limits
+	objRes.ID = obj.ID
+	objRes.Limits = obj.Limits
 	responseBytes, err := objRes.ReadDIRes()
 	if err != nil {
 		return diag.FromErr(err)
@@ -347,7 +355,7 @@ func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{})
 	//obj := models.SIProject{GroupId: uuid.MustParse(res.Id())}
 
 	obj := models.Project{}
-	obj.Project.ID = uuid.MustParse(res.Id())
+	obj.ID = uuid.MustParse(res.Id())
 	responseBytes, err := obj.ReadDI()
 	if err != nil {
 		return nil, err
@@ -371,9 +379,9 @@ func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{})
 		return nil, err
 	}
 
-	obj.Project.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
-	obj.Project.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
-	obj.Project.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
+	obj.Limits.CoresVcpuCount = limits["data"].Limits.CoresVcpuCount
+	obj.Limits.RamGbAmount = limits["data"].Limits.RamGbAmount
+	obj.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
 
 	obj.WriteTF(res)
 

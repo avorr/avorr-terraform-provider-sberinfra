@@ -20,7 +20,7 @@ type Servers struct {
 
 func (o *Servers) Urls(action string) string {
 	urls := map[string]string{
-		"servers": fmt.Sprintf("servers?project_id=%s", o.Project.Project.ID.String()),
+		"servers": fmt.Sprintf("servers?project_id=%s", o.Project.ID.String()),
 	}
 	return urls[action]
 }
@@ -42,24 +42,6 @@ func (o *Servers) Read() error {
 
 	return nil
 }
-
-//func (o *Servers) ReadCluster(id string) error {
-//	responseBytes, err := o.read(fmt.Sprintf("servers/clusters/%s", id))
-//	if err != nil {
-//		return err
-//	}
-//	type ClusterResponse struct {
-//		Cluster *models.Cluster `json:"cluster"`
-//	}
-//	response := &ClusterResponse{}
-//	err = json.Unmarshal(responseBytes, response)
-//	if err != nil {
-//		return err
-//	}
-//	o.Clusters = append(o.Clusters, response.Cluster)
-//	response.Cluster.SetObject()
-//	return nil
-//}
 
 func (o *Servers) deserialize(data []byte) error {
 	return json.Unmarshal(data, &o)

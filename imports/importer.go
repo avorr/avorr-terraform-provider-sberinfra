@@ -24,7 +24,7 @@ func (o *Importer) Import(projectId string) error {
 	}
 	//project := &models.Project{Id: id}
 	project := &models.Project{}
-	project.Project.ID = id
+	project.ID = id
 	o.Project = project
 	o.Api = client.NewApi()
 	models.Api = o.Api

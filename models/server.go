@@ -479,7 +479,8 @@ func (o *Server) CreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) ReadDI() ([]byte, error) {
-	return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
+	//return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
+	return Api.NewRequestRead(fmt.Sprintf("servers/%s", o.Id))
 }
 
 func (o *Server) ReadDIStatusCode() ([]byte, int, error) {
@@ -524,23 +525,6 @@ func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
 }
 
 func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, error) {
-
-	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
-	//{
-	//    "security_group": {
-	//        "state": "attach",
-	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
-	//    }
-	//}
-
-	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
-	//{
-	//    "security_group": {
-	//        "state": "detach",
-	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
-	//    }
-	//}
-
 	request := map[string]map[string]string{
 		"security_group": {
 			"state":             state,
@@ -551,8 +535,8 @@ func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	//return Api.NewRequestCreate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
-	return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
+	//return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
+	return Api.NewRequestUpdate(fmt.Sprintf("servers/%s/action", o.Id), data)
 }
 
 func (o *Server) TagDetachDI(tagId string) error {
