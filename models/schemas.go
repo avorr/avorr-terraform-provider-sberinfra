@@ -225,7 +225,7 @@ func validateLimitsMapValue() schema.SchemaValidateDiagFunc {
 
 func uniqueCidr() schema.SchemaValidateDiagFunc {
 	var cidr []string
-	var count int8
+	var count int
 	return func(v interface{}, path cty.Path) diag.Diagnostics {
 		var diags diag.Diagnostics
 		count++
@@ -234,7 +234,7 @@ func uniqueCidr() schema.SchemaValidateDiagFunc {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("expected type of network.%d.cidr to be string", count),
-				//Detail:        fmt.Sprintf("There is more than one network with the same cird [%s]", value),
+				//Detail:        fmt.Sprintf("There is more than one network with the same cidr [%s]", value),
 				//AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
 			})
 		}
@@ -243,7 +243,7 @@ func uniqueCidr() schema.SchemaValidateDiagFunc {
 			diags = append(diags, diag.Diagnostic{
 				Severity: diag.Error,
 				Summary:  fmt.Sprintf("expected network.%d.cidr to be a valid IPv4 Value, got %v", count, v.(string)),
-				//Detail:        fmt.Sprintf("There is more than one network with the same cird [%s]", value),
+				//Detail:        fmt.Sprintf("There is more than one network with the same cidr [%s]", value),
 				//AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
 			})
 		}

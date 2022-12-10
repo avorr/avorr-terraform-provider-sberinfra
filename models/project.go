@@ -1,17 +1,16 @@
 package models
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/utils"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/hcl/v2/gohcl"
-	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"log"
 	"time"
+	//	"github.com/hashicorp/hcl/v2/gohcl"
+	//	"github.com/hashicorp/hcl/v2/hclwrite"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -111,48 +110,6 @@ type ResProject struct {
 	} `json:"security_groups"`
 }
 
-//type ProjectNew struct {
-//	ID             uuid.UUID `json:"id"`
-//	Name           string    `json:"name"`
-//	State          string    `json:"state"`
-//	Type           string    `json:"type"`
-//	IrGroup        string    `json:"ir_group"`
-//	IrType         string    `json:"ir_type"`
-//	Virtualization string    `json:"virtualization"`
-//	Datacenter     string    `json:"datacenter"`
-//	DefaultNetwork uuid.UUID `json:"default_network"`
-//	Limits         struct {
-//		CoresVcpuCount  int `json:"cores_vcpu_count"`
-//		RamGbAmount     int `json:"ram_gb_amount"`
-//		StorageGbAmount int `json:"storage_gb_amount"`
-//	} `json:"limits"`
-//	Networks []struct {
-//		Cidr           string    `json:"cidr"`
-//		Status         string    `json:"status"`
-//		EnableDhcp     bool      `json:"enable_dhcp"`
-//		SubnetName     string    `json:"subnet_name"`
-//		SubnetUUID     uuid.UUID `json:"subnet_uuid"`
-//		NetworkName    string    `json:"network_name"`
-//		NetworkUUID    uuid.UUID `json:"network_uuid"`
-//		DNSNameservers []string  `json:"dns_nameservers"`
-//		IsDefault      bool      `json:"is_default"`
-//	} `json:"networks"`
-//	DomainName     string    `json:"domain_name"`
-//	GroupName      string    `json:"group_name"`
-//	DomainID       uuid.UUID `json:"domain_id"`
-//	GroupID        uuid.UUID `json:"group_id"`
-//	IsProm         bool      `json:"is_prom"`
-//	JumpHost       bool      `json:"jump_host"`
-//	Desc           string    `json:"desc"`
-//	SecurityGroups []struct {
-//		Rules            []Rule        `json:"rules"`
-//		Status           string        `json:"status"`
-//		GroupName        string        `json:"group_name"`
-//		SecurityGroupID  string        `json:"security_group_id"`
-//		AttachedToServer []interface{} `json:"attached_to_server"`
-//	} `json:"security_groups"`
-//}
-
 type Networks struct {
 	Network struct {
 		NetworkName    string   `json:"network_name"`
@@ -246,71 +203,72 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 	return nil
 }
 
-func (o *Project) GetType() string {
-	return "si_vdc"
-}
-
-//func (o *Project) NewObj() DIDataResource {
-//	return &Project{}
-//}
-
-func (o *Project) GetId() string {
-	return o.ID.String()
-}
-
-func (o *Project) GetDomainId() uuid.UUID {
-	return o.DomainID
-}
-
-func (o *Project) GetResType() string {
-	return "si_group"
-}
-
-func (o *Project) GetResName() string {
-	return o.Name
-}
-
-func (o *Project) GetOutput() (string, string) {
-	//return o.ResOutputName, o.ResOutputValue
-	return "", ""
-}
-
-//func (o *Project) SetResFields() {
 /*
-	o.ResId = o.GetId()
-	o.ResType = o.GetResType()
-	o.ResName = utils.Reformat(o.Name)
-	// o.ResDomainId = o.DomainId.String()
-	o.ResDomainIdUUID = o.DomainId.String()
-	o.ResOutputName = fmt.Sprintf(
-		"%s_id",
-		o.GetResType(),
-	)
-	o.ResOutputValue = fmt.Sprintf(
-		"data.%s.%s.id",
-		o.GetResType(),
-		o.GetResName(),
-	)
+	func (o *Project) GetType() string {
+		return "si_vdc"
+	}
+
+	func (o *Project) NewObj() DIDataResource {
+		return &Project{}
+	}
+
+	func (o *Project) GetId() string {
+		return o.ID.String()
+	}
+
+	func (o *Project) GetDomainId() uuid.UUID {
+		return o.DomainID
+	}
+
+	func (o *Project) GetResType() string {
+		return "si_group"
+	}
+
+	func (o *Project) GetResName() string {
+		return o.Name
+	}
+
+	func (o *Project) GetOutput() (string, string) {
+		//return o.ResOutputName, o.ResOutputValue
+		return "", ""
+	}
+
+	func (o *Project) SetResFields() {
+		o.ResId = o.GetId()
+		o.ResType = o.GetResType()
+		o.ResName = utils.Reformat(o.Name)
+		// o.ResDomainId = o.DomainId.String()
+		o.ResDomainIdUUID = o.DomainId.String()
+		o.ResOutputName = fmt.Sprintf(
+			"%s_id",
+			o.GetResType(),
+		)
+		o.ResOutputValue = fmt.Sprintf(
+			"data.%s.%s.id",
+			o.GetResType(),
+			o.GetResName(),
+		)
+
+}
+
+	func (o *Project) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
+		m := make(map[string][]*Project)
+		err := json.Unmarshal(responseBytes, &m)
+		if err != nil {
+			return nil, err
+		}
+
+		m2 := make([]DIDataResource, len(m["groups"]))
+		for k, v := range m["groups"] {
+			m2[k] = v
+		}
+		return m2, nil
+	}
+
+	func (o *Project) NewObj() DIResource {
+		return &Project{}
+	}
 */
-//}
-
-//func (o *Project) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
-//	m := make(map[string][]*Project)
-//	err := json.Unmarshal(responseBytes, &m)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	m2 := make([]DIDataResource, len(m["groups"]))
-//	for k, v := range m["groups"] {
-//		m2[k] = v
-//	}
-//	return m2, nil
-//}
-
-//func (o *Project) NewObj() DIResource {
-//	return &Project{}
-//}
 
 func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
@@ -485,6 +443,7 @@ func (o *Project) Serialize() ([]byte, error) {
 	return requestBytes, nil
 }
 
+/*
 func (o *Project) DeserializeOld(responseBytes []byte) error {
 	//response := make(map[string]map[string]interface{})
 	response := make(map[string]interface{})
@@ -520,6 +479,7 @@ func (o *Project) DeserializeOld(responseBytes []byte) error {
 	//o.AppSystemsCi = objMap["app_systems_ci"].(string)
 	return nil
 }
+*/
 
 func (o *Project) Deserialize(responseBytes []byte) error {
 	var response map[string]Project
@@ -574,9 +534,9 @@ func (o *ResProject) ReadDIRes() ([]byte, error) {
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
-func (o *Project) UpdateDI(data []byte) ([]byte, error) {
-	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
-}
+//func (o *Project) UpdateDI(data []byte) ([]byte, error) {
+//	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
+//}
 
 func (o *Project) UpdateProjectName(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
@@ -594,8 +554,8 @@ func (o *Project) DeleteDI() error {
 	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.ID), nil, 204)
 }
 
-func (o *Project) DeleteNetwork(NetworkUuid string) error {
-	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.ID, NetworkUuid), nil, 200)
+func (o *Project) DeleteNetwork(networkId string) error {
+	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.ID, networkId), nil, 200)
 }
 
 func (o *Project) ReadAll() ([]byte, error) {
@@ -682,6 +642,7 @@ func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName st
 	}
 }
 
+/*
 func (o *Project) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
 	return nil
 }
@@ -714,13 +675,14 @@ func (o *Project) ToHCLOutput() []byte {
 	return utils.Regexp(f.Bytes())
 }
 
-//func (o *Project) HostVars(server *Server) map[string]interface{} {
-//	return nil
-//}
+func (o *Project) HostVars(server *Server) map[string]interface{} {
+	return nil
+}
 
 func (o *Project) GetGroup() uuid.UUID {
 	return o.GroupID
 }
+
 
 func (o *Project) ToHCL(server *Server) ([]byte, error) {
 	//o.ResType = o.GetType()
@@ -744,3 +706,4 @@ func (o *Project) HCLAppParams() *HCLAppParams {
 func (o *Project) HCLVolumes() []*HCLVolume {
 	return nil
 }
+*/

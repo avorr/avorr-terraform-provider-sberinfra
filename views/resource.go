@@ -588,6 +588,18 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 				return nil, err
 			}
 		}
+
+		if len(server.SecurityGroups) > 0 {
+			var securityGroups []string
+			for _, v := range server.SecurityGroups {
+				securityGroups = append(securityGroups, v.String())
+			}
+			err = res.Set("security_groups", securityGroups)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		// return nil, nil
 		return []*schema.ResourceData{res}, nil
 	}
