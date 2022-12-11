@@ -14,7 +14,7 @@ terraform {
   required_providers {
     si = {
       source  = "sberbank/devops/si"
-      version = "0.4.4"
+      version = "0.4.5"
     }
     #    vault = {
     #      version = "3.3.0"
