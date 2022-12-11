@@ -84,7 +84,7 @@ func (o *SecurityGroup) CreateSecurityRule(data []byte) ([]byte, error) {
 }
 
 func (o *SecurityGroup) Deserialize(responseBytes []byte) error {
-	var responseStruct map[string]Project
+	var responseStruct map[string]Vdc
 	err := json.Unmarshal(responseBytes, &responseStruct)
 	if err != nil {
 		return err

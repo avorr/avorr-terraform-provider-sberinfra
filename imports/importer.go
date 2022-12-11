@@ -10,7 +10,7 @@ import (
 
 type Importer struct {
 	Api     *client.Api
-	Project *models.Project
+	Project *models.Vdc
 	Domain  *models.Domain
 	Group   *models.Group
 	//StandType *models.StandType
@@ -22,8 +22,8 @@ func (o *Importer) Import(projectId string) error {
 	if err != nil {
 		return fmt.Errorf("can't parse uuid, %s\n", err)
 	}
-	//project := &models.Project{Id: id}
-	project := &models.Project{}
+	//project := &models.Vdc{Id: id}
+	project := &models.Vdc{}
 	project.ID = id
 	o.Project = project
 	o.Api = client.NewApi()

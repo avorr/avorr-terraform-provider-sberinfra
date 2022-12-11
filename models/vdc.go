@@ -16,7 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-type Project struct {
+type Vdc struct {
 	ID             uuid.UUID `json:"id,omitempty"`
 	Name           string    `json:"name"`
 	State          string    `json:"state"`
@@ -58,7 +58,7 @@ type Project struct {
 	SecurityGroups []SecurityGroup `json:"security_groups"`
 }
 
-type ResProject struct {
+type ResVdc struct {
 	ID             uuid.UUID `json:"id"`
 	Name           string    `json:"name"`
 	State          string    `json:"state"`
@@ -120,7 +120,7 @@ type Networks struct {
 	} `json:"network"`
 }
 
-func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []interface{}) diag.Diagnostics {
+func (o *Vdc) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []interface{}) diag.Diagnostics {
 	body := Networks{}
 	for _, v := range additionalNets {
 		v := v.(map[string]interface{})
@@ -146,7 +146,7 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 			return diag.FromErr(err)
 		}
 
-		deserializeResBody := ResProject{}
+		deserializeResBody := ResVdc{}
 		err = json.Unmarshal(resBody, &deserializeResBody)
 		if err != nil {
 			return diag.FromErr(err)
@@ -158,7 +158,7 @@ func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, addi
 	return diag.Diagnostics{}
 }
 
-func (o *Project) GetProjectQuota() ([]byte, error) {
+func (o *Vdc) GetVdcQuota() ([]byte, error) {
 	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.ID, o.GroupID))
 
 	if err != nil {
@@ -167,7 +167,7 @@ func (o *Project) GetProjectQuota() ([]byte, error) {
 	return body, nil
 }
 
-func (o *ResProject) GetProjectQuota() ([]byte, error) {
+func (o *ResVdc) GetVdcQuota() ([]byte, error) {
 	body, err := Api.NewRequestRead(fmt.Sprintf("/v2/projects/%s/quota?group_id=%s", o.ID, o.GroupID))
 
 	if err != nil {
@@ -176,7 +176,7 @@ func (o *ResProject) GetProjectQuota() ([]byte, error) {
 	return body, nil
 }
 
-func (o *Project) SetDefaultNetwork(networkUuid string) error {
+func (o *Vdc) SetDefaultNetwork(networkUuid string) error {
 	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
 	if err != nil {
 		return err
@@ -190,7 +190,7 @@ func (o *Project) SetDefaultNetwork(networkUuid string) error {
 	return nil
 }
 
-func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
+func (o *ResVdc) SetDefaultNetwork(networkUuid string) error {
 	body, err := json.Marshal(map[string]string{"network_uuid": networkUuid})
 	if err != nil {
 		return err
@@ -204,36 +204,36 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 }
 
 /*
-	func (o *Project) GetType() string {
+	func (o *Vdc) GetType() string {
 		return "si_vdc"
 	}
 
-	func (o *Project) NewObj() DIDataResource {
-		return &Project{}
+	func (o *Vdc) NewObj() DIDataResource {
+		return &Vdc{}
 	}
 
-	func (o *Project) GetId() string {
+	func (o *Vdc) GetId() string {
 		return o.ID.String()
 	}
 
-	func (o *Project) GetDomainId() uuid.UUID {
+	func (o *Vdc) GetDomainId() uuid.UUID {
 		return o.DomainID
 	}
 
-	func (o *Project) GetResType() string {
+	func (o *Vdc) GetResType() string {
 		return "si_group"
 	}
 
-	func (o *Project) GetResName() string {
+	func (o *Vdc) GetResName() string {
 		return o.Name
 	}
 
-	func (o *Project) GetOutput() (string, string) {
+	func (o *Vdc) GetOutput() (string, string) {
 		//return o.ResOutputName, o.ResOutputValue
 		return "", ""
 	}
 
-	func (o *Project) SetResFields() {
+	func (o *Vdc) SetResFields() {
 		o.ResId = o.GetId()
 		o.ResType = o.GetResType()
 		o.ResName = utils.Reformat(o.Name)
@@ -251,8 +251,8 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 
 }
 
-	func (o *Project) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
-		m := make(map[string][]*Project)
+	func (o *Vdc) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
+		m := make(map[string][]*Vdc)
 		err := json.Unmarshal(responseBytes, &m)
 		if err != nil {
 			return nil, err
@@ -265,12 +265,12 @@ func (o *ResProject) SetDefaultNetwork(networkUuid string) error {
 		return m2, nil
 	}
 
-	func (o *Project) NewObj() DIResource {
-		return &Project{}
+	func (o *Vdc) NewObj() DIResource {
+		return &Vdc{}
 	}
 */
 
-func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
+func (o *Vdc) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
 	if res.Id() != "" {
 		o.ID = uuid.MustParse(res.Id())
@@ -325,7 +325,7 @@ func (o *Project) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	return diag.Diagnostics{}
 }
 
-func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
+func (o *ResVdc) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 
 	if res.Id() != "" {
 		o.ID = uuid.MustParse(res.Id())
@@ -353,7 +353,7 @@ func (o *ResProject) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	return diag.Diagnostics{}
 }
 
-func (o *Project) WriteTF(res *schema.ResourceData) {
+func (o *Vdc) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.ID.String())
 
 	res.Set("datacenter", o.Datacenter)
@@ -379,13 +379,13 @@ func (o *Project) WriteTF(res *schema.ResourceData) {
 	//res.Set("network_uuid")
 }
 
-func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
+func (o *ResVdc) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.ID.String())
 	res.Set("name", o.Name)
 	res.Set("ir_group", o.IrGroup)
 	res.Set("group_id", o.GroupID.String())
-	//res.Set("domain_id", o.Project.DomainID.String())
-	//res.Set("state", o.Project.State)
+	//res.Set("domain_id", o.Vdc.DomainID.String())
+	//res.Set("state", o.Vdc.State)
 	res.Set("type", o.Type)
 
 	res.Set("description", o.Desc)
@@ -401,7 +401,7 @@ func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 		log.Println(err)
 	}
 
-	//if o.Project.Networks != nil && len(o.Project.Networks) > 0 {sort.Sort(ByPath(o.Project.Networks))
+	//if o.Vdc.Networks != nil && len(o.Vdc.Networks) > 0 {sort.Sort(ByPath(o.Vdc.Networks))
 
 	networks := make([]map[string]interface{}, 0)
 	for _, v := range o.Networks {
@@ -434,8 +434,8 @@ func (o *ResProject) WriteTFRes(res *schema.ResourceData) {
 	}
 }
 
-func (o *Project) Serialize() ([]byte, error) {
-	requestBytes, err := json.Marshal(map[string]*Project{"project": o})
+func (o *Vdc) Serialize() ([]byte, error) {
+	requestBytes, err := json.Marshal(map[string]*Vdc{"project": o})
 
 	if err != nil {
 		return nil, err
@@ -444,7 +444,7 @@ func (o *Project) Serialize() ([]byte, error) {
 }
 
 /*
-func (o *Project) DeserializeOld(responseBytes []byte) error {
+func (o *Vdc) DeserializeOld(responseBytes []byte) error {
 	//response := make(map[string]map[string]interface{})
 	response := make(map[string]interface{})
 	err := json.Unmarshal(responseBytes, &response)
@@ -481,8 +481,8 @@ func (o *Project) DeserializeOld(responseBytes []byte) error {
 }
 */
 
-func (o *Project) Deserialize(responseBytes []byte) error {
-	var response map[string]Project
+func (o *Vdc) Deserialize(responseBytes []byte) error {
+	var response map[string]Vdc
 	err := json.Unmarshal(responseBytes, &response)
 	*o = response["project"]
 	if err != nil {
@@ -491,8 +491,8 @@ func (o *Project) Deserialize(responseBytes []byte) error {
 	return nil
 }
 
-func (o *ResProject) DeserializeRead(responseBytes []byte) error {
-	var response map[string]ResProject
+func (o *ResVdc) DeserializeRead(responseBytes []byte) error {
+	var response map[string]ResVdc
 	err := json.Unmarshal(responseBytes, &response)
 	*o = response["project"]
 	if err != nil {
@@ -502,7 +502,7 @@ func (o *ResProject) DeserializeRead(responseBytes []byte) error {
 	return nil
 }
 
-func (o *Project) ParseIdFromCreateResponse(data []byte) error {
+func (o *Vdc) ParseIdFromCreateResponse(data []byte) error {
 	response := make(map[string]map[string]interface{})
 	err := json.Unmarshal(data, &response)
 	if err != nil {
@@ -513,56 +513,56 @@ func (o *Project) ParseIdFromCreateResponse(data []byte) error {
 		return errors.New("no project in response")
 	}
 
-	//o2 := &Project{}
+	//o2 := &Vdc{}
 	o.ID = uuid.MustParse(objMap["id"].(string))
 	o.GroupID = uuid.MustParse(objMap["group_id"].(string))
 
 	return nil
 }
 
-func (o *Project) CreateDI(data []byte) ([]byte, error) {
+func (o *Vdc) CreateDI(data []byte) ([]byte, error) {
 	return Api.NewRequestCreate("/v2/projects", data)
 }
 
-func (o *Project) ReadDI() ([]byte, error) {
+func (o *Vdc) ReadDI() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
-func (o *ResProject) ReadDIRes() ([]byte, error) {
+func (o *ResVdc) ReadDIRes() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
-//func (o *Project) UpdateDI(data []byte) ([]byte, error) {
+//func (o *Vdc) UpdateDI(data []byte) ([]byte, error) {
 //	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
 //}
 
-func (o *Project) UpdateProjectName(data []byte) ([]byte, error) {
+func (o *Vdc) UpdateVdcName(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
 }
 
-func (o *Project) UpdateProjectDesc(data []byte) ([]byte, error) {
+func (o *Vdc) UpdateVdcDesc(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
 }
 
-func (o *Project) UpdateProjectLimits(data []byte) ([]byte, error) {
+func (o *Vdc) UpdateVdcLimits(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("/v2/projects/%s/quota", o.ID), data)
 }
 
-func (o *Project) DeleteDI() error {
+func (o *Vdc) DeleteDI() error {
 	return Api.NewRequestDelete(fmt.Sprintf("projects/%s", o.ID), nil, 204)
 }
 
-func (o *Project) DeleteNetwork(networkId string) error {
+func (o *Vdc) DeleteNetwork(networkId string) error {
 	return Api.NewRequestDelete(fmt.Sprintf("projects/%s/networks/%s", o.ID, networkId), nil, 200)
 }
 
-func (o *Project) ReadAll() ([]byte, error) {
+func (o *Vdc) ReadAll() ([]byte, error) {
 	return Api.NewRequestRead("projects/")
 }
 
-func (o *Project) StateChange(res *schema.ResourceData) *resource.StateChangeConf {
+func (o *Vdc) StateChange(res *schema.ResourceData) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
@@ -598,7 +598,7 @@ func (o *Project) StateChange(res *schema.ResourceData) *resource.StateChangeCon
 	}
 }
 
-func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName string, isDefault bool) *resource.StateChangeConf {
+func (o *ResVdc) StateChangeNetwork(res *schema.ResourceData, networkName string, isDefault bool) *resource.StateChangeConf {
 	return &resource.StateChangeConf{
 		Timeout:      res.Timeout(schema.TimeoutCreate),
 		PollInterval: 15 * time.Second,
@@ -643,17 +643,17 @@ func (o *ResProject) StateChangeNetwork(res *schema.ResourceData, networkName st
 }
 
 /*
-func (o *Project) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
+func (o *Vdc) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
 	return nil
 }
-func (o *Project) OnDeserialize(map[string]interface{}, *Server) {}
-func (o *Project) Urls(string) string {
+func (o *Vdc) OnDeserialize(map[string]interface{}, *Server) {}
+func (o *Vdc) Urls(string) string {
 	return ""
 }
-func (o *Project) OnReadTF(*schema.ResourceData, *Server)  {}
-func (o *Project) OnWriteTF(*schema.ResourceData, *Server) {}
+func (o *Vdc) OnReadTF(*schema.ResourceData, *Server)  {}
+func (o *Vdc) OnWriteTF(*schema.ResourceData, *Server) {}
 
-func (o *Project) ToHCLOutput() []byte {
+func (o *Vdc) ToHCLOutput() []byte {
 	dataRoot := &HCLOutputRoot{
 		Resources: &HCLOutput{
 			ResName: fmt.Sprintf(
@@ -675,22 +675,22 @@ func (o *Project) ToHCLOutput() []byte {
 	return utils.Regexp(f.Bytes())
 }
 
-func (o *Project) HostVars(server *Server) map[string]interface{} {
+func (o *Vdc) HostVars(server *Server) map[string]interface{} {
 	return nil
 }
 
-func (o *Project) GetGroup() uuid.UUID {
+func (o *Vdc) GetGroup() uuid.UUID {
 	return o.GroupID
 }
 
 
-func (o *Project) ToHCL(server *Server) ([]byte, error) {
+func (o *Vdc) ToHCL(server *Server) ([]byte, error) {
 	//o.ResType = o.GetType()
 	o.IrType = o.GetType()
 	//o.ResName = utils.Reformat(o.Name)
 	o.IrType = utils.Reformat(o.Name)
 	type HCLServerRoot struct {
-		Resources *Project `hcl:"resource,block"`
+		Resources *Vdc `hcl:"resource,block"`
 	}
 	root := &HCLServerRoot{Resources: o}
 	f := hclwrite.NewEmptyFile()
@@ -699,11 +699,11 @@ func (o *Project) ToHCL(server *Server) ([]byte, error) {
 	return f.Bytes(), nil
 }
 
-func (o *Project) HCLAppParams() *HCLAppParams {
+func (o *Vdc) HCLAppParams() *HCLAppParams {
 	return nil
 }
 
-func (o *Project) HCLVolumes() []*HCLVolume {
+func (o *Vdc) HCLVolumes() []*HCLVolume {
 	return nil
 }
 */

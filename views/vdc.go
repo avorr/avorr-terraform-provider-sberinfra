@@ -10,11 +10,11 @@ import (
 	"log"
 )
 
-func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func VdcCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
-	obj := models.Project{}
+	obj := models.Vdc{}
 
 	diags = obj.ReadTF(res)
 
@@ -61,7 +61,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	//objRes := models.Project{}
+	//objRes := models.Vdc{}
 
 	err = obj.ParseIdFromCreateResponse(responseBytes)
 
@@ -75,7 +75,7 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 
-	objRes2 := models.ResProject{}
+	objRes2 := models.ResVdc{}
 	objRes2.ID = obj.ID
 	obj.AddNetwork(ctx, res, additionalNetworks)
 	responseBytes, err = objRes2.ReadDIRes()
@@ -100,12 +100,20 @@ func ProjectCreate(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
-func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+type limitsImport struct {
+	Limits struct {
+		RamGbAmount     int `json:"ram_gb_amount"`
+		CoresVcpuCount  int `json:"cores_vcpu_count"`
+		StorageGbAmount int `json:"storage_gb_amount"`
+	} `json:"limits"`
+}
+
+func VdcRead(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 
 	var diags diag.Diagnostics
 
-	//obj := models.Project{}
-	obj := models.ResProject{}
+	//obj := models.Vdc{}
+	obj := models.ResVdc{}
 	obj.ReadTFRes(res)
 
 	responseBytes, err := obj.ReadDIRes()
@@ -118,17 +126,9 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 		return diag.FromErr(err)
 	}
 
-	bytes, err := obj.GetProjectQuota()
+	bytes, err := obj.GetVdcQuota()
 
-	type LimitsImport struct {
-		Limits struct {
-			RamGbAmount     int `json:"ram_gb_amount"`
-			CoresVcpuCount  int `json:"cores_vcpu_count"`
-			StorageGbAmount int `json:"storage_gb_amount"`
-		} `json:"limits"`
-	}
-
-	limits := map[string]*LimitsImport{}
+	limits := map[string]*limitsImport{}
 	err = json.Unmarshal(bytes, &limits)
 
 	if err != nil {
@@ -145,11 +145,11 @@ func ProjectRead(ctx context.Context, res *schema.ResourceData, m interface{}) d
 	return diags
 }
 
-func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func VdcUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	obj := models.Project{}
-	//obj := models.ResProject{}
+	obj := models.Vdc{}
+	//obj := models.ResVdc{}
 
 	diags = obj.ReadTF(res)
 
@@ -247,41 +247,33 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 
 	if res.HasChange("name") {
-		type updateProjectName struct {
-			Project struct {
-				Action string `json:"action"`
-				Name   string `json:"name"`
-			} `json:"project"`
-		}
-		objProjectUpdate := updateProjectName{}
-		objProjectUpdate.Project.Action = "change_name"
-		objProjectUpdate.Project.Name = obj.Name
-		requestBytes, err := json.Marshal(objProjectUpdate)
-		responseBytes, err := obj.UpdateProjectName(requestBytes)
+		requestBytes, err := json.Marshal(map[string]map[string]string{
+			"project": {
+				"action": "change_name",
+				"name":   obj.Name,
+			},
+		})
+		responseBytes, err := obj.UpdateVdcName(requestBytes)
 		if err != nil {
 			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
 	if res.HasChange("description") {
-		type updateProjectDesc struct {
-			Project struct {
-				Action string `json:"action"`
-				Desc   string `json:"desc"`
-			} `json:"project"`
-		}
-		objProjectUpdate := updateProjectDesc{}
-		objProjectUpdate.Project.Action = "change_desc"
-		objProjectUpdate.Project.Desc = obj.Desc
-		requestBytes, err := json.Marshal(objProjectUpdate)
-		responseBytes, err := obj.UpdateProjectDesc(requestBytes)
+		requestBytes, err := json.Marshal(map[string]map[string]string{
+			"project": {
+				"action": "change_desc",
+				"desc":   obj.Desc,
+			},
+		})
+		responseBytes, err := obj.UpdateVdcDesc(requestBytes)
 		if err != nil {
 			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
 	if res.HasChange("limits") {
-		type updateProjectLimits struct {
+		type updateVdcLimits struct {
 			GroupID uuid.UUID `json:"group_id"`
 			Limits  struct {
 				CoresVcpuCount  int `json:"cores_vcpu_count"`
@@ -290,21 +282,21 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 			} `json:"limits"`
 		}
 
-		objProjectLimits := updateProjectLimits{}
-		objProjectLimits.GroupID = obj.GroupID
-		objProjectLimits.Limits.CoresVcpuCount = obj.Limits.CoresVcpuCount
-		objProjectLimits.Limits.StorageGbAmount = obj.Limits.StorageGbAmount
-		objProjectLimits.Limits.RamGbAmount = obj.Limits.RamGbAmount
+		objVdcLimits := updateVdcLimits{}
+		objVdcLimits.GroupID = obj.GroupID
+		objVdcLimits.Limits.CoresVcpuCount = obj.Limits.CoresVcpuCount
+		objVdcLimits.Limits.StorageGbAmount = obj.Limits.StorageGbAmount
+		objVdcLimits.Limits.RamGbAmount = obj.Limits.RamGbAmount
 
-		requestBytes, err := json.Marshal(objProjectLimits)
-		responseBytes, err := obj.UpdateProjectLimits(requestBytes)
+		requestBytes, err := json.Marshal(objVdcLimits)
+		responseBytes, err := obj.UpdateVdcLimits(requestBytes)
 
 		if err != nil {
 			return diag.Errorf(err.Error(), string(responseBytes))
 		}
 	}
 
-	objRes := models.ResProject{}
+	objRes := models.ResVdc{}
 	objRes.ID = obj.ID
 	objRes.Limits = obj.Limits
 	responseBytes, err := objRes.ReadDIRes()
@@ -338,9 +330,9 @@ func ProjectUpdate(ctx context.Context, res *schema.ResourceData, m interface{})
 	//return diags
 }
 
-func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
+func VdcDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	obj := models.Project{}
+	obj := models.Vdc{}
 	obj.ReadTF(res)
 
 	err := obj.DeleteDI()
@@ -351,10 +343,10 @@ func ProjectDelete(ctx context.Context, res *schema.ResourceData, m interface{})
 	return diags
 }
 
-func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
+func VdcImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
 	//obj := models.SIProject{GroupId: uuid.MustParse(res.Id())}
 
-	obj := models.Project{}
+	obj := models.Vdc{}
 	obj.ID = uuid.MustParse(res.Id())
 	responseBytes, err := obj.ReadDI()
 	if err != nil {
@@ -362,17 +354,9 @@ func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{})
 	}
 	err = obj.Deserialize(responseBytes)
 
-	bytes, err := obj.GetProjectQuota()
+	bytes, err := obj.GetVdcQuota()
 
-	type LimitsImport struct {
-		Limits struct {
-			RamGbAmount     int `json:"ram_gb_amount"`
-			CoresVcpuCount  int `json:"cores_vcpu_count"`
-			StorageGbAmount int `json:"storage_gb_amount"`
-		} `json:"limits"`
-	}
-
-	limits := map[string]*LimitsImport{}
+	limits := map[string]*limitsImport{}
 	err = json.Unmarshal(bytes, &limits)
 
 	if err != nil {
@@ -385,8 +369,8 @@ func ProjectImport(ctx context.Context, res *schema.ResourceData, m interface{})
 
 	obj.WriteTF(res)
 
-	//obj := models.ResProject{}
-	//obj.Project.ID = uuid.MustParse(res.Id())
+	//obj := models.ResVdc{}
+	//obj.Vdc.ID = uuid.MustParse(res.Id())
 	//responseBytes, err := obj.ReadDIRes()
 	//if err != nil {
 	//	return nil, err

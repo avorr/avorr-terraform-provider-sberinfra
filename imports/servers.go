@@ -13,7 +13,7 @@ type Servers struct {
 	//Clusters   []*models.Cluster `json:"clusters"`
 	ClusterIds map[string]bool
 	NonCluster []*models.Server
-	Project    *models.Project
+	Project    *models.Vdc
 	Api        *client.Api
 	Meta       map[string]interface{} `json:"meta"`
 }

@@ -21,7 +21,7 @@ var (
 	SchemaGroup  map[string]*schema.Schema
 
 	//// resource
-	SchemaProject       map[string]*schema.Schema
+	SchemaVdc           map[string]*schema.Schema
 	SchemaVM            map[string]*schema.Schema
 	SchemaSecurityGroup map[string]*schema.Schema
 	SchemaTag           map[string]*schema.Schema
@@ -48,7 +48,7 @@ func init() {
 		// "is_deleted":  {Type: schema.TypeBool, Computed: true},
 	}
 
-	SchemaProject = map[string]*schema.Schema{
+	SchemaVdc = map[string]*schema.Schema{
 		//"ir_group":       {Type: schema.TypeString, Required: true},
 		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vdc"},
 		//"type":           {Type: schema.TypeString, Required: true},
