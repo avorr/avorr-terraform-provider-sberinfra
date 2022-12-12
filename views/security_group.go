@@ -77,7 +77,7 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 		//Add rule
 		for _, rule := range addSrSet.List() {
 			rule := rule.(map[string]interface{})
-			requestBytes, err := json.Marshal(map[string]map[string]interface{}{
+			securityRuleMap := map[string]map[string]interface{}{
 				"security_rule": {
 					"ethertype":         rule["ethertype"],
 					"direction":         rule["direction"],
@@ -87,7 +87,13 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 					"remote_ip_prefix":  rule["remote_ip_prefix"],
 					"security_group_id": obj.SecurityGroupID,
 				},
-			})
+			}
+
+			if rule["remote_ip_prefix"] == "" {
+				delete(securityRuleMap["security_rule"], "remote_ip_prefix")
+			}
+
+			requestBytes, err := json.Marshal(securityRuleMap)
 			if err != nil {
 				return diag.FromErr(err)
 			}
@@ -102,6 +108,7 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 				return diag.FromErr(err)
 			}
 		}
+
 		//Remove rules
 		for _, rule := range removeSrSet.List() {
 			foo := map[string]map[string]string{
@@ -132,7 +139,35 @@ func SecurityGroupDelete(ctx context.Context, res *schema.ResourceData, m interf
 	var diags diag.Diagnostics
 	obj := models.SecurityGroup{}
 	obj.ReadTF(res)
-	err := obj.DeleteResource()
+
+	responseBytes, err := obj.ReadResource()
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	err = obj.Deserialize(responseBytes)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+
+	if len(obj.AttachedToServer) > 0 {
+		for _, v := range obj.AttachedToServer {
+			vm := models.Server{}
+			vm.Id = v.ServerUUID
+
+			_, err = vm.SecurityGroupVM(obj.SecurityGroupID, "detach")
+			if err != nil {
+				return diag.FromErr(err)
+			}
+
+			_, err = vm.StateSecurityGroupChange(res).WaitForStateContext(ctx)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+	}
+
+	err = obj.DeleteResource()
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -154,6 +189,9 @@ func SecurityGroupImport(ctx context.Context, res *schema.ResourceData, m interf
 		return nil, err
 	}
 	err = obj.DeserializeImport(responseBytes)
+	if err != nil {
+		return nil, err
+	}
 	obj.IsImport = true
 
 	obj.WriteTF(res)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"net"
 	"strconv"
 	//"github.com/hashicorp/go-cty/cty"
 	//"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -20,7 +21,7 @@ var (
 	SchemaGroup  map[string]*schema.Schema
 
 	//// resource
-	SchemaProject       map[string]*schema.Schema
+	SchemaVdc           map[string]*schema.Schema
 	SchemaVM            map[string]*schema.Schema
 	SchemaSecurityGroup map[string]*schema.Schema
 	SchemaTag           map[string]*schema.Schema
@@ -47,7 +48,7 @@ func init() {
 		// "is_deleted":  {Type: schema.TypeBool, Computed: true},
 	}
 
-	SchemaProject = map[string]*schema.Schema{
+	SchemaVdc = map[string]*schema.Schema{
 		//"ir_group":       {Type: schema.TypeString, Required: true},
 		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vdc"},
 		//"type":           {Type: schema.TypeString, Required: true},
@@ -78,9 +79,9 @@ func init() {
 			MinItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"name": {Type: schema.TypeString, Required: true},
+					"name": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueNetworkName()},
 					"id":   {Type: schema.TypeString, Computed: true},
-					"cidr": {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsCIDR},
+					"cidr": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueCidr()},
 					"dns": {
 						Type:     schema.TypeSet,
 						Required: true,
@@ -100,11 +101,10 @@ func init() {
 		"group_id":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		"vdc_id":       {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
-		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
-		"ir_type":  {Type: schema.TypeString, Computed: true},
-		"cpu":      {Type: schema.TypeInt, Computed: true},
-		"ram":      {Type: schema.TypeInt, Computed: true},
-		//"disk":         {Type: schema.TypeInt, Optional: true},
+		"ir_group":   {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
+		"ir_type":    {Type: schema.TypeString, Computed: true},
+		"cpu":        {Type: schema.TypeInt, Computed: true},
+		"ram":        {Type: schema.TypeInt, Computed: true},
 		"flavor":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"m1.tiny", "m1.small", "m1.medium", "m1.large", "m1.xlarge", "m2.tiny", "m2.small", "m2.medium", "m2.large", "m2.xlarge", "m2.xxlarge", "m3.medium", "m3.large", "m4.tiny", "m4.small", "m4.medium", "m4.large", "m4.xlarge", "m6.tiny", "m6.small", "m6.medium", "m6.large", "m6.xlarge", "m8.tiny", "m8.small", "m8.medium", "m8.large", "m8.xlarge", "m12.large", "m16.tiny", "m16.small", "m16.large", "m16.xxlarge", "kasper_n2.tiny", "kasper_n2.small", "kasper_n2.medium", "kasper_n2.large", "kasper_n2.xlarge", "kasper_n1.small", "kasper_n1.medium", "kasper_n1.large", "kasper_n3.small", "kasper_n3.medium", "kasper_n3.large", "kasper_n3.xlarge"}, false)},
 		"network_id": {Type: schema.TypeString, Optional: true, ValidateFunc: validation.IsUUID},
 		//"virtualization":  {Type: schema.TypeString, Required: true},
@@ -115,16 +115,12 @@ func init() {
 		"fault_tolerance": {Type: schema.TypeString, Optional: true, Default: "Stand-alone"},
 		"state":           {Type: schema.TypeString, Computed: true},
 		"state_resize":    {Type: schema.TypeString, Computed: true},
-		//"zone":            {Type: schema.TypeString, Required: true},
-		"zone": {Type: schema.TypeString, Optional: true, Default: "internal"},
-		"ip":   {Type: schema.TypeString, Computed: true},
-		//"dns":             {Type: schema.TypeString, Computed: true},
-		//"dns_name":        {Type: schema.TypeString, Computed: true},
+		"zone":            {Type: schema.TypeString, Optional: true, Default: "internal"},
+		"ip":              {Type: schema.TypeString, Computed: true},
 		"step":            {Type: schema.TypeString, Computed: true},
 		"public_ssh_name": {Type: schema.TypeString, Optional: true},
-		//"group":           {Type: schema.TypeString, Optional: true},
-		"user":     {Type: schema.TypeString, Computed: true},
-		"password": {Type: schema.TypeString, Computed: true},
+		"user":            {Type: schema.TypeString, Computed: true},
+		"password":        {Type: schema.TypeString, Computed: true},
 		"disk": {
 			Type:     schema.TypeMap,
 			Required: true,
@@ -134,19 +130,6 @@ func init() {
 				validateMapValue(),
 			),
 		},
-
-		//"hdd": {
-		//	Type:     schema.TypeSet,
-		//	Required: true,
-		//	ForceNew: false,
-		//	MaxItems: 1,
-		//	Elem: &schema.Resource{
-		//		Schema: map[string]*schema.Schema{
-		//			"size":         {Type: schema.TypeInt, Required: true, ForceNew: false},
-		//			"storage_type": {Type: schema.TypeString, Optional: true, ForceNew: false},
-		//		},
-		//	},
-		//},
 
 		"volume": {
 			Type:     schema.TypeSet,
@@ -168,7 +151,8 @@ func init() {
 		"id":     {Type: schema.TypeString, Computed: true},
 		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.IsUUID},
 		//"name":       {Type: schema.TypeString, Required: true, ForceNew: true},
-		"name": {Type: schema.TypeString, Required: true},
+		"name":               {Type: schema.TypeString, Required: true},
+		"attached_to_server": {Type: schema.TypeSet, Computed: true, Elem: &schema.Schema{Type: schema.TypeString}},
 		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,
@@ -239,9 +223,69 @@ func validateLimitsMapValue() schema.SchemaValidateDiagFunc {
 	}
 }
 
-var count int
+func uniqueCidr() schema.SchemaValidateDiagFunc {
+	var cidr []string
+	var count int
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		count++
+		v, ok := v.(string)
+		if !ok {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("expected type of network.%d.cidr to be string", count),
+				//Detail:        fmt.Sprintf("There is more than one network with the same cidr [%s]", value),
+				//AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
+			})
+		}
+
+		if _, _, err := net.ParseCIDR(v.(string)); err != nil {
+			diags = append(diags, diag.Diagnostic{
+				Severity: diag.Error,
+				Summary:  fmt.Sprintf("expected network.%d.cidr to be a valid IPv4 Value, got %v", count, v.(string)),
+				//Detail:        fmt.Sprintf("There is more than one network with the same cidr [%s]", value),
+				//AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
+			})
+		}
+
+		for _, value := range cidr {
+			if v.(string) == value {
+				diags = append(diags, diag.Diagnostic{
+					Severity:      diag.Error,
+					Summary:       "There mustn't be networks with the same cidr",
+					Detail:        fmt.Sprintf("There is more than one network with the same cird [%s]", value),
+					AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
+				})
+			}
+		}
+
+		cidr = append(cidr, v.(string))
+		return diags
+	}
+}
+
+func uniqueNetworkName() schema.SchemaValidateDiagFunc {
+	var networkNames []string
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		for _, value := range networkNames {
+			if v.(string) == value {
+				diags = append(diags, diag.Diagnostic{
+					Severity:      diag.Error,
+					Summary:       "There mustn't be networks with the same name",
+					Detail:        fmt.Sprintf("There is more than one network with the same name [%s]", value),
+					AttributePath: append(path, cty.IndexStep{Key: cty.StringVal("default")}),
+				})
+			}
+		}
+
+		networkNames = append(networkNames, v.(string))
+		return diags
+	}
+}
 
 func defaultNetworkCount() schema.SchemaValidateDiagFunc {
+	var count int
 	return func(v interface{}, path cty.Path) diag.Diagnostics {
 		var diags diag.Diagnostics
 		if v.(bool) {

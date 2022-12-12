@@ -74,13 +74,13 @@ func ProviderFunc() *schema.Provider {
 			"si_vdc": {
 				Importer: &schema.ResourceImporter{
 					//State:        schema.ImportStatePassthrough,
-					StateContext: views.ProjectImport,
+					StateContext: views.VdcImport,
 				},
-				CreateContext: views.ProjectCreate,
-				ReadContext:   views.ProjectRead,
-				UpdateContext: views.ProjectUpdate,
-				DeleteContext: views.ProjectDelete,
-				Schema:        models.SchemaProject,
+				CreateContext: views.VdcCreate,
+				ReadContext:   views.VdcRead,
+				UpdateContext: views.VdcUpdate,
+				DeleteContext: views.VdcDelete,
+				Schema:        models.SchemaVdc,
 				Timeouts: &schema.ResourceTimeout{
 					Create: schema.DefaultTimeout(timeout),
 				},
@@ -119,7 +119,7 @@ func ProviderFunc() *schema.Provider {
 				},
 				CreateContext: views.TagCreate,
 				ReadContext:   views.TagRead,
-				// UpdateContext: views.ProjectUpdate,
+				// UpdateContext: views.TagUpdate,
 				DeleteContext: views.TagDelete,
 				Schema:        models.SchemaTag,
 				Timeouts: &schema.ResourceTimeout{

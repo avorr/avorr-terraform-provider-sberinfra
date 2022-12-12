@@ -433,8 +433,10 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 			for _, v := range l1 {
 				if !utils.ArrContainsStr(l2, v) {
 					_, err := server.SecurityGroupVM(v, "detach")
+
 					if err != nil {
-						return diag.FromErr(err)
+						//return diag.FromErr(err)
+						log.Println(diag.FromErr(err))
 					}
 
 					_, err = server.StateSecurityGroupChange(res).WaitForStateContext(ctx)
@@ -586,6 +588,18 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 				return nil, err
 			}
 		}
+
+		if len(server.SecurityGroups) > 0 {
+			var securityGroups []string
+			for _, v := range server.SecurityGroups {
+				securityGroups = append(securityGroups, v.String())
+			}
+			err = res.Set("security_groups", securityGroups)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		// return nil, nil
 		return []*schema.ResourceData{res}, nil
 	}

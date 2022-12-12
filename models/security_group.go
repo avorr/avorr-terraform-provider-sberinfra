@@ -16,6 +16,7 @@ import (
 type SecurityGroup struct {
 	ProjectID        string `json:"-"`
 	GroupName        string `json:"group_name"`
+	Status           string `json:"status"`
 	SecurityRules    []Rule `json:"security_rules"`
 	Rules            []Rule `json:"rules,omitempty"`
 	State            string `json:"-"`
@@ -83,7 +84,7 @@ func (o *SecurityGroup) CreateSecurityRule(data []byte) ([]byte, error) {
 }
 
 func (o *SecurityGroup) Deserialize(responseBytes []byte) error {
-	var responseStruct map[string]ProjectNew
+	var responseStruct map[string]Vdc
 	err := json.Unmarshal(responseBytes, &responseStruct)
 	if err != nil {
 		return err
@@ -93,6 +94,7 @@ out:
 	for _, group := range responseStruct["project"].SecurityGroups {
 		if group.GroupName == o.GroupName {
 			existGroup = true
+			o.AttachedToServer = group.AttachedToServer
 			o.SecurityGroupID = group.SecurityGroupID
 			if len(o.SecurityRules) > 0 {
 				for _, rule := range group.Rules {
@@ -141,6 +143,10 @@ func (o *SecurityGroup) DeserializeImport(responseBytes []byte) error {
 			}
 		}
 	}
+
+	if o.GroupName == "" {
+		return fmt.Errorf("security group id %s not found", o.SecurityGroupID)
+	}
 	return nil
 }
 
@@ -166,7 +172,6 @@ func (o *SecurityGroup) StateChangeSecurityGroup(res *schema.ResourceData) *reso
 
 			// write to TF state
 			//o.WriteTF(res)
-
 			if o.State == "ready" || o.State == "created" {
 				return o, "Running", nil
 			}
@@ -231,6 +236,17 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	attachedServerId := make([]string, 0)
+	for _, serverId := range o.AttachedToServer {
+		attachedServerId = append(attachedServerId, serverId.ServerUUID.String())
+	}
+
+	err = res.Set("attached_to_server", attachedServerId)
+	if err != nil {
+		log.Println(err)
+	}
+
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
 	//res.Set("network_uuid")

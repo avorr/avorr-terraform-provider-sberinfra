@@ -356,6 +356,11 @@ func (o *Server) Deserialize(data []byte) error {
 
 	serverMap := response["server"]
 
+	//var defaultSecurityGroup string
+	//outputSecurityGroups := serverMap["outputs"].(map[string]interface{})["server_security_groups"].([]interface{})
+	//if len(outputSecurityGroups) == 1 {
+	//	defaultSecurityGroup = outputSecurityGroups[0].(map[string]interface{})["id"].(string)
+	//}
 	o.Name = serverMap["name"].(string)
 	o.ServiceName = serverMap["service_name"].(string)
 	o.Zone = serverMap["zone"].(string)
@@ -451,11 +456,13 @@ func (o *Server) Deserialize(data []byte) error {
 
 	if ok && securityGroups != nil {
 		for _, v := range securityGroups.([]interface{}) {
-			id, err := uuid.Parse(v.(map[string]interface{})["security_group_id"].(string))
-			if err != nil {
-				log.Println(err)
-			} else {
-				o.SecurityGroups = append(o.SecurityGroups, id)
+			if v.(map[string]interface{})["group_name"].(string) != "default" {
+				id, err := uuid.Parse(v.(map[string]interface{})["security_group_id"].(string))
+				if err != nil {
+					log.Println(err)
+				} else {
+					o.SecurityGroups = append(o.SecurityGroups, id)
+				}
 			}
 		}
 	}
@@ -479,10 +486,11 @@ func (o *Server) CreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) ReadDI() ([]byte, error) {
-	return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
+	//return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
+	return Api.NewRequestRead(fmt.Sprintf("servers/%s", o.Id))
 }
 
-func (o *Server) ReadDIStatusCode() ([]byte, int, error) {
+func (o *Server) ReadSIStatusCode() ([]byte, int, error) {
 	return Api.NewRequestReadStatusCode(fmt.Sprintf(o.Object.Urls("read"), o.Id))
 }
 
@@ -524,23 +532,6 @@ func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
 }
 
 func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, error) {
-
-	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
-	//{
-	//    "security_group": {
-	//        "state": "attach",
-	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
-	//    }
-	//}
-
-	//https://portal.pd24.gtp/api/v1/servers/4f51ef88-bb9f-457a-830a-72e659050954/action
-	//{
-	//    "security_group": {
-	//        "state": "detach",
-	//        "security_group_id": "81e89420-9de2-4fe3-aa3c-0f051923729a"
-	//    }
-	//}
-
 	request := map[string]map[string]string{
 		"security_group": {
 			"state":             state,
@@ -551,8 +542,8 @@ func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	//return Api.NewRequestCreate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
-	return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
+	//return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
+	return Api.NewRequestUpdate(fmt.Sprintf("servers/%s/action", o.Id), data)
 }
 
 func (o *Server) TagDetachDI(tagId string) error {
@@ -585,8 +576,7 @@ func (o *Server) StateChange(res *schema.ResourceData) *resource.StateChangeConf
 		Target:       []string{"Running", "Damaged", "Removed"},
 		Refresh: func() (interface{}, string, error) {
 
-			//responseBytes, err := o.ReadDIStatusCode()
-			responseBytes, responseStatusCode, err := o.ReadDIStatusCode()
+			responseBytes, responseStatusCode, err := o.ReadSIStatusCode()
 
 			if responseStatusCode == 404 {
 				return o, "Removed", nil
@@ -773,8 +763,8 @@ func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
 	return f.Bytes()
 }
 
+/*
 func (o *Server) SetObject() bool {
-
 	if o.IrGroup == "" {
 		return false
 	}
@@ -785,26 +775,11 @@ func (o *Server) SetObject() bool {
 	switch o.IrGroup {
 	case "vm":
 		obj = &VM{}
-		//case "nginx":
-		//	obj = &Nginx{}
-		//case "sowa":
-		//	obj = &Sowa{}
-		//case "project":
-		//	obj = &Openshift{}
-		//case "postgres":
-		//	obj = &Postgres{}
-		//case "postgres_se":
-		//	obj = &PostgresSE{}
-		//case "elk":
-		//	obj = &ELK{}
 	}
 	o.Object = obj
 	return true
 }
-
-// "kafka":       "di_kafka",
-// "ignite":      "di_ignite",
-// "patroni":     "di_patroni",
+*/
 
 func (o *Server) HCLHeader() []byte {
 
