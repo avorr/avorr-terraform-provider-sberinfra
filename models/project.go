@@ -211,15 +211,15 @@ type ProjectNew struct {
 	RouterInterfaces interface{} `json:"router_interfaces"`
 }
 
-type Networks struct {
-	Network struct {
-		NetworkName    string   `json:"network_name"`
-		Cidr           string   `json:"cidr"`
-		DNSNameservers []string `json:"dns_nameservers"`
-		EnableDhcp     bool     `json:"enable_dhcp"`
-		IsDefault      bool     `json:"is_default"`
-	} `json:"network"`
-}
+//type Networks struct {
+//	Network struct {
+//		NetworkName    string   `json:"network_name"`
+//		Cidr           string   `json:"cidr"`
+//		DNSNameservers []string `json:"dns_nameservers"`
+//		EnableDhcp     bool     `json:"enable_dhcp"`
+//		IsDefault      bool     `json:"is_default"`
+//	} `json:"network"`
+//}
 
 func (o *Project) AddNetwork(ctx context.Context, res *schema.ResourceData, additionalNets []interface{}) diag.Diagnostics {
 
