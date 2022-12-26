@@ -2,10 +2,10 @@ resource "si_tag" "nolabel" {
   name = "nolabel"
 }
 
-#resource "di_tag" "jenkins" {
+#resource "si_tag" "jenkins" {
 #  name = "jenkins"
 #}
 
-#resource "di_tag" "wildfly" {
+#resource "si_tag" "wildfly" {
 #	name = "wildfly"
 #}

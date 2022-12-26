@@ -34,8 +34,8 @@ type Rule struct {
 	Status         string `json:"status,omitempty"`
 	Direction      string `json:"direction"`
 	Protocol       string `json:"protocol"`
-	PortRangeMin   int    `json:"port_range_min"`
-	PortRangeMax   int    `json:"port_range_max"`
+	PortRangeMin   int    `json:"port_range_min,omitempty"`
+	PortRangeMax   int    `json:"port_range_max,omitempty"`
 	RemoteIpPrefix string `json:"remote_ip_prefix,omitempty"`
 	RemoteGroupID  string `json:"remote_group_id,omitempty"`
 }

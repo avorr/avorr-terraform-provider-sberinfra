@@ -4,9 +4,10 @@ cd ..
 echo `date`
 name=terraform-provider-si
 version=0.4.5
-platform=darwin_amd64; goos="darwin"
-#platform=linux_amd64; goos="linux"
-#platform=windows; goos="windows"
+#platform=darwin_amd64; goos="darwin"; goarch="amd64"
+platform=darwin_arm64; goos="darwin"; goarch="arm64"
+#platform=linux_amd64; goos="linux"; goarch="amd64"
+#platform=windows; goos="windows"; goarch="amd64"
 
 provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/si
 binary_dir=${provider_dir}/${version}/${platform}
@@ -17,10 +18,9 @@ go version
 go mod tidy -v
 #go mod vendor -v
 #go build -mod=vendor -v -o ${binary}
-GOOS=${goos} go build -v -o ${binary}
+GOOS=${goos} GOARCH=${goarch} go build -v -o ${binary}
 #./${binary} import
 #rm test-di/.terraform.lock.hcl || true
-
 cp ${binary} ${binary_dir}/${binary}
 #mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 #cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
@@ -40,7 +40,6 @@ export SI_TIMEOUT=7000
 terraform init
 clear
 ls -l ~/.terraform.d/plugins/sberbank/devops/si/${version}/${platform}/terraform-provider-si_v${version}_${platform}
-
 #./imports.sh
 #terraform plan
 #terraform apply
