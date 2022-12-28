@@ -93,6 +93,14 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 				delete(securityRuleMap["security_rule"], "remote_ip_prefix")
 			}
 
+			if rule["port_range_min"] == 0 {
+				delete(securityRuleMap["security_rule"], "port_range_min")
+			}
+
+			if rule["port_range_max"] == 0 {
+				delete(securityRuleMap["security_rule"], "port_range_max")
+			}
+
 			requestBytes, err := json.Marshal(securityRuleMap)
 			if err != nil {
 				return diag.FromErr(err)
