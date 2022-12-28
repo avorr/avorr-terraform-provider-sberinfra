@@ -165,7 +165,7 @@ func init() {
 					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
 					"port_range_min":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
 					"port_range_max":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
-					"remote_group_id":  {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
+					"remote_group_id":  {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsUUID},
 				},
 			},
 		},
