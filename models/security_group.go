@@ -213,6 +213,22 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 					"remote_ip_prefix": v.RemoteIpPrefix,
 					"remote_group_id":  v.RemoteGroupID,
 				}
+				if rule["port_range_min"] == 0 {
+					delete(rule, "port_range_min")
+				}
+
+				if rule["port_range_max"] == 0 {
+					delete(rule, "port_range_max")
+				}
+
+				if rule["remote_ip_prefix"] == "" {
+					delete(rule, "remote_ip_prefix")
+				}
+
+				if rule["remote_group_id"] == "" {
+					delete(rule, "remote_group_id")
+				}
+
 				rules = append(rules, rule)
 			}
 		}
@@ -228,7 +244,26 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 				"remote_ip_prefix": v.RemoteIpPrefix,
 				"remote_group_id":  v.RemoteGroupID,
 			}
-			rules = append(rules, rule)
+			if rule["port_range_min"] == 0 {
+				delete(rule, "port_range_min")
+			}
+
+			if rule["port_range_max"] == 0 {
+				delete(rule, "port_range_max")
+			}
+
+			if rule["remote_ip_prefix"] == "" {
+				delete(rule, "remote_ip_prefix")
+			}
+
+			if rule["remote_group_id"] == "" {
+				delete(rule, "remote_group_id")
+			}
+
+			if rule["id"] != "" {
+				rules = append(rules, rule)
+			}
+			//rules = append(rules, rule)
 		}
 	}
 
