@@ -13,6 +13,10 @@ provider_dir=${HOME}/.terraform.d/plugins/sberbank/devops/si
 binary_dir=${provider_dir}/${version}/${platform}
 binary=${name}_v${version}_${platform}
 
+if [[ ${platform} == darwin_arm64 ]]; then
+  [ -e ${binary_dir}/${binary} ] && rm ${binary_dir}/${binary}
+fi
+
 mkdir -p ${binary_dir}
 go version
 go mod tidy -v
@@ -20,10 +24,10 @@ go mod tidy -v
 #go build -mod=vendor -v -o ${binary}
 GOOS=${goos} GOARCH=${goarch} go build -v -o ${binary}
 #./${binary} import
-#rm test-di/.terraform.lock.hcl || true
+#rm .terraform.lock.hcl || true
 cp ${binary} ${binary_dir}/${binary}
-#mkdir -p test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-#cp ${binary} test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#mkdir -p .test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
+#cp ${binary} .test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
 rm ${binary}
 cd test
 
@@ -39,7 +43,7 @@ export SI_TIMEOUT=7000
 
 terraform init
 clear
-ls -l ~/.terraform.d/plugins/sberbank/devops/si/${version}/${platform}/terraform-provider-si_v${version}_${platform}
+ls -l ${binary_dir}/${binary}
 #./imports.sh
 #terraform plan
 #terraform apply

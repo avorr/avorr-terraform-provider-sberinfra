@@ -43,6 +43,7 @@ resource "si_vm" "vm" {
   os_name      = "rhel"
   os_version   = "7.9"
   flavor       = "m1.tiny"
+#  public_ssh_name = "id_rsa.pub"
   disk         = {
     size = 50
     #    storage_type = "iscsi-fast-01"
