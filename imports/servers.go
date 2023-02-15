@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"base.sw.sbc.space/pid/terraform-provider-si/client"
-	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 type Servers struct {

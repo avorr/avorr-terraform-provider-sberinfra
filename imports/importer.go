@@ -1,8 +1,8 @@
 package imports
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/client"
-	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"bytes"
 	"fmt"
 	"github.com/google/uuid"

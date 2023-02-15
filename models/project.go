@@ -1,7 +1,7 @@
 package models
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/utils"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"context"
 	"encoding/json"
 	"errors"
