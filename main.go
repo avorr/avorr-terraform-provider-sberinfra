@@ -1,7 +1,7 @@
 package main
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/imports"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/imports"
 	"context"
 	"log"
 	"os"
@@ -12,9 +12,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 
-	"base.sw.sbc.space/pid/terraform-provider-si/client"
-	"base.sw.sbc.space/pid/terraform-provider-si/models"
-	"base.sw.sbc.space/pid/terraform-provider-si/views"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/views"
 )
 
 func main() {

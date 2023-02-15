@@ -1,8 +1,8 @@
 package views
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/models"
-	"base.sw.sbc.space/pid/terraform-provider-si/utils"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"bytes"
 	"context"
 	"encoding/json"

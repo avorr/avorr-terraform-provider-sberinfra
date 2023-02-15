@@ -1,7 +1,7 @@
 package models
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/client"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )

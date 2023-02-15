@@ -1,7 +1,7 @@
 package views
 
 import (
-	"base.sw.sbc.space/pid/terraform-provider-si/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"context"
 	"encoding/json"
 	"fmt"
