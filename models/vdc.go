@@ -203,73 +203,6 @@ func (o *ResVdc) SetDefaultNetwork(networkUuid string) error {
 	return nil
 }
 
-/*
-	func (o *Vdc) GetType() string {
-		return "si_vdc"
-	}
-
-	func (o *Vdc) NewObj() DIDataResource {
-		return &Vdc{}
-	}
-
-	func (o *Vdc) GetId() string {
-		return o.ID.String()
-	}
-
-	func (o *Vdc) GetDomainId() uuid.UUID {
-		return o.DomainID
-	}
-
-	func (o *Vdc) GetResType() string {
-		return "si_group"
-	}
-
-	func (o *Vdc) GetResName() string {
-		return o.Name
-	}
-
-	func (o *Vdc) GetOutput() (string, string) {
-		//return o.ResOutputName, o.ResOutputValue
-		return "", ""
-	}
-
-	func (o *Vdc) SetResFields() {
-		o.ResId = o.GetId()
-		o.ResType = o.GetResType()
-		o.ResName = utils.Reformat(o.Name)
-		// o.ResDomainId = o.DomainId.String()
-		o.ResDomainIdUUID = o.DomainId.String()
-		o.ResOutputName = fmt.Sprintf(
-			"%s_id",
-			o.GetResType(),
-		)
-		o.ResOutputValue = fmt.Sprintf(
-			"data.%s.%s.id",
-			o.GetResType(),
-			o.GetResName(),
-		)
-
-}
-
-	func (o *Vdc) DeserializeAll(responseBytes []byte) ([]DIDataResource, error) {
-		m := make(map[string][]*Vdc)
-		err := json.Unmarshal(responseBytes, &m)
-		if err != nil {
-			return nil, err
-		}
-
-		m2 := make([]DIDataResource, len(m["groups"]))
-		for k, v := range m["groups"] {
-			m2[k] = v
-		}
-		return m2, nil
-	}
-
-	func (o *Vdc) NewObj() DIResource {
-		return &Vdc{}
-	}
-*/
-
 func (o *Vdc) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 
 	if res.Id() != "" {
@@ -443,44 +376,6 @@ func (o *Vdc) Serialize() ([]byte, error) {
 	return requestBytes, nil
 }
 
-/*
-func (o *Vdc) DeserializeOld(responseBytes []byte) error {
-	//response := make(map[string]map[string]interface{})
-	response := make(map[string]interface{})
-	err := json.Unmarshal(responseBytes, &response)
-	if err != nil {
-		return err
-	}
-
-	objMap, ok := response["projects"].([]interface{})
-	if !ok {
-		return errors.New("no project in response")
-	}
-
-	for _, v := range objMap {
-		value := v.(map[string]interface{})
-
-		if value["name"].(string) == o.Name {
-			o.GroupID = uuid.MustParse(value["group_id"].(string))
-		}
-	}
-
-	//o.Id = uuid.MustParse(objMap["id"].(string))
-	//o.ResId = objMap["id"].(string)
-	//o.DomainId = uuid.MustParse(objMap["domain_id"].(string))
-	//o.GroupId = uuid.MustParse(objMap["group_id"].(string))
-	//o.ResGroupId = objMap["group_id"].(string)
-	//o.StandTypeId = uuid.MustParse(objMap["stand_type_id"].(string))
-	//o.ResStandTypeId = objMap["stand_type_id"].(string)
-	//o.StandType = objMap["stand_type"].(string)
-	//o.Name = objMap["name"].(string)
-	//o.Type = objMap["type"].(string)
-	//o.State = objMap["state"].(string)
-	//o.AppSystemsCi = objMap["app_systems_ci"].(string)
-	return nil
-}
-*/
-
 func (o *Vdc) Deserialize(responseBytes []byte) error {
 	var response map[string]Vdc
 	err := json.Unmarshal(responseBytes, &response)
@@ -533,10 +428,6 @@ func (o *ResVdc) ReadDIRes() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ID))
 	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
-
-//func (o *Vdc) UpdateDI(data []byte) ([]byte, error) {
-//	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
-//}
 
 func (o *Vdc) UpdateVdcName(data []byte) ([]byte, error) {
 	return Api.NewRequestUpdate(fmt.Sprintf("projects/%s", o.ID), data)
@@ -641,69 +532,3 @@ func (o *ResVdc) StateChangeNetwork(res *schema.ResourceData, networkName string
 		},
 	}
 }
-
-/*
-func (o *Vdc) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
-	return nil
-}
-func (o *Vdc) OnDeserialize(map[string]interface{}, *Server) {}
-func (o *Vdc) Urls(string) string {
-	return ""
-}
-func (o *Vdc) OnReadTF(*schema.ResourceData, *Server)  {}
-func (o *Vdc) OnWriteTF(*schema.ResourceData, *Server) {}
-
-func (o *Vdc) ToHCLOutput() []byte {
-	dataRoot := &HCLOutputRoot{
-		Resources: &HCLOutput{
-			ResName: fmt.Sprintf(
-				"%s_id",
-				//o.ResType,
-				o.IrType,
-			),
-			Value: fmt.Sprintf(
-				"%s.%s.id",
-				//o.ResType,
-				o.IrType,
-				//o.ResName,
-				o.IrType,
-			),
-		},
-	}
-	f := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(dataRoot, f.Body())
-	return utils.Regexp(f.Bytes())
-}
-
-func (o *Vdc) HostVars(server *Server) map[string]interface{} {
-	return nil
-}
-
-func (o *Vdc) GetGroup() uuid.UUID {
-	return o.GroupID
-}
-
-
-func (o *Vdc) ToHCL(server *Server) ([]byte, error) {
-	//o.ResType = o.GetType()
-	o.IrType = o.GetType()
-	//o.ResName = utils.Reformat(o.Name)
-	o.IrType = utils.Reformat(o.Name)
-	type HCLServerRoot struct {
-		Resources *Vdc `hcl:"resource,block"`
-	}
-	root := &HCLServerRoot{Resources: o}
-	f := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(root, f.Body())
-	// return utils.Regexp(f.Bytes())
-	return f.Bytes(), nil
-}
-
-func (o *Vdc) HCLAppParams() *HCLAppParams {
-	return nil
-}
-
-func (o *Vdc) HCLVolumes() []*HCLVolume {
-	return nil
-}
-*/
