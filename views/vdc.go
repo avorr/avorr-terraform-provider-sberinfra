@@ -1,12 +1,12 @@
 package views
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"log"
 )
 
@@ -31,21 +31,21 @@ func VdcCreate(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 	additionalNetworks := make([]interface{}, 0)
 
 	defaultNetworkCount := 0
-	//networkNames := make([]string, 0)
+	networkNames := make([]string, 0)
 	for _, v := range networks.List() {
 		v := v.(map[string]interface{})
-		//for _, name := range networkNames {
-		//	if v["name"].(string) == name {
-		//		return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["name"])
-		//	}
-		//}
-		//networkNames = append(networkNames, v["name"].(string))
+		for _, name := range networkNames {
+			if v["name"].(string) == name {
+				return diag.Errorf("There mustn't be networks with the same name [%s, %s]", name, v["name"])
+			}
+		}
+		networkNames = append(networkNames, v["name"].(string))
 
 		if v["default"] == true {
 			defaultNetworkCount += 1
-			//if defaultNetworkCount > 1 {
-			//	return diag.Errorf("Default networks should not be more than one")
-			//}
+			if defaultNetworkCount > 1 {
+				return diag.Errorf("Default networks should not be more than one")
+			}
 		} else {
 			additionalNetworks = append(additionalNetworks, v)
 		}
@@ -173,24 +173,22 @@ func VdcUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 			}
 		}
 
-		//for i1, net1 := range netSet2.List() {
-		//net1 := net1.(map[string]interface{})
-		//netIsDefault1 := net1["default"]
-		//netName1 := net1["name"]
-		//for i2, net2 := range netSet2.List() {
-		//net2 := net2.(map[string]interface{})
-		//netIsDefault2 := net2["default"]
-		//if i2-i1 > 0 && netIsDefault2 == true && netIsDefault1 == true {
-		//	return diag.Errorf("Default networks shouldn't be more than one")
-		//}
-		//netName2 := net2["name"]
-		//if i2-i1 > 0 && netName1 == netName2 {
-		//	return diag.Errorf("There mustn't be networks with the same name [%s, %s]", netName1, netName2)
-		//}
-		//}
-		//}
-
-		//return diags
+		for i1, net1 := range netSet2.List() {
+			net1 := net1.(map[string]interface{})
+			netIsDefault1 := net1["default"]
+			netName1 := net1["name"]
+			for i2, net2 := range netSet2.List() {
+				net2 := net2.(map[string]interface{})
+				netIsDefault2 := net2["default"]
+				if i2-i1 > 0 && netIsDefault2 == true && netIsDefault1 == true {
+					return diag.Errorf("Default networks shouldn't be more than one")
+				}
+				netName2 := net2["name"]
+				if i2-i1 > 0 && netName1 == netName2 {
+					return diag.Errorf("There mustn't be networks with the same name [%s, %s]", netName1, netName2)
+				}
+			}
+		}
 
 		var existNetwork func([]interface{}, string) bool
 		existNetwork = func(m []interface{}, networkName string) bool {

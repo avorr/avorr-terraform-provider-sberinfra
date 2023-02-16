@@ -79,16 +79,19 @@ func init() {
 			MinItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"name": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueNetworkName()},
+					//"name": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueNetworkName()},
+					"name": {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringIsNotEmpty},
 					"id":   {Type: schema.TypeString, Computed: true},
-					"cidr": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueCidr()},
+					//"cidr": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueCidr()},
+					"cidr": {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsCIDR},
 					"dns": {
 						Type:     schema.TypeSet,
 						Required: true,
 						Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPv4Address},
 					},
-					"dhcp":    {Type: schema.TypeBool, Required: true},
-					"default": {Type: schema.TypeBool, Optional: true, Default: false, ValidateDiagFunc: defaultNetworkCount()},
+					"dhcp": {Type: schema.TypeBool, Required: true},
+					//"default": {Type: schema.TypeBool, Optional: true, Default: false, ValidateDiagFunc: defaultNetworkCount()},
+					"default": {Type: schema.TypeBool, Optional: true, Default: false},
 				},
 			},
 		},
@@ -98,6 +101,7 @@ func init() {
 		"name": {Type: schema.TypeString, Computed: true},
 		//"service_name": {Type: schema.TypeString, Required: true},
 		"service_name": {Type: schema.TypeString, Optional: true},
+		"description":  {Type: schema.TypeString, Optional: true},
 		"group_id":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		"vdc_id":       {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
@@ -130,7 +134,6 @@ func init() {
 				validateMapValue(),
 			),
 		},
-
 		"volume": {
 			Type:     schema.TypeSet,
 			Optional: true,
@@ -147,6 +150,7 @@ func init() {
 		"tag_ids":         {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsUUID}},
 		"security_groups": {Type: schema.TypeSet, Optional: true, Elem: &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsUUID}},
 	}
+
 	SchemaSecurityGroup = map[string]*schema.Schema{
 		"id":     {Type: schema.TypeString, Computed: true},
 		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.IsUUID},
@@ -345,14 +349,12 @@ func validateMapValue() schema.SchemaValidateDiagFunc {
 
 //func sortedKeys(m map[string]interface{}) []string {
 //	keys := make([]string, len(m))
-//
 //	i := 0
 //	for key := range m {
 //		keys[i] = key
 //		i++
 //	}
-
-//sort.Strings(keys)
+//	sort.Strings(keys)
 //
-//return keys
+//	return keys
 //}

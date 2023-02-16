@@ -2,9 +2,9 @@
 set -ex
 echo `date`
 name=terraform-provider-si
-version=0.4.5
-#platform=darwin_amd64; goos="darwin"; goarch="amd64"
-platform=darwin_arm64; goos="darwin"; goarch="arm64"
+version=0.4.6
+platform=darwin_amd64; goos="darwin"; goarch="amd64"
+#platform=darwin_arm64; goos="darwin"; goarch="arm64"
 #platform=linux_amd64; goos="linux"; goarch="amd64"
 #platform=windows; goos="windows"; goarch="amd64"
 
@@ -22,26 +22,19 @@ go mod tidy -v
 #go mod vendor -v
 #go build -mod=vendor -v -o ${binary}
 GOOS=${goos} GOARCH=${goarch} go build -v -o ${binary}
-#./${binary} import
-#rm .terraform.lock.hcl || true
-cp ${binary} ${binary_dir}/${binary}
-#mkdir -p .test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-#cp ${binary} .test-di/.terraform/plugins/sberbank/devops/di/${version}/${platform}/
-rm ${binary}
+mv ${binary} ${binary_dir}/${binary}
 
 rm -rf .terraform/ || true
-#rm terraform.tfstate* || true
 rm ./.terraform.lock.hcl || true
-#rm ./inventory.bin || true
 
-#export TF_LOG=DEBUG
 export SI_TIMEOUT=7000
+#export TF_LOG=DEBUG
 #export TF_LOG=INFO
 #export TF_LOG=ERROR
 
 terraform init
 ls -l ${binary_dir}/${binary}
-#./imports.sh
+
 #terraform plan
 #terraform apply
 #terraform apply -auto-approve

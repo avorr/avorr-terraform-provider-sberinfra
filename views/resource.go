@@ -1,8 +1,6 @@
 package views
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -10,6 +8,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"log"
 )
 
@@ -134,6 +134,15 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 		//	return diag.FromErr(err)
 		//}
 
+		// add description
+		description, ok := res.GetOk("description")
+		if ok {
+			_, err := server.DescriptionAdd(description.(string))
+			if err != nil {
+				return diag.FromErr(err)
+			}
+		}
+
 		// attach tags
 		if res.HasChange("tag_ids") {
 			_, tagIds := res.GetChange("tag_ids")
@@ -145,6 +154,7 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 				}
 			}
 		}
+
 		if res.HasChange("security_groups") {
 			_, securityGroups := res.GetChange("security_groups")
 			for _, v := range securityGroups.(*schema.Set).List() {
@@ -232,7 +242,6 @@ func ReadResource(obj models.DIResource) schema.ReadContextFunc {
 		//if err != nil {
 		//	return diag.FromErr(err)
 		//}
-
 		return diags
 	}
 	return f
@@ -257,6 +266,28 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 			changes := map[string]map[string]string{
 				"server": {
 					"service_name": service_name.(string),
+				},
+			}
+			objBytes, err := json.Marshal(changes)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			responseBytes, err := server.UpdateDI(objBytes)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			err = server.Deserialize(responseBytes)
+			if err != nil {
+				return diag.FromErr(err)
+			}
+			server.WriteTF(res)
+		}
+
+		if res.HasChange("description") {
+			_, description := res.GetChange("description")
+			changes := map[string]map[string]string{
+				"server": {
+					"comment": description.(string),
 				},
 			}
 			objBytes, err := json.Marshal(changes)
@@ -317,33 +348,6 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 				log.Printf("[INFO] timeout on resize for instance (%s), save current state: %s", server.Id.String(), server.StateResize)
 			}
 		}
-
-		// openshift only
-		//if server.Object.GetType() == "di_openshift" && (res.HasChange("ram") || res.HasChange("cpu")) {
-		//	_, ram := res.GetChange("ram")
-		//	_, cpu := res.GetChange("cpu")
-		//	changes := map[string]map[string]int{
-		//		"resize": {
-		//			"ram": ram.(int),
-		//			"cpu": cpu.(int),
-		//		},
-		//	}
-		//	objBytes, err := json.Marshal(changes)
-		//	if err != nil {
-		//		return diag.FromErr(err)
-		//	}
-		//	_, err = server.ResizeDI(objBytes)
-		//	if err != nil {
-		//		return diag.FromErr(err)
-		//	}
-		//	server.StateResize = "resizing"
-		//	server.WriteTF(res)
-		//
-		//	_, err = server.StateResizeChange(res).WaitForStateContext(ctx)
-		//	if err != nil {
-		//		log.Printf("[INFO] timeout on resize for instance (%s), save current state: %s", server.Id.String(), server.StateResize)
-		//	}
-		//}
 
 		if res.HasChange("volume") {
 			v1, v2 := res.GetChange("volume")
@@ -548,7 +552,6 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 		if err != nil {
 			return nil, err
 		}
-		// log.Println(pp.Sprint(server))
 
 		hclRoot := server.GetHCLRoot()
 		hclRoot.Resources.Type = obj.GetType()
@@ -600,7 +603,6 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 			}
 		}
 
-		// return nil, nil
 		return []*schema.ResourceData{res}, nil
 	}
 }

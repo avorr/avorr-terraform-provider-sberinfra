@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"time"
 
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 )
 
 type Server struct {
@@ -27,6 +27,7 @@ type Server struct {
 	Step           string     `json:"step"`
 	Name           string     `json:"name"`
 	ServiceName    string     `json:"service_name" hcl:"service_name"`
+	Comment        string     `json:"comment,omitempty"`
 	IrGroup        string     `json:"ir_group" hcl:"ir_group"`
 	IrType         string     `json:"ir_type"`
 	OsName         string     `json:"os_name" hcl:"os_name"`
@@ -84,6 +85,10 @@ func (o *Server) ReadTF(res *schema.ResourceData) {
 	}
 
 	o.ServiceName = res.Get("service_name").(string)
+	description, ok := res.GetOk("description")
+	if ok {
+		o.Comment = description.(string)
+	}
 	o.IrGroup = res.Get("ir_group").(string)
 	o.OsName = res.Get("os_name").(string)
 
@@ -195,6 +200,11 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.Set("step", o.Step)
 	res.Set("name", o.Name)
 	res.Set("service_name", o.ServiceName)
+	res.Set("description", o.Comment)
+	//_, ok := res.GetOk("description")
+	//if ok {
+	//	res.Set("description", o.Comment)
+	//}
 	res.Set("ir_group", o.IrGroup)
 	res.Set("ir_type", o.IrType)
 	res.Set("os_name", o.OsName)
@@ -250,30 +260,19 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 	}
 	if o.Hdd.Size != 0 && o.Disk == 0 {
 		if o.Hdd.StorageType != "" {
-			//hdd := make([]map[string]interface{}, 1)
-			//hdd[0] = map[string]interface{}{
-			//	"size":         o.Hdd.Size,
-			//	"storage_type": o.Hdd.StorageType,
-			//}
-			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk), "storage_type": o.Hdd.StorageType})
+			err := res.Set("disk", map[string]string{
+				"size":         strconv.Itoa(o.Disk),
+				"storage_type": o.Hdd.StorageType,
+			})
 			if err != nil {
 				log.Println(err)
 			}
 		} else {
-			//hdd := make([]map[string]int, 1)
-			//hdd[0] = map[string]int{
-			//	"size": o.Hdd.Size,
-			//}
 			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk)})
 			if err != nil {
 				log.Println(err)
 			}
 		}
-
-		//err := res.Set("hdd", map[string]interface{}{"size": o.Hdd.Size, "storage_type": o.Hdd.StorageType})
-		//if err != nil {
-		//	log.Println("ERR", err)
-		//}
 	}
 	o.Object.OnWriteTF(res, o)
 }
@@ -304,6 +303,7 @@ func (o *Server) ToMap() map[string]interface{} {
 		"step":            o.Step,
 		"user":            o.User,
 	}
+
 	if o.Disk != 0 {
 		serverMap["disk"] = o.Disk
 	}
@@ -312,6 +312,7 @@ func (o *Server) ToMap() map[string]interface{} {
 		serverMap["public_ssh_name"] = o.PublicSshName
 		serverMap["public_ssh"] = o.PublicSsh
 	}
+
 	if o.Hdd.StorageType != "" {
 		serverMap["hdd"] = map[string]interface{}{"size": o.Disk, "storage_type": o.Hdd.StorageType}
 	} else {
@@ -355,7 +356,6 @@ func (o *Server) Deserialize(data []byte) error {
 	}
 
 	serverMap := response["server"]
-
 	//var defaultSecurityGroup string
 	//outputSecurityGroups := serverMap["outputs"].(map[string]interface{})["server_security_groups"].([]interface{})
 	//if len(outputSecurityGroups) == 1 {
@@ -363,13 +363,24 @@ func (o *Server) Deserialize(data []byte) error {
 	//}
 	o.Name = serverMap["name"].(string)
 	o.ServiceName = serverMap["service_name"].(string)
-	o.Zone = serverMap["zone"].(string)
+	description, ok := serverMap["comment"]
+	if ok && description != nil {
+		o.Comment = serverMap["comment"].(string)
+	}
+	zone, ok := serverMap["zone"]
+	if ok && zone != nil {
+		o.Zone = serverMap["zone"].(string)
+	}
+	//o.Zone = serverMap["zone"].(string)
 	o.OsName = serverMap["os_name"].(string)
 	o.OsVersion = serverMap["os_version"].(string)
 	o.Virtualization = serverMap["virtualization"].(string)
 	o.IrGroup = serverMap["ir_group"].(string)
-	o.FaultTolerance = serverMap["fault_tolerance"].(string)
-
+	faultTolerance, ok := serverMap["fault_tolerance"]
+	if ok && faultTolerance != nil {
+		o.FaultTolerance = faultTolerance.(string)
+	}
+	//o.FaultTolerance = serverMap["fault_tolerance"].(string)
 	o.State = serverMap["state"].(string)
 	// o.IrType = serverMap["ir_type"].(string)
 	irType, ok := serverMap["ir_type"]
@@ -416,7 +427,7 @@ func (o *Server) Deserialize(data []byte) error {
 	}
 
 	networkUuid, ok := serverMap["network_uuid"]
-	if ok && networkUuid != "" {
+	if ok && networkUuid != "" && networkUuid != nil {
 		o.NetworkUuid = uuid.MustParse(serverMap["network_uuid"].(string))
 	}
 
@@ -516,6 +527,20 @@ func (o *Server) VolumeCreateDI(data []byte) ([]byte, error) {
 
 func (o *Server) VolumeRemoveDI(data []byte) ([]byte, error) {
 	return nil, Api.NewRequestDelete(fmt.Sprintf(o.Object.Urls("volume_remove"), o.Id), data, 200)
+}
+
+func (o *Server) DescriptionAdd(description string) ([]byte, error) {
+	request := map[string]map[string]string{
+		"server": {
+			"comment": description,
+		},
+	}
+	data, err := json.Marshal(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("update"), o.Id), data)
 }
 
 func (o *Server) TagAttachDI(tagId string) ([]byte, error) {
@@ -674,7 +699,6 @@ func (o *Server) StateSecurityGroupChange(res *schema.ResourceData) *resource.St
 }
 
 func (o *Server) ToHCL() []byte {
-
 	type HCLServerRoot struct {
 		Resources *Server `hcl:"resource,block"`
 	}
@@ -685,7 +709,6 @@ func (o *Server) ToHCL() []byte {
 }
 
 func (o *Server) GetGroup() string {
-
 	group := o.Object.GetGroup()
 	if group == "" {
 		return utils.Reformat(o.ServiceName)
@@ -693,36 +716,7 @@ func (o *Server) GetGroup() string {
 	return group
 }
 
-//func (o *Server) GetAnsibleVaultPassword() (string, error) {
-//	if o.Password == "" {
-//		return "", fmt.Errorf("no/blank password")
-//	}
-//	isEnabled, ok := os.LookupEnv("SI_ANSIBLE_PASSWORD")
-//	if ok {
-//		isEnabledBool, err := strconv.ParseBool(isEnabled)
-//		if err != nil {
-//			return "", err
-//		}
-//		if !isEnabledBool {
-//			return "", fmt.Errorf("ansible_password disabled")
-//		}
-//	}
-//	vaultPasswordFileLocation := os.Getenv("SI_VAULT_PASSWORD_FILE")
-//	TODO: check vaultPasswordFileLocation != ""
-//	vaultPasswordFileBytes, err := ioutil.ReadFile(vaultPasswordFileLocation)
-// if last byte is '\n'- remove it
-//if vaultPasswordFileBytes[len(vaultPasswordFileBytes)-1] == 0x0a {
-//	vaultPasswordFileBytes = vaultPasswordFileBytes[:len(vaultPasswordFileBytes)-1]
-//}
-//passwordEncrypted, err := vault.Encrypt(o.Password, string(vaultPasswordFileBytes))
-//if err != nil {
-//	return "", err
-//}
-//return passwordEncrypted, nil
-//}
-
 func (o *Server) GetHCLRoot() *HCLRoot {
-
 	root := &HCLRoot{Resources: &HCL{
 		// Id:             o.Id.String(),
 		// Name:           o.Name,
@@ -756,33 +750,13 @@ func (o *Server) GetHCLRoot() *HCLRoot {
 }
 
 func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
-
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(root, f.Body())
 	// return utils.Regexp(f.Bytes())
 	return f.Bytes()
 }
 
-/*
-func (o *Server) SetObject() bool {
-	if o.IrGroup == "" {
-		return false
-	}
-	if o.Object != nil {
-		return false
-	}
-	var obj DIResource
-	switch o.IrGroup {
-	case "vm":
-		obj = &VM{}
-	}
-	o.Object = obj
-	return true
-}
-*/
-
 func (o *Server) HCLHeader() []byte {
-
 	return []byte(fmt.Sprintf(
 		"resource \"%s\" \"%s\" {}\n",
 		o.Object.GetType(),
@@ -791,7 +765,6 @@ func (o *Server) HCLHeader() []byte {
 }
 
 func (o *Server) ImportCmd() []byte {
-
 	return []byte(fmt.Sprintf(
 		"terraform import %s.%s %s\n",
 		o.Object.GetType(),
