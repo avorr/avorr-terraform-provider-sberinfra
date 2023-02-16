@@ -1,9 +1,9 @@
 package models
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 )
 
 type HCLDataResource struct {
@@ -54,9 +54,7 @@ type HCLOutput struct {
 
 func ToHCLData(res DIDataResource) []byte {
 	res.SetResFields()
-
 	dataRoot := &HCLDataRoot{Resources: res}
-
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(dataRoot, f.Body())
 	return utils.Regexp(f.Bytes())
@@ -64,9 +62,7 @@ func ToHCLData(res DIDataResource) []byte {
 
 func ToHCLResource(res DIResource) []byte {
 	// res.SetResFields()
-
 	dataRoot := &HCLResourceRoot{Resources: res}
-
 	f := hclwrite.NewEmptyFile()
 	gohcl.EncodeIntoBody(dataRoot, f.Body())
 	return utils.Regexp(f.Bytes())
