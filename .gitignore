@@ -3,5 +3,4 @@ terraform.tfstate*
 .terraform.lock.hcl
 .terraform
 *.json
-.my_env
-dev.go
+.env

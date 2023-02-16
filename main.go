@@ -1,25 +1,22 @@
 package main
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/imports"
 	"context"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/imports"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/views"
 	"log"
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/views"
 )
 
 func main() {
 	if len(os.Args) == 3 && os.Args[1] == "import" {
-		//log.Println("Imports doesnt support")
 		importer := imports.Importer{}
 		err := importer.Import(os.Args[2])
 		if err != nil {
@@ -56,10 +53,10 @@ func ProviderFunc() *schema.Provider {
 	//views.Inventory = inventory
 
 	return &schema.Provider{
-		// ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
-		// 	log.Println(pp.Println(data))
-		// 	return nil, nil
-		// },
+		//ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		//	log.Println(pp.Sprintln(data))
+		//	return nil, nil
+		//},
 		DataSourcesMap: map[string]*schema.Resource{
 			"si_domain": {
 				ReadContext: ReadDataResource(&models.Domain{}),
