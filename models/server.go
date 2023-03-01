@@ -325,7 +325,7 @@ func (o *Server) Serialize() ([]byte, error) {
 	serverMap := o.ToMap()
 	delete(serverMap, "id")
 	delete(serverMap, "name")
-	delete(serverMap, "ir_type")
+	//delete(serverMap, "ir_type")
 	// delete(serverMap, "flavor")
 	// delete(serverMap, "cpu")
 	// delete(serverMap, "ram")

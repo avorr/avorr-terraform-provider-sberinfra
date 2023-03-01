@@ -105,8 +105,9 @@ func init() {
 		"group_id":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		"vdc_id":       {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
 		//"ir_group":        {Type: schema.TypeString, Required: true},
-		"ir_group":   {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
-		"ir_type":    {Type: schema.TypeString, Computed: true},
+		"ir_group": {Type: schema.TypeString, Optional: true, Default: "vm"}, //Required
+		//"ir_type":    {Type: schema.TypeString, Computed: true},
+		"ir_type":    {Type: schema.TypeString, Optional: true},
 		"cpu":        {Type: schema.TypeInt, Computed: true},
 		"ram":        {Type: schema.TypeInt, Computed: true},
 		"flavor":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringInSlice([]string{"m1.tiny", "m1.small", "m1.medium", "m1.large", "m1.xlarge", "m2.tiny", "m2.small", "m2.medium", "m2.large", "m2.xlarge", "m2.xxlarge", "m3.medium", "m3.large", "m4.tiny", "m4.small", "m4.medium", "m4.large", "m4.xlarge", "m6.tiny", "m6.small", "m6.medium", "m6.large", "m6.xlarge", "m8.tiny", "m8.small", "m8.medium", "m8.large", "m8.xlarge", "m12.large", "m16.tiny", "m16.small", "m16.large", "m16.xxlarge", "kasper_n2.tiny", "kasper_n2.small", "kasper_n2.medium", "kasper_n2.large", "kasper_n2.xlarge", "kasper_n1.small", "kasper_n1.medium", "kasper_n1.large", "kasper_n3.small", "kasper_n3.medium", "kasper_n3.large", "kasper_n3.xlarge"}, false)},
