@@ -118,6 +118,7 @@ func init() {
 		"os_version":     {Type: schema.TypeString, Required: true},
 		//"fault_tolerance": {Type: schema.TypeString, Required: true},
 		"fault_tolerance": {Type: schema.TypeString, Optional: true, Default: "Stand-alone"},
+		"domain":          {Type: schema.TypeString, Optional: true},
 		"state":           {Type: schema.TypeString, Computed: true},
 		"state_resize":    {Type: schema.TypeString, Computed: true},
 		"zone":            {Type: schema.TypeString, Optional: true, Default: "internal"},
