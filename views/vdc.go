@@ -94,8 +94,6 @@ func VdcCreate(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 	objRes2.Limits.RamGbAmount = ram
 	objRes2.Limits.StorageGbAmount = storage
 
-	//objRes2.Limits = obj.Limits
-
 	objRes2.WriteTFRes(res)
 	return diags
 }
@@ -308,24 +306,6 @@ func VdcUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 	objRes.WriteTFRes(res)
 
 	return diags
-
-	//requestBytes, err := obj.Serialize()
-	//if err != nil {
-	//	return diag.FromErr(err)
-	//}
-
-	//responseBytes, err := obj.UpdateDI(requestBytes)
-	//if err != nil {
-	//	return diag.FromErr(err)
-	//}
-
-	//err = obj.Deserialize(responseBytes)
-	//if err != nil {
-	//	return diag.FromErr(err)
-	//}
-
-	//obj.WriteTF(res)
-	//return diags
 }
 
 func VdcDelete(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -342,8 +322,6 @@ func VdcDelete(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 }
 
 func VdcImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]*schema.ResourceData, error) {
-	//obj := models.SIProject{GroupId: uuid.MustParse(res.Id())}
-
 	obj := models.Vdc{}
 	obj.ID = uuid.MustParse(res.Id())
 	responseBytes, err := obj.ReadDI()
@@ -366,40 +344,6 @@ func VdcImport(ctx context.Context, res *schema.ResourceData, m interface{}) ([]
 	obj.Limits.StorageGbAmount = limits["data"].Limits.StorageGbAmount
 
 	obj.WriteTF(res)
-
-	//obj := models.ResVdc{}
-	//obj.Vdc.ID = uuid.MustParse(res.Id())
-	//responseBytes, err := obj.ReadDIRes()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//err = obj.DeserializeRead(responseBytes)
-	//if err != nil {
-	//	return nil, err
-	//}
-	//obj.WriteTFRes(res)
-
-	//
-	//objBytes, _ := obj.ToHCL(nil)
-	//log.Println(string(objBytes))
-	//
-	//index := bytes.IndexByte(objBytes, byte('{'))
-	//
-	//firstString := objBytes[:index+1]
-	//
-	//fileBytes, err := ioutil.ReadFile("project.tf")
-	//if err != nil {
-	//	return nil, err
-	//}
-
-	//toReplace := []byte(fmt.Sprintf("%s}", firstString))
-
-	//newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
-
-	//err = ioutil.WriteFile("project.tf", newBytes, 0600)
-	//if err != nil {
-	//	return nil, err
-	//}
 
 	return []*schema.ResourceData{res}, nil
 }
