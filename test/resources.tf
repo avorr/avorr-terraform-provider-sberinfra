@@ -111,11 +111,8 @@ resource "si_vm" "vm" {
   count = 1
 }
 
-#resource "si_vdc" "import" {
-#}
+resource "si_vdc" "import" {}
 
-#resource "si_security_group" "import" {
-#}
+resource "si_security_group" "import" {}
 
-#resource "si_vm" "import" {
-#}
+resource "si_vm" "import" {}

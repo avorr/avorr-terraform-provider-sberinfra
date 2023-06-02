@@ -189,7 +189,8 @@ func (o *Server) GetPubKey() error {
 			return nil
 		}
 	}
-	return fmt.Errorf("can't find public ssh key \"%s\"", o.PublicSshName)
+	//return fmt.Errorf("can't find public ssh key \"%s\"", o.PublicSshName)
+	return nil
 }
 
 func (o *Server) WriteTF(res *schema.ResourceData) {

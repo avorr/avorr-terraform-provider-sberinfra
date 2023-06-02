@@ -29,7 +29,7 @@ terraform {
   #    force_path_style            = true
   #  }
 }
-provider "si" {}
+provider si {}
 
 
 #provider "vault" {
