@@ -1,0 +1,42 @@
+variables:
+  REGISTRY: https://art.gos-tech.xyz/artifactory/terraform-local-pid/pid/si
+
+stages:
+  - build and push provider
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
+
+build:
+  stage: build and push provider
+  image:
+    name: golang:alpine
+  script:
+    - VERSION=$(grep 'version=' build.sh | awk -F '=' '{print $2}')
+    - apk add zip curl
+
+    - OS=darwin; ARCH=amd64; BINARY=terraform-provider-si_v${VERSION}_${OS}_${ARCH}
+    - GOOS=$OS GOARCH=$ARCH go build -v -o $BINARY
+    - zip $BINARY.zip $BINARY
+    - curl -u "${ART_USER}":"${ART_PASSWORD}" -X PUT "${REGISTRY}/$VERSION/$BINARY.zip" -T $BINARY.zip
+
+    - OS=darwin; ARCH=arm64; BINARY=terraform-provider-si_v${VERSION}_${OS}_${ARCH}
+    - GOOS=$OS GOARCH=$ARCH go build -v -o $BINARY
+    - zip $BINARY.zip $BINARY
+    - curl -u "${ART_USER}":"${ART_PASSWORD}" -X PUT "${REGISTRY}/$VERSION/$BINARY.zip" -T $BINARY.zip
+
+    - OS=linux; ARCH=amd64; BINARY=terraform-provider-si_v${VERSION}_${OS}_${ARCH}
+    - GOOS=$OS GOARCH=$ARCH go build -v -o $BINARY
+    - zip $BINARY.zip $BINARY
+    - curl -u "${ART_USER}":"${ART_PASSWORD}" -X PUT "${REGISTRY}/$VERSION/$BINARY.zip" -T $BINARY.zip
+
+    - OS=linux; ARCH=arm64; BINARY=terraform-provider-si_v${VERSION}_${OS}_${ARCH}
+    - GOOS=$OS GOARCH=$ARCH go build -v -o $BINARY
+    - zip $BINARY.zip $BINARY
+    - curl -u "${ART_USER}":"${ART_PASSWORD}" -X PUT "${REGISTRY}/$VERSION/$BINARY.zip" -T $BINARY.zip
+
+    - OS=windows; ARCH=amd64; BINARY=terraform-provider-si_v${VERSION}_${OS}_${ARCH}
+    - GOOS=$OS GOARCH=$ARCH go build -v -o $BINARY
+    - zip $BINARY.zip $BINARY
+    - curl -u "${ART_USER}":"${ART_PASSWORD}" -X PUT "${REGISTRY}/$VERSION/$BINARY.zip" -T $BINARY.zip
