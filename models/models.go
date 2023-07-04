@@ -18,8 +18,6 @@ type DIDataResource interface {
 	Deserialize([]byte) error
 	ReadAll() ([]byte, error)
 	DeserializeAll([]byte) ([]DIDataResource, error)
-	// ToHCL() *HCLResource
-	// ToHCL2() *HCLDataResource
 	GetId() string
 	GetResType() string
 	GetResName() string
@@ -35,10 +33,4 @@ type DIResource interface {
 	Urls(string) string
 	OnReadTF(*schema.ResourceData, *Server)
 	OnWriteTF(*schema.ResourceData, *Server)
-	GetType() string
-	GetGroup() string
-	HostVars(*Server) map[string]interface{}
-	// ToHCL(*Server) ([]byte, error)
-	HCLAppParams() *HCLAppParams
-	HCLVolumes() []*HCLVolume
 }

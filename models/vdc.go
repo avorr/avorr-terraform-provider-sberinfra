@@ -5,15 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"log"
 	"time"
-	//	"github.com/hashicorp/hcl/v2/gohcl"
-	//	"github.com/hashicorp/hcl/v2/hclwrite"
-
-	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 type Vdc struct {
@@ -25,7 +22,6 @@ type Vdc struct {
 	IrType         string    `json:"ir_type"`
 	Virtualization string    `json:"virtualization"`
 	Datacenter     string    `json:"datacenter"`
-	DefaultNetwork uuid.UUID `json:"default_network"`
 	Limits         struct {
 		CoresVcpuCount  int `json:"cores_vcpu_count"`
 		RamGbAmount     int `json:"ram_gb_amount"`
@@ -39,19 +35,6 @@ type Vdc struct {
 		EnableDhcp     bool      `json:"enable_dhcp"`
 		IsDefault      bool      `json:"is_default"`
 	} `json:"network"`
-	NetworksRes []struct {
-		Cidr           string    `json:"cidr"`
-		Status         string    `json:"status"`
-		EnableDhcp     bool      `json:"enable_dhcp"`
-		SubnetName     string    `json:"subnet_name"`
-		SubnetUUID     uuid.UUID `json:"subnet_uuid"`
-		NetworkName    string    `json:"network_name"`
-		NetworkUUID    uuid.UUID `json:"network_uuid"`
-		DNSNameservers []string  `json:"dns_nameservers"`
-		IsDefault      bool      `json:"is_default"`
-	} `json:"networks"`
-	GroupName      string          `json:"group_name,omitempty"`
-	DomainID       uuid.UUID       `json:"domain_id"`
 	GroupID        uuid.UUID       `json:"group_id"`
 	JumpHost       bool            `json:"jump_host"`
 	Desc           string          `json:"desc"`
@@ -84,30 +67,9 @@ type ResVdc struct {
 		DNSNameservers []string  `json:"dns_nameservers"`
 		IsDefault      bool      `json:"is_default"`
 	} `json:"networks"`
-	DomainName     string    `json:"domain_name"`
-	GroupName      string    `json:"group_name"`
-	DomainID       uuid.UUID `json:"domain_id"`
-	GroupID        uuid.UUID `json:"group_id"`
-	IsProm         bool      `json:"is_prom"`
-	JumpHost       bool      `json:"jump_host"`
-	Desc           string    `json:"desc"`
-	SecurityGroups []struct {
-		Rules []struct {
-			ID              string      `json:"id"`
-			Protocol        interface{} `json:"protocol"`
-			Direction       string      `json:"direction"`
-			Ethertype       string      `json:"ethertype"`
-			PortRangeMax    interface{} `json:"port_range_max"`
-			PortRangeMin    interface{} `json:"port_range_min"`
-			RemoteGroupID   interface{} `json:"remote_group_id"`
-			RemoteIpPrefix  interface{} `json:"remote_ip_prefix,omitempty"`
-			SecurityGroupID string      `json:"security_group_id"`
-		} `json:"rules"`
-		Status           string        `json:"status"`
-		GroupName        string        `json:"group_name"`
-		SecurityGroupID  string        `json:"security_group_id"`
-		AttachedToServer []interface{} `json:"attached_to_server"`
-	} `json:"security_groups"`
+	GroupID  uuid.UUID `json:"group_id"`
+	JumpHost bool      `json:"jump_host"`
+	Desc     string    `json:"desc"`
 }
 
 type Networks struct {
@@ -145,14 +107,12 @@ func (o *Vdc) AddNetwork(ctx context.Context, res *schema.ResourceData, addition
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		deserializeResBody := ResVdc{}
+		deserializeResBody := map[string]*ResVdc{}
 		err = json.Unmarshal(resBody, &deserializeResBody)
 		if err != nil {
 			return diag.FromErr(err)
 		}
-
-		_, err = deserializeResBody.StateChangeNetwork(res, body.Network.NetworkName, body.Network.IsDefault).WaitForStateContext(ctx)
+		_, err = deserializeResBody["project"].StateChangeNetwork(res, body.Network.NetworkName, body.Network.IsDefault).WaitForStateContext(ctx)
 	}
 
 	return diag.Diagnostics{}
@@ -215,7 +175,6 @@ func (o *Vdc) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 	o.Virtualization = res.Get("virtualization").(string)
 	o.Name = res.Get("name").(string)
 	o.GroupID = uuid.MustParse(res.Get("group_id").(string))
-	//o.ID = uuid.MustParse(res.Id())
 	o.Datacenter = res.Get("datacenter").(string)
 	o.Desc = res.Get("description").(string)
 	o.JumpHost = res.Get("jump_host").(bool)
@@ -270,7 +229,6 @@ func (o *ResVdc) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 	o.Virtualization = res.Get("virtualization").(string)
 	o.Name = res.Get("name").(string)
 	o.GroupID = uuid.MustParse(res.Get("group_id").(string))
-	//o.ID = uuid.MustParse(res.Id())
 	o.Datacenter = res.Get("datacenter").(string)
 	o.Desc = res.Get("description").(string)
 	o.JumpHost = res.Get("jump_host").(bool)
@@ -289,20 +247,20 @@ func (o *ResVdc) ReadTFRes(res *schema.ResourceData) diag.Diagnostics {
 func (o *Vdc) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.ID.String())
 
-	res.Set("datacenter", o.Datacenter)
-	res.Set("ir_type", o.IrType)
-	res.Set("description", o.Desc)
-	res.Set("group_id", o.GroupID.String())
-	res.Set("jump_host", o.JumpHost)
-	res.Set("name", o.Name)
-	res.Set("virtualization", o.Virtualization)
+	err := res.Set("datacenter", o.Datacenter)
+	err = res.Set("ir_type", o.IrType)
+	err = res.Set("description", o.Desc)
+	err = res.Set("group_id", o.GroupID.String())
+	err = res.Set("jump_host", o.JumpHost)
+	err = res.Set("name", o.Name)
+	err = res.Set("virtualization", o.Virtualization)
 
 	limits := map[string]int{
 		"cores":   o.Limits.CoresVcpuCount,
 		"ram":     o.Limits.RamGbAmount,
 		"storage": o.Limits.StorageGbAmount,
 	}
-	err := res.Set("limits", limits)
+	err = res.Set("limits", limits)
 	if err != nil {
 		log.Println(err)
 	}
@@ -314,51 +272,38 @@ func (o *Vdc) WriteTF(res *schema.ResourceData) {
 
 func (o *ResVdc) WriteTFRes(res *schema.ResourceData) {
 	res.SetId(o.ID.String())
-	res.Set("name", o.Name)
-	res.Set("ir_group", o.IrGroup)
-	res.Set("group_id", o.GroupID.String())
-	//res.Set("domain_id", o.Vdc.DomainID.String())
-	//res.Set("state", o.Vdc.State)
-	res.Set("type", o.Type)
+	err := res.Set("name", o.Name)
+	err = res.Set("ir_group", o.IrGroup)
+	err = res.Set("group_id", o.GroupID.String())
+	err = res.Set("type", o.Type)
 
-	res.Set("description", o.Desc)
-	res.Set("default_network", o.DefaultNetwork.String())
+	err = res.Set("description", o.Desc)
+	err = res.Set("default_network", o.DefaultNetwork.String())
 	limits := map[string]int{
 		"cores":   o.Limits.CoresVcpuCount,
 		"ram":     o.Limits.RamGbAmount,
 		"storage": o.Limits.StorageGbAmount,
 	}
 
-	err := res.Set("limits", limits)
+	err = res.Set("limits", limits)
 	if err != nil {
 		log.Println(err)
 	}
 
-	//if o.Vdc.Networks != nil && len(o.Vdc.Networks) > 0 {sort.Sort(ByPath(o.Vdc.Networks))
-
 	networks := make([]map[string]interface{}, 0)
 	for _, v := range o.Networks {
-		if v.NetworkUUID == o.DefaultNetwork {
-			volume := map[string]interface{}{
-				"cidr":    v.Cidr,
-				"dns":     v.DNSNameservers,
-				"dhcp":    v.EnableDhcp,
-				"default": true,
-				"name":    v.NetworkName,
-				"id":      v.NetworkUUID.String(),
-			}
-			networks = append(networks, volume)
-		} else {
-			volume := map[string]interface{}{
-				"cidr":    v.Cidr,
-				"dns":     v.DNSNameservers,
-				"dhcp":    v.EnableDhcp,
-				"default": false,
-				"name":    v.NetworkName,
-				"id":      v.NetworkUUID.String(),
-			}
-			networks = append(networks, volume)
+		network := map[string]interface{}{
+			"cidr":    v.Cidr,
+			"dns":     v.DNSNameservers,
+			"dhcp":    v.EnableDhcp,
+			"default": false,
+			"name":    v.NetworkName,
+			"id":      v.NetworkUUID.String(),
 		}
+		if v.NetworkUUID == o.DefaultNetwork {
+			network["default"] = true
+		}
+		networks = append(networks, network)
 	}
 
 	err = res.Set("network", networks)
@@ -408,7 +353,6 @@ func (o *Vdc) ParseIdFromCreateResponse(data []byte) error {
 		return errors.New("no project in response")
 	}
 
-	//o2 := &Vdc{}
 	o.ID = uuid.MustParse(objMap["id"].(string))
 	o.GroupID = uuid.MustParse(objMap["group_id"].(string))
 
@@ -421,12 +365,10 @@ func (o *Vdc) CreateDI(data []byte) ([]byte, error) {
 
 func (o *Vdc) ReadDI() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ID))
-	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
 func (o *ResVdc) ReadDIRes() ([]byte, error) {
 	return Api.NewRequestRead(fmt.Sprintf("projects/%s", o.ID))
-	//return Api.NewRequestRead(fmt.Sprintf("projects?group_ids=%s", o.GroupId))
 }
 
 func (o *Vdc) UpdateVdcName(data []byte) ([]byte, error) {

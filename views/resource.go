@@ -1,10 +1,10 @@
 package views
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -33,19 +33,12 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 		}
 
 		// serialize for request
-		// requestBytes, err := server.Object.Serialize(&server)
 		requestBytes, err := server.Serialize()
 		if err != nil {
 			return diag.FromErr(err)
 		}
 
-		// bb := bytes.Buffer{}
-		// json.Indent(&bb, requestBytes, "", "\t")
-		// log.Println(bb.String())
-		// return nil
-
 		// send request to DI (new server)
-		// responseBytes, err := server.DI("create", requestBytes, 201)
 		responseBytes, err := server.CreateDI(requestBytes)
 		if err != nil {
 			return diag.FromErr(err)
@@ -64,7 +57,6 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 		}
 
 		// deserialize response to obj
-		// err = server.Object.Deserialize(responseBytes, &server)
 		err = server.Deserialize(responseBytes)
 		if err != nil {
 			return diag.FromErr(err)
@@ -98,41 +90,6 @@ func CreateResource(o models.DIResource) schema.CreateContextFunc {
 				server.ErrMsg,
 			)
 		}
-
-		//groupName := newObj.GetType()[3:]
-		//group := Inventory.All.GetGroup(groupName)
-		//if group == nil {
-		//	group = &inventory_yaml.Group{Name: groupName}
-		//}
-
-		//subgroupName := server.GetGroup()
-		//subgroup := group.GetGroup(subgroupName)
-		//if subgroup == nil {
-		//	subgroup = &inventory_yaml.Group{Name: subgroupName}
-		//	group.AddGroup(subgroup)
-		//}
-		//
-		//if subgroup.Vars == nil {
-		//	subgroup.Vars = make(map[string]interface{})
-		//}
-		//subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
-		//subgroup.Vars["service_name_ru"] = server.ServiceName
-
-		//host := &inventory_yaml.Host{
-		//// Name: server.Id.String(),
-		//Name: server.DNSName,
-		//Vars: newObj.HostVars(&server),
-		//}
-		//subgroup.AddHost(host)
-		//Inventory.All.AddGroup(group)
-		//err = Inventory.Save()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
-		//err = Inventory.ToBIN()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
 
 		// add description
 		description, ok := res.GetOk("description")
@@ -198,50 +155,6 @@ func ReadResource(obj models.DIResource) schema.ReadContextFunc {
 			return diag.FromErr(err)
 		}
 		server.WriteTF(res)
-		// if obj.State == "damaged" {
-		// 	err = obj.Delete()
-		// 	if err != nil {
-		// 		return diag.FromErr(err)
-		// 	}
-		// 	res.SetId("")
-		// }
-
-		//groupName := obj.GetType()[3:]
-		//group := Inventory.All.GetGroup(groupName)
-		//if group == nil {
-		//	group = &inventory_yaml.Group{Name: groupName}
-		//}
-		//
-		//subgroupName := server.GetGroup()
-		//// subgroupName := obj.GetGroup()
-		//// subgroupName := utils.Reformat(server.ServiceName)
-		//subgroup := group.GetGroup(subgroupName)
-		//if subgroup == nil {
-		//	subgroup = &inventory_yaml.Group{Name: subgroupName}
-		//	group.AddGroup(subgroup)
-		//}
-		//
-		//if subgroup.Vars == nil {
-		//	subgroup.Vars = make(map[string]interface{})
-		//}
-		//subgroup.Vars["service_name_en"] = utils.Reformat(server.ServiceName)
-		//subgroup.Vars["service_name_ru"] = server.ServiceName
-		//
-		//host := &inventory_yaml.Host{
-		//	// Name: server.Id.String(),
-		//	Name: server.DNSName,
-		//	Vars: newObj.HostVars(&server),
-		//}
-		//subgroup.AddHost(host)
-		//Inventory.All.AddGroup(group)
-		//err = Inventory.Save()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
-		//err = Inventory.ToBIN()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
 		return diags
 	}
 	return f
@@ -254,8 +167,9 @@ func UpdateResource(obj models.DIResource) schema.UpdateContextFunc {
 		server := models.Server{Object: obj}
 		server.ReadTF(res)
 
-		if res.Get("state") == "creating" || res.Get("state_resize") == "resizing" {
-			return diag.FromErr(errors.New("can't update 'creating' or 'resizing' instance"))
+		state := res.Get("state")
+		if state == "creating" || state == "damaged" || res.Get("state_resize") == "resizing" {
+			return diag.FromErr(errors.New(fmt.Sprintf("can't update %q instance", state)))
 		}
 		if res.HasChange("disk") {
 			return diag.FromErr(errors.New("main disk change not implemented in api"))
@@ -478,57 +392,16 @@ func DeleteResource(obj models.DIResource) schema.DeleteContextFunc {
 		if res.Get("state") == "creating" || res.Get("state_resize") == "resizing" {
 			return diag.FromErr(errors.New("can't delete 'creating' or 'resizing' instance"))
 		}
-		//server.Id = uuid.MustParse(res.Id())
-		err := server.DeleteVM()
-		//os.Exit(3)
-		//responseBytes, err := server.ReadDI()
-		//objRes := models.Server{Object: obj}
-		//err = json.Unmarshal(responseBytes, &objRes)
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
-		//objRes.Id = uuid.MustParse(res.Id())
 
-		//return diags
-		//_, err := objRes.StateChange(res).WaitForStateContext(ctx)
+		err := server.DeleteVM()
 		_, err = server.StateChange(res).WaitForStateContext(ctx)
 		if err != nil {
 			log.Printf("[INFO] timeout on remove for instance (%s), save current state: %s", server.Id.String(), server.State)
 		}
-		//os.Exit(3)
 		if err != nil {
 			return diag.FromErr(err)
 		}
 		res.SetId("")
-
-		//groupName := obj.GetType()[3:]
-
-		//group := Inventory.All.GetGroup(groupName)
-		//if group == nil {
-		//	group = &inventory_yaml.Group{Name: groupName}
-		//}
-		//subgroupName := server.GetGroup()
-		//// subgroupName := utils.Reformat(server.ServiceName)
-		//subgroup := group.GetGroup(subgroupName)
-		//if subgroup != nil {
-		//	if len(subgroup.Hosts) == 1 {
-		//		group.RmGroup(subgroup.Name)
-		//	} else {
-		//		subgroup.RmHost(server.DNSName)
-		//	}
-		//}
-		//if len(group.Hosts) == 0 && len(group.Children) == 0 {
-		//	Inventory.All.RmGroup(group.Name)
-		//}
-		//
-		//err = Inventory.Save()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
-		//err = Inventory.ToBIN()
-		//if err != nil {
-		//	return diag.FromErr(err)
-		//}
 
 		return diags
 	}
@@ -553,34 +426,6 @@ func ImportResource(obj models.DIResource) schema.StateContextFunc {
 			return nil, err
 		}
 
-		hclRoot := server.GetHCLRoot()
-		hclRoot.Resources.Type = obj.GetType()
-		hclRoot.Resources.AppParams = obj.HCLAppParams()
-		hclRoot.Resources.Volumes = obj.HCLVolumes()
-		objBytes := server.GetHCLRootBytes(hclRoot)
-		index := bytes.IndexByte(objBytes, byte('{'))
-		firstString := objBytes[:index+1]
-		if firstString[0] == byte(0x0a) {
-			firstString = firstString[1:]
-		}
-		appParamsFind := []byte("app_params {")
-		appParamsReplace := []byte("app_params = {")
-		objBytes = bytes.Replace(objBytes, appParamsFind, appParamsReplace, 1)
-		// log.Println(string(objBytes))
-
-		// TODO: file names
-		//fileName := "imports.tf"
-		//fileBytes, err := ioutil.ReadFile(fileName)
-		//if err != nil {
-		//	return nil, err
-		//}
-
-		//toReplace := []byte(fmt.Sprintf("%s}", firstString))
-		//newBytes := bytes.Replace(fileBytes, toReplace, objBytes, -1)
-		//err = ioutil.WriteFile(fileName, newBytes, 0600)
-		//if err != nil {
-		//	return nil, err
-		//}
 		if len(server.TagIds) > 0 {
 			var tags []string
 			for _, v := range server.TagIds {

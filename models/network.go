@@ -10,8 +10,3 @@ type Network struct {
 }
 
 type ByNetworkPath []*Network
-
-//func (o ByNetworkPath) Len() int           { return len(o) }
-//func (o ByNetworkPath) Less(i, j int) bool { return o[i].Path < o[j].Path }
-//func (o ByNetworkPath) Swap(i, j int)      { o[i], o[j] = o[j], o[i] }
-//

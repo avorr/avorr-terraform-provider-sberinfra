@@ -25,11 +25,6 @@ type Request struct {
 	Debug         bool
 }
 
-type Response struct {
-	Errors interface{} `json:"errors"`
-	Data   interface{}
-}
-
 func (o *Request) Log(format string, v ...interface{}) {
 	if o.Debug {
 		log.Printf(format, v...)

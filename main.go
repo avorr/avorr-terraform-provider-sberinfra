@@ -6,9 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/imports"
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/views"
+
 	"log"
 	"os"
 	"strconv"
@@ -16,15 +16,7 @@ import (
 )
 
 func main() {
-	if len(os.Args) == 3 && os.Args[1] == "import" {
-		importer := imports.Importer{}
-		err := importer.Import(os.Args[2])
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		runPlugin()
-	}
+	runPlugin()
 }
 
 func runPlugin() {
@@ -44,14 +36,6 @@ func ProviderFunc() *schema.Provider {
 		}
 	}
 
-	//inventory := inventory_yaml.NewInventory()
-	//inventory.IsDisabled()
-	//err := inventory.FromBIN()
-	//if err != nil {
-	//	log.Println(err)
-	//}
-	//views.Inventory = inventory
-
 	return &schema.Provider{
 		//ConfigureContextFunc: func(ctx context.Context, data *schema.ResourceData) (interface{}, diag.Diagnostics) {
 		//	log.Println(pp.Sprintln(data))
@@ -70,7 +54,6 @@ func ProviderFunc() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"si_vdc": {
 				Importer: &schema.ResourceImporter{
-					//State:        schema.ImportStatePassthrough,
 					StateContext: views.VdcImport,
 				},
 				CreateContext: views.VdcCreate,
@@ -84,7 +67,6 @@ func ProviderFunc() *schema.Provider {
 			},
 			"si_vm": {
 				Importer: &schema.ResourceImporter{
-					//State:        schema.ImportStatePassthrough,
 					StateContext: views.ImportResource(&models.VM{}),
 				},
 				CreateContext: views.CreateResource(&models.VM{}),
@@ -98,7 +80,6 @@ func ProviderFunc() *schema.Provider {
 			},
 			"si_security_group": {
 				Importer: &schema.ResourceImporter{
-					//State:        schema.ImportStatePassthrough,
 					StateContext: views.SecurityGroupImport,
 				},
 				CreateContext: views.SecurityGroupCreate,
@@ -116,7 +97,7 @@ func ProviderFunc() *schema.Provider {
 				},
 				CreateContext: views.TagCreate,
 				ReadContext:   views.TagRead,
-				// UpdateContext: views.TagUpdate,
+				//UpdateContext: views.TagUpdate,
 				DeleteContext: views.TagDelete,
 				Schema:        models.SchemaTag,
 				Timeouts: &schema.ResourceTimeout{

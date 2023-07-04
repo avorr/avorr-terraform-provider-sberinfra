@@ -4,14 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	"github.com/hashicorp/hcl/v2/gohcl"
-	"github.com/hashicorp/hcl/v2/hclwrite"
-
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
-
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"log"
 )
 
 type Tag struct {
@@ -26,10 +21,6 @@ func (o *Tag) GetType() string {
 	return "si_tag"
 }
 
-func (o *Tag) NewObj() DIResource {
-	return &Tag{}
-}
-
 func (o *Tag) ReadTF(res *schema.ResourceData) {
 	if res.Id() != "" {
 		o.Id = uuid.MustParse(res.Id())
@@ -39,7 +30,10 @@ func (o *Tag) ReadTF(res *schema.ResourceData) {
 
 func (o *Tag) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Id.String())
-	res.Set("name", o.Name)
+	err := res.Set("name", o.Name)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (o *Tag) Serialize() ([]byte, error) {
@@ -83,10 +77,6 @@ func (o *Tag) CreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Tag) ReadDI() ([]byte, error) {
-	// Api.Debug = false
-	// response, err := Api.NewRequestRead("dict/tags")
-	// Api.Debug = true
-	// return response, err
 	return Api.NewRequestRead("dict/tags")
 }
 
@@ -118,50 +108,5 @@ func (o *Tag) DeserializeAll(responseBytes []byte) error {
 	if !found {
 		return fmt.Errorf("no tag [%s]:%s in response list", o.Id, o.Name)
 	}
-	return nil
-}
-
-func (o *Tag) OnSerialize(map[string]interface{}, *Server) map[string]interface{} {
-	return nil
-}
-func (o *Tag) OnDeserialize(map[string]interface{}, *Server) {}
-func (o *Tag) Urls(string) string {
-	return ""
-}
-func (o *Tag) OnReadTF(*schema.ResourceData, *Server)  {}
-func (o *Tag) OnWriteTF(*schema.ResourceData, *Server) {}
-
-func (o *Tag) ToHCLOutput() []byte {
-	dataRoot := &HCLOutputRoot{
-		Resources: &HCLOutput{
-			ResName: fmt.Sprintf(
-				"%s_id",
-				o.ResType,
-			),
-			Value: fmt.Sprintf(
-				"%s.%s.id",
-				o.ResType,
-				o.ResName,
-			),
-		},
-	}
-	f := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(dataRoot, f.Body())
-	return utils.Regexp(f.Bytes())
-}
-
-func (o *Tag) HostVars(server *Server) map[string]interface{} {
-	return nil
-}
-
-func (o *Tag) GetGroup() string {
-	return ""
-}
-
-func (o *Tag) HCLAppParams() *HCLAppParams {
-	return nil
-}
-
-func (o *Tag) HCLVolumes() []*HCLVolume {
 	return nil
 }

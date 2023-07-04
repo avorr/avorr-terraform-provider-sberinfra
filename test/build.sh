@@ -3,7 +3,7 @@ set -ex
 cd ..
 echo `date`
 name=terraform-provider-si
-version=0.4.6
+version=0.4.7
 platform=darwin_amd64; goos="darwin"; goarch="amd64"
 #platform=darwin_arm64; goos="darwin"; goarch="arm64"
 #platform=linux_amd64; goos="linux"; goarch="amd64"

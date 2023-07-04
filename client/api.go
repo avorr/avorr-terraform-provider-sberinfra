@@ -12,12 +12,6 @@ type Api struct {
 	Debug bool
 }
 
-type ApiResponse struct {
-	Meta struct {
-		TotalCount int `json:"total_count"`
-	}
-}
-
 func NewApi() *Api {
 	debug := false
 	if os.Getenv("TF_LOG") == "DEBUG" {
@@ -109,9 +103,6 @@ func (o *Api) NewRequestRead(url string) ([]byte, error) {
 }
 
 func (o *Api) NewRequestReadStatusCode(url string) ([]byte, int, error) {
-	//request, err := o.NewRequest("GET", url, nil, 200)
-	//request, err := o.request("GET", url, nil, 200)
-	//request := o.request("GET", url)
 	request, statusCode, err := o.NewRequestSc("GET", url, nil)
 	if err != nil {
 		return nil, statusCode, err
@@ -145,14 +136,6 @@ func (o *Api) NewRequestResize(url string, data []byte) ([]byte, error) {
 
 func (o *Api) NewRequestMove(url string, data []byte) ([]byte, error) {
 	request, err := o.NewRequest("POST", url, data, 200)
-	if err != nil {
-		return nil, err
-	}
-	return request.ResponseBody, nil
-}
-
-func (o *Api) NewRequestUpScale(url string, data []byte) ([]byte, error) {
-	request, err := o.NewRequest("POST", url, data, 201)
 	if err != nil {
 		return nil, err
 	}

@@ -3,10 +3,8 @@ package models
 import (
 	"encoding/base64"
 	"fmt"
-
 	"github.com/hashicorp/hcl/v2/gohcl"
 	"github.com/hashicorp/hcl/v2/hclwrite"
-
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 )
 

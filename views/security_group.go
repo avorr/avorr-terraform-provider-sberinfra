@@ -1,11 +1,11 @@
 package views
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"context"
 	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -81,23 +81,23 @@ func SecurityGroupUpdate(ctx context.Context, res *schema.ResourceData, m interf
 				"security_rule": {
 					"ethertype":         rule["ethertype"],
 					"direction":         rule["direction"],
-					"port_range_min":    rule["port_range_min"],
-					"port_range_max":    rule["port_range_max"],
+					"port_range_min":    rule["from_port"],
+					"port_range_max":    rule["to_port"],
 					"protocol":          rule["protocol"],
-					"remote_ip_prefix":  rule["remote_ip_prefix"],
+					"remote_ip_prefix":  rule["cidr_prefix"],
 					"security_group_id": obj.SecurityGroupID,
 				},
 			}
 
-			if rule["remote_ip_prefix"] == "" {
+			if rule["cidr_prefix"] == "" {
 				delete(securityRuleMap["security_rule"], "remote_ip_prefix")
 			}
 
-			if rule["port_range_min"] == 0 {
+			if rule["from_port"] == 0 {
 				delete(securityRuleMap["security_rule"], "port_range_min")
 			}
 
-			if rule["port_range_max"] == 0 {
+			if rule["to_port"] == 0 {
 				delete(securityRuleMap["security_rule"], "port_range_max")
 			}
 
