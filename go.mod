@@ -1,4 +1,4 @@
-module gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra
+module github.com/avorr/terraform-provider-sberinfra
 
 go 1.18
 

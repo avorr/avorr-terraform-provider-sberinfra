@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
+	"github.com/avorr/terraform-provider-sberinfra/client"
+	"github.com/avorr/terraform-provider-sberinfra/models"
+	"github.com/avorr/terraform-provider-sberinfra/views"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/views"
 
 	"log"
 	"os"

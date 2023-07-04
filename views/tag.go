@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/avorr/terraform-provider-sberinfra/models"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 func LookupTag(TagName string) uuid.UUID {

@@ -1,10 +1,10 @@
 package imports
 
 import (
+	"github.com/avorr/terraform-provider-sberinfra/client"
+	"github.com/avorr/terraform-provider-sberinfra/models"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 type Importer struct {
@@ -21,7 +21,6 @@ func (o *Importer) Import(projectId string) diag.Diagnostics {
 		return diags
 	}
 	project := &models.Vdc{ID: id}
-	//project.ID = id
 	o.Project = project
 	o.Api = client.NewApi()
 	models.Api = o.Api

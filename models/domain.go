@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
+	"github.com/avorr/terraform-provider-sberinfra/utils"
 	"net/url"
 
 	"github.com/google/uuid"

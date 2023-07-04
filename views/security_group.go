@@ -3,9 +3,9 @@ package views
 import (
 	"context"
 	"encoding/json"
+	"github.com/avorr/terraform-provider-sberinfra/models"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 func SecurityGroupCreate(ctx context.Context, res *schema.ResourceData, m interface{}) diag.Diagnostics {
