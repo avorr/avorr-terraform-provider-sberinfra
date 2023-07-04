@@ -1,14 +1,13 @@
 package views
 
 import (
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
 )
 
 func LookupTag(TagName string) uuid.UUID {

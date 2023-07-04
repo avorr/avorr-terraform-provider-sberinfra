@@ -1,5 +1,5 @@
 variables:
-  REGISTRY: https://art.gos-tech.xyz/artifactory/terraform-local-pid/pid/si
+  REGISTRY: https://art.gos-tech.xyz/artifactory/terraform-local-pid/cloud/si
 
 stages:
   - build and push provider

@@ -1,11 +1,10 @@
 package imports
 
 import (
+	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/client"
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/models"
-	"bytes"
-	"fmt"
-	"github.com/google/uuid"
 )
 
 type Importer struct {
@@ -13,18 +12,16 @@ type Importer struct {
 	Project *models.Vdc
 	Domain  *models.Domain
 	Group   *models.Group
-	//StandType *models.StandType
-	//AS        *models.AS
 }
 
-func (o *Importer) Import(projectId string) error {
+func (o *Importer) Import(projectId string) diag.Diagnostics {
+	var diags diag.Diagnostics
 	id, err := uuid.Parse(projectId)
 	if err != nil {
-		return fmt.Errorf("can't parse uuid, %s\n", err)
+		return diags
 	}
-	//project := &models.Vdc{Id: id}
-	project := &models.Vdc{}
-	project.ID = id
+	project := &models.Vdc{ID: id}
+	//project.ID = id
 	o.Project = project
 	o.Api = client.NewApi()
 	models.Api = o.Api
@@ -32,11 +29,11 @@ func (o *Importer) Import(projectId string) error {
 
 	responseBytes, err := project.ReadDI()
 	if err != nil {
-		return err
+		return diags
 	}
 	err = project.Deserialize(responseBytes)
 	if err != nil {
-		return err
+		return diags
 	}
 
 	servers := Servers{
@@ -44,33 +41,9 @@ func (o *Importer) Import(projectId string) error {
 		Api:     o.Api,
 	}
 
-	//servers := Servers{}
-	//servers
-
 	err = servers.Read()
 	if err != nil {
-		return err
+		return diags
 	}
-
-	var bbTF, bbSH bytes.Buffer
-	bbSH.Write([]byte("#!/usr/bin/env bash\n\n"))
-
-	for _, v := range servers.NonCluster {
-		bbTF.Write(v.HCLHeader())
-		bbSH.Write(v.ImportCmd())
-	}
-	//for _, v := range servers.Clusters {
-	//	bbTF.Write(v.HCLHeader())
-	//	bbSH.Write(v.ImportCmd())
-	//}
-
-	//err = ioutil.WriteFile("imports.tf", bbTF.Bytes(), 0777)
-	//if err != nil {
-	//	return err
-	//}
-	//err = ioutil.WriteFile("imports.sh", bbSH.Bytes(), 0777)
-	//if err != nil {
-	//	return err
-	//}
-	return nil
+	return diags
 }

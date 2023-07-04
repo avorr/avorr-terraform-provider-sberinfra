@@ -3,14 +3,15 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
+	"time"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"log"
-	"time"
 )
 
 type SecurityGroup struct {
@@ -53,11 +54,11 @@ func (o *SecurityGroup) ReadTF(res *schema.ResourceData) diag.Diagnostics {
 				//ID:             uuid.Nil,
 				Ethertype:      v["ethertype"].(string),
 				Direction:      v["direction"].(string),
-				PortRangeMin:   v["port_range_min"].(int),
-				PortRangeMax:   v["port_range_max"].(int),
+				PortRangeMin:   v["from_port"].(int),
+				PortRangeMax:   v["to_port"].(int),
 				Protocol:       v["protocol"].(string),
-				RemoteIpPrefix: v["remote_ip_prefix"].(string),
-				RemoteGroupID:  v["remote_group_id"].(string),
+				RemoteIpPrefix: v["cidr_prefix"].(string),
+				RemoteGroupID:  v["sg_id"].(string),
 			})
 		}
 	} else {
@@ -204,29 +205,29 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 		for _, v := range o.Rules {
 			if v.Protocol != "" {
 				rule := map[string]interface{}{
-					"id":               v.ID,
-					"direction":        v.Direction,
-					"ethertype":        v.Ethertype,
-					"protocol":         v.Protocol,
-					"port_range_min":   v.PortRangeMin,
-					"port_range_max":   v.PortRangeMax,
-					"remote_ip_prefix": v.RemoteIpPrefix,
-					"remote_group_id":  v.RemoteGroupID,
+					"id":          v.ID,
+					"direction":   v.Direction,
+					"ethertype":   v.Ethertype,
+					"protocol":    v.Protocol,
+					"from_port":   v.PortRangeMin,
+					"to_port":     v.PortRangeMax,
+					"cidr_prefix": v.RemoteIpPrefix,
+					"sg_id":       v.RemoteGroupID,
 				}
-				if rule["port_range_min"] == 0 {
-					delete(rule, "port_range_min")
-				}
-
-				if rule["port_range_max"] == 0 {
-					delete(rule, "port_range_max")
+				if rule["from_port"] == 0 {
+					delete(rule, "from_port")
 				}
 
-				if rule["remote_ip_prefix"] == "" {
-					delete(rule, "remote_ip_prefix")
+				if rule["to_port"] == 0 {
+					delete(rule, "to_port")
 				}
 
-				if rule["remote_group_id"] == "" {
-					delete(rule, "remote_group_id")
+				if rule["cidr_prefix"] == "" {
+					delete(rule, "cidr_prefix")
+				}
+
+				if rule["sg_id"] == "" {
+					delete(rule, "sg_id")
 				}
 
 				rules = append(rules, rule)
@@ -235,35 +236,34 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 	} else {
 		for _, v := range o.SecurityRules {
 			rule := map[string]interface{}{
-				"id":               v.ID,
-				"direction":        v.Direction,
-				"ethertype":        v.Ethertype,
-				"protocol":         v.Protocol,
-				"port_range_min":   v.PortRangeMin,
-				"port_range_max":   v.PortRangeMax,
-				"remote_ip_prefix": v.RemoteIpPrefix,
-				"remote_group_id":  v.RemoteGroupID,
+				"id":          v.ID,
+				"direction":   v.Direction,
+				"ethertype":   v.Ethertype,
+				"protocol":    v.Protocol,
+				"from_port":   v.PortRangeMin,
+				"to_port":     v.PortRangeMax,
+				"cidr_prefix": v.RemoteIpPrefix,
+				"sg_id":       v.RemoteGroupID,
 			}
-			if rule["port_range_min"] == 0 {
-				delete(rule, "port_range_min")
-			}
-
-			if rule["port_range_max"] == 0 {
-				delete(rule, "port_range_max")
+			if rule["from_port"] == 0 {
+				delete(rule, "from_port")
 			}
 
-			if rule["remote_ip_prefix"] == "" {
-				delete(rule, "remote_ip_prefix")
+			if rule["to_port"] == 0 {
+				delete(rule, "to_port")
 			}
 
-			if rule["remote_group_id"] == "" {
-				delete(rule, "remote_group_id")
+			if rule["cidr_prefix"] == "" {
+				delete(rule, "cidr_prefix")
+			}
+
+			if rule["sg_id"] == "" {
+				delete(rule, "sg_id")
 			}
 
 			if rule["id"] != "" {
 				rules = append(rules, rule)
 			}
-			//rules = append(rules, rule)
 		}
 	}
 
@@ -277,11 +277,10 @@ func (o *SecurityGroup) WriteTF(res *schema.ResourceData) {
 		attachedServerId = append(attachedServerId, serverId.ServerUUID.String())
 	}
 
-	err = res.Set("attached_to_server", attachedServerId)
+	err = res.Set("attached_to_vm", attachedServerId)
 	if err != nil {
 		log.Println(err)
 	}
-
 	//res.SetConnInfo("network")
 	//res.ConnInfo()
 	//res.Set("network_uuid")

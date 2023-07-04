@@ -3,10 +3,10 @@ package models
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 )
 
@@ -23,10 +23,6 @@ type Group struct {
 	ResDomainName   string    `json:"-"`
 	ResOutputName   string    `json:"-"`
 	ResOutputValue  string    `json:"-"`
-	// Limit    float64   `json:"limit"`
-	// PortalId   int       `json:"portal_id"`
-	// DomainName string    `json:"domain_name"`
-	// IsDeleted  bool      `json:"is_deleted"`
 }
 
 func (o *Group) NewObj() DIDataResource {
@@ -43,17 +39,15 @@ func (o *Group) ReadTF(res *schema.ResourceData) {
 
 func (o *Group) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Id.String())
-	res.Set("name", o.Name)
-	// res.Set("limit", o.Limit)
-	// res.Set("portal_id", o.PortalId)
-	res.Set("domain_id", o.DomainId.String())
-	// res.Set("domain_name", o.DomainName)
-	res.Set("is_prom", o.IsProm)
-	// res.Set("is_deleted", o.IsDeleted)
+	err := res.Set("name", o.Name)
+	err = res.Set("domain_id", o.DomainId.String())
+	err = res.Set("is_prom", o.IsProm)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func (o *Group) deserializeList(responseBytes []byte) error {
-	// data := make(map[string][]map[string]interface{})
 	data := make(map[string]interface{})
 	err := json.Unmarshal(responseBytes, &data)
 	if err != nil {
@@ -62,12 +56,10 @@ func (o *Group) deserializeList(responseBytes []byte) error {
 	for _, val := range data["groups"].([]interface{}) {
 		v := val.(map[string]interface{})
 		if v["name"] == o.Name {
-			// o.Limit = v["limit"].(float64)
 			o.Id = uuid.MustParse(v["id"].(string))
 			if v["is_prom"] != nil {
 				o.IsProm = v["is_prom"].(bool)
 			}
-
 			return nil
 		}
 	}
@@ -82,25 +74,16 @@ func (o *Group) DeserializeOne(responseBytes []byte) error {
 	}
 	resource := data["group"]
 	o.Id = uuid.MustParse(resource["id"].(string))
-	// o.Limit = resource["limit"].(float64)
 	o.Name = resource["name"].(string)
 	return nil
 }
 
 func (o *Group) Deserialize(responseBytes []byte) error {
-	// if o.Id.ID() != uint32(0) {
-	// return o.deserializeOne(responseBytes)
-	// } else {
 	return o.deserializeList(responseBytes)
-	// }
 }
 
 func (o *Group) ReadDI() ([]byte, error) {
-	// if o.Id.ID() != uint32(0) {
-	// return Api.NewRequestRead(fmt.Sprintf("groups/%s", o.Id))
-	// } else {
 	return Api.NewRequestRead(fmt.Sprintf("groups?domain_id=%s", o.DomainId.String()))
-	// }
 }
 
 func (o *Group) GetId() string {
@@ -149,7 +132,6 @@ func (o *Group) SetResFields() {
 	o.ResId = o.GetId()
 	o.ResType = o.GetResType()
 	o.ResName = utils.Reformat(o.Name)
-	// o.ResDomainId = o.DomainId.String()
 	o.ResDomainIdUUID = o.DomainId.String()
 	o.ResOutputName = fmt.Sprintf(
 		"%s_id",

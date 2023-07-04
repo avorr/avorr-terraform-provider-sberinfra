@@ -10,11 +10,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/hashicorp/hcl/v2/gohcl"
-	"github.com/hashicorp/hcl/v2/hclwrite"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
 )
 
 type Server struct {
@@ -35,32 +32,31 @@ type Server struct {
 	Virtualization string     `json:"virtualization" hcl:"virtualization"`
 	FaultTolerance string     `json:"fault_tolerance" hcl:"fault_tolerance"`
 	//Region         string    `json:"region" hcl:"region"`
-	NetworkUuid       uuid.UUID       `json:"network_uuid,omitempty" hcl:"network_uuid"`
-	User              string          `json:"user"`
-	Password          string          `json:"password,omitempty"`
-	Cpu               int             `json:"cpu" hcl:"cpu"`
-	Ram               int             `json:"ram" hcl:"ram"`
-	Disk              int             `json:"disk" hcl:"disk"`
-	Flavor            string          `json:"flavor"`
-	Zone              string          `json:"zone" hcl:"zone"`
-	Ip                string          `json:"ip"`
-	PublicSshName     string          `json:"public_ssh_name,omitempty" hcl:"public_ssh_name"`
-	PublicSsh         string          `json:"public_ssh,omitempty"`
-	ResId             string          `json:"-" hcl:"id"`
-	ResType           string          `json:"-" hcl:"type,label"`
-	ResName           string          `json:"-" hcl:"name,label"`
-	ResGroupIdUUID    string          `json:"-" hcl:"group_id_uuid"`
-	ResGroupId        string          `json:"-" hcl:"group_id"`
-	ResProjectIdUUID  string          `json:"-" hcl:"project_id_uuid"`
-	ResProjectId      string          `json:"-" hcl:"project_id"`
-	ResAppParams      *HCLAppParams   `json:"-" hcl:"app_params,block"`
-	ResVolumes        []*HCLVolume    `json:"-" hcl:"volume,block"`
+	NetworkUuid      uuid.UUID `json:"network_uuid,omitempty" hcl:"network_uuid"`
+	User             string    `json:"user"`
+	Password         string    `json:"password,omitempty"`
+	Cpu              int       `json:"cpu" hcl:"cpu"`
+	Ram              int       `json:"ram" hcl:"ram"`
+	Disk             int       `json:"disk" hcl:"disk"`
+	Flavor           string    `json:"flavor"`
+	Zone             string    `json:"zone" hcl:"zone"`
+	Ip               string    `json:"ip"`
+	PublicSshName    string    `json:"public_ssh_name,omitempty" hcl:"public_ssh_name"`
+	PublicSsh        string    `json:"public_ssh,omitempty"`
+	ResId            string    `json:"-" hcl:"id"`
+	ResType          string    `json:"-" hcl:"type,label"`
+	ResName          string    `json:"-" hcl:"name,label"`
+	ResGroupIdUUID   string    `json:"-" hcl:"group_id_uuid"`
+	ResGroupId       string    `json:"-" hcl:"group_id"`
+	ResProjectIdUUID string    `json:"-" hcl:"project_id_uuid"`
+	ResProjectId     string    `json:"-" hcl:"project_id"`
+	//ResAppParams      *HCLAppParams   `json:"-" hcl:"app_params,block"`
+	//ResVolumes        []*HCLVolume    `json:"-" hcl:"volume,block"`
 	TagIds            []uuid.UUID     `json:"tag_ids" hcl:"-"`
 	SecurityGroups    []uuid.UUID     `json:"-" hcl:"-"`
 	ResSecurityGroups []SecurityGroup `json:"security_groups" hcl:"-"`
-	//ResSecurityGroups []SecurityGroup `json:"-" hcl:"-"`
-	ErrMsg string `json:"err_msg,omitempty" hcl:"-"`
-	Hdd    struct {
+	ErrMsg            string          `json:"err_msg,omitempty" hcl:"-"`
+	Hdd               struct {
 		Size        int    `json:"size"`
 		StorageType string `json:"storage_type,omitempty"`
 	} `json:"hdd,omitempty"`
@@ -195,28 +191,23 @@ func (o *Server) GetPubKey() error {
 
 func (o *Server) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Id.String())
-
-	res.Set("state", o.State)
-	res.Set("state_resize", o.StateResize)
-	res.Set("step", o.Step)
-	res.Set("name", o.Name)
-	res.Set("service_name", o.ServiceName)
-	res.Set("description", o.Comment)
-	//_, ok := res.GetOk("description")
-	//if ok {
-	//	res.Set("description", o.Comment)
-	//}
-	res.Set("ir_group", o.IrGroup)
-	res.Set("ir_type", o.IrType)
-	res.Set("os_name", o.OsName)
-	res.Set("os_version", o.OsVersion)
-	res.Set("fault_tolerance", o.FaultTolerance)
-	res.Set("virtualization", o.Virtualization)
-	res.Set("flavor", o.Flavor)
-	res.Set("cpu", o.Cpu)
-	res.Set("ram", o.Ram)
-	res.Set("ip", o.Ip)
-	res.Set("zone", o.Zone)
+	err := res.Set("state", o.State)
+	err = res.Set("state_resize", o.StateResize)
+	err = res.Set("step", o.Step)
+	err = res.Set("name", o.Name)
+	err = res.Set("service_name", o.ServiceName)
+	err = res.Set("description", o.Comment)
+	err = res.Set("ir_group", o.IrGroup)
+	err = res.Set("ir_type", o.IrType)
+	err = res.Set("os_name", o.OsName)
+	err = res.Set("os_version", o.OsVersion)
+	err = res.Set("fault_tolerance", o.FaultTolerance)
+	err = res.Set("virtualization", o.Virtualization)
+	err = res.Set("flavor", o.Flavor)
+	err = res.Set("cpu", o.Cpu)
+	err = res.Set("ram", o.Ram)
+	err = res.Set("ip", o.Ip)
+	err = res.Set("zone", o.Zone)
 	//res.Set("region", o.Region)
 
 	//_, ok := res.GetOk("disk")
@@ -239,12 +230,15 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 
 	_, ok := res.GetOk("network_id")
 	if ok && o.NetworkUuid != uuid.Nil || o.IsImport && o.NetworkUuid != uuid.Nil {
-		res.Set("network_id", o.NetworkUuid.String())
+		err = res.Set("network_id", o.NetworkUuid.String())
 	}
 
-	res.Set("vdc_id", o.ProjectId.String())
-	res.Set("group_id", o.GroupId.String())
-	res.Set("user", o.User)
+	err = res.Set("vdc_id", o.ProjectId.String())
+	err = res.Set("group_id", o.GroupId.String())
+	err = res.Set("user", o.User)
+	if err != nil {
+		log.Println(err)
+	}
 
 	isDisabled, ok := os.LookupEnv("VM_PASSWORD_OUTPUT")
 	if ok {
@@ -253,27 +247,24 @@ func (o *Server) WriteTF(res *schema.ResourceData) {
 			log.Println(err)
 		}
 		if isDisabledBool == true {
-			res.Set("password", o.Password)
+			err = res.Set("password", o.Password)
 		}
 	}
 	if o.PublicSshName != "" {
-		res.Set("public_ssh_name", o.PublicSshName)
+		err = res.Set("public_ssh_name", o.PublicSshName)
 	}
 	if o.Hdd.Size != 0 && o.Disk == 0 {
 		if o.Hdd.StorageType != "" {
-			err := res.Set("disk", map[string]string{
+			err = res.Set("disk", map[string]string{
 				"size":         strconv.Itoa(o.Disk),
 				"storage_type": o.Hdd.StorageType,
 			})
-			if err != nil {
-				log.Println(err)
-			}
 		} else {
-			err := res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk)})
-			if err != nil {
-				log.Println(err)
-			}
+			err = res.Set("disk", map[string]string{"size": strconv.Itoa(o.Disk)})
 		}
+	}
+	if err != nil {
+		log.Println(err)
 	}
 	o.Object.OnWriteTF(res, o)
 }
@@ -498,7 +489,6 @@ func (o *Server) CreateDI(data []byte) ([]byte, error) {
 }
 
 func (o *Server) ReadDI() ([]byte, error) {
-	//return Api.NewRequestRead(fmt.Sprintf(o.Object.Urls("read"), o.Id))
 	return Api.NewRequestRead(fmt.Sprintf("servers/%s", o.Id))
 }
 
@@ -568,7 +558,6 @@ func (o *Server) SecurityGroupVM(securityGroupId string, state string) ([]byte, 
 	if err != nil {
 		return nil, err
 	}
-	//return Api.NewRequestUpdate(fmt.Sprintf(o.Object.Urls("security_group"), o.Id), data)
 	return Api.NewRequestUpdate(fmt.Sprintf("servers/%s/action", o.Id), data)
 }
 
@@ -689,87 +678,7 @@ func (o *Server) StateSecurityGroupChange(res *schema.ResourceData) *resource.St
 					}
 				}
 			}
-
-			//if o.StateResize == "stable" {
-			//	o.WriteTF(res)
-			//	return o, "Stable", nil
-			//}
 			return o, "Attached", nil
 		},
 	}
-}
-
-func (o *Server) ToHCL() []byte {
-	type HCLServerRoot struct {
-		Resources *Server `hcl:"resource,block"`
-	}
-	root := &HCLServerRoot{Resources: o}
-	f := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(root, f.Body())
-	return utils.Regexp(f.Bytes())
-}
-
-func (o *Server) GetGroup() string {
-	group := o.Object.GetGroup()
-	if group == "" {
-		return utils.Reformat(o.ServiceName)
-	}
-	return group
-}
-
-func (o *Server) GetHCLRoot() *HCLRoot {
-	root := &HCLRoot{Resources: &HCL{
-		// Id:             o.Id.String(),
-		// Name:           o.Name,
-		// Name:           utils.Reformat(o.ServiceName),
-		Name:           utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
-		GroupId:        o.GroupId.String(),
-		ProjectId:      o.ProjectId.String(),
-		ServiceName:    o.ServiceName,
-		IrGroup:        o.IrGroup,
-		OsName:         o.OsName,
-		OsVersion:      o.OsVersion,
-		Virtualization: o.Virtualization,
-		FaultTolerance: o.FaultTolerance,
-		//Region:         o.Region,
-		Disk:          o.Disk,
-		Flavor:        o.Flavor,
-		Zone:          o.Zone,
-		PublicSshName: o.PublicSshName,
-		AppParams:     nil,
-		Volumes:       nil,
-		TagIds:        nil,
-	}}
-	if len(o.TagIds) > 0 {
-		tags := HCLTags{}
-		for _, v := range o.TagIds {
-			tags = append(tags, v.String())
-		}
-		root.Resources.TagIds = &tags
-	}
-	return root
-}
-
-func (o *Server) GetHCLRootBytes(root *HCLRoot) []byte {
-	f := hclwrite.NewEmptyFile()
-	gohcl.EncodeIntoBody(root, f.Body())
-	// return utils.Regexp(f.Bytes())
-	return f.Bytes()
-}
-
-func (o *Server) HCLHeader() []byte {
-	return []byte(fmt.Sprintf(
-		"resource \"%s\" \"%s\" {}\n",
-		o.Object.GetType(),
-		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
-	))
-}
-
-func (o *Server) ImportCmd() []byte {
-	return []byte(fmt.Sprintf(
-		"terraform import %s.%s %s\n",
-		o.Object.GetType(),
-		utils.Reformat(fmt.Sprintf("%s_%s", o.ServiceName, o.Name)),
-		o.Id.String(),
-	))
 }

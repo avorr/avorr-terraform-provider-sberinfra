@@ -2,17 +2,13 @@ package models
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
+
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"net"
-	"strconv"
-	//"github.com/hashicorp/go-cty/cty"
-	//"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"regexp"
-	//"sort"
-	//"strconv"
 )
 
 var (
@@ -79,18 +75,15 @@ func init() {
 			MinItems: 1,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					//"name": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueNetworkName()},
 					"name": {Type: schema.TypeString, Required: true, ValidateFunc: validation.StringIsNotEmpty},
 					"id":   {Type: schema.TypeString, Computed: true},
-					//"cidr": {Type: schema.TypeString, Required: true, ValidateDiagFunc: uniqueCidr()},
 					"cidr": {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsCIDR},
 					"dns": {
 						Type:     schema.TypeSet,
 						Required: true,
 						Elem:     &schema.Schema{Type: schema.TypeString, ValidateFunc: validation.IsIPv4Address},
 					},
-					"dhcp": {Type: schema.TypeBool, Required: true},
-					//"default": {Type: schema.TypeBool, Optional: true, Default: false, ValidateDiagFunc: defaultNetworkCount()},
+					"dhcp":    {Type: schema.TypeBool, Required: true},
 					"default": {Type: schema.TypeBool, Optional: true, Default: false},
 				},
 			},
@@ -98,8 +91,7 @@ func init() {
 	}
 
 	SchemaVM = map[string]*schema.Schema{
-		"name": {Type: schema.TypeString, Computed: true},
-		//"service_name": {Type: schema.TypeString, Required: true},
+		"name":         {Type: schema.TypeString, Computed: true},
 		"service_name": {Type: schema.TypeString, Optional: true},
 		"description":  {Type: schema.TypeString, Optional: true},
 		"group_id":     {Type: schema.TypeString, Required: true, ValidateFunc: validation.IsUUID},
@@ -142,10 +134,11 @@ func init() {
 			ForceNew: false,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					//"path":         {Type: schema.TypeString, Optional: true},
 					"volume_id":    {Type: schema.TypeString, Computed: true},
 					"size":         {Type: schema.TypeInt, Required: true, ForceNew: false},
-					"storage_type": {Type: schema.TypeString, Optional: true},
+					"storage_type": {Type: schema.TypeString, Optional: true, Default: "__DEFAULT__"},
+					//"description":  {Type: schema.TypeString, Optional: true},
+					"name": {Type: schema.TypeString, Optional: true},
 				},
 			},
 		},
@@ -157,21 +150,21 @@ func init() {
 		"id":     {Type: schema.TypeString, Computed: true},
 		"vdc_id": {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.IsUUID},
 		//"name":       {Type: schema.TypeString, Required: true, ForceNew: true},
-		"name":               {Type: schema.TypeString, Required: true},
-		"attached_to_server": {Type: schema.TypeSet, Computed: true, Elem: &schema.Schema{Type: schema.TypeString}},
+		"name":           {Type: schema.TypeString, Required: true},
+		"attached_to_vm": {Type: schema.TypeSet, Computed: true, Elem: &schema.Schema{Type: schema.TypeString}},
 		"security_rule": {
 			Type:     schema.TypeSet,
 			Optional: true,
 			Elem: &schema.Resource{
 				Schema: map[string]*schema.Schema{
-					"id":               {Type: schema.TypeString, Computed: true},
-					"ethertype":        {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
-					"direction":        {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
-					"protocol":         {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
-					"remote_ip_prefix": {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
-					"port_range_min":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
-					"port_range_max":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
-					"remote_group_id":  {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsUUID},
+					"id":          {Type: schema.TypeString, Computed: true},
+					"ethertype":   {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"IPv4", "IPv6"}, false)},
+					"direction":   {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"ingress", "egress"}, false)},
+					"protocol":    {Type: schema.TypeString, Required: true, ForceNew: false, ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp"}, false)},
+					"cidr_prefix": {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsCIDR},
+					"from_port":   {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
+					"to_port":     {Type: schema.TypeInt, Optional: true, ForceNew: false, ValidateFunc: validation.IsPortNumber},
+					"sg_id":       {Type: schema.TypeString, Optional: true, ForceNew: false, ValidateFunc: validation.IsUUID},
 				},
 			},
 		},
@@ -227,6 +220,70 @@ func validateLimitsMapValue() schema.SchemaValidateDiagFunc {
 		//}
 		return diags
 	}
+}
+
+func allDiagFunc(validators ...schema.SchemaValidateDiagFunc) schema.SchemaValidateDiagFunc {
+	return func(i interface{}, k cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		for _, validator := range validators {
+			diags = append(diags, validator(i, k)...)
+		}
+		return diags
+	}
+}
+
+func validateMapValue() schema.SchemaValidateDiagFunc {
+	return func(v interface{}, path cty.Path) diag.Diagnostics {
+		var diags diag.Diagnostics
+		for key, value := range v.(map[string]interface{}) {
+			var detail string
+			if key == "size" {
+				_, err := strconv.Atoi(value.(string))
+				if err != nil {
+					diags = append(diags, diag.Diagnostic{
+						Severity:      diag.Error,
+						Summary:       "Inappropriate value for attribute \"size\": a number is required.",
+						Detail:        detail,
+						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+					})
+				}
+			} //else if key == "storage_type" {
+			//if value != "iscsi-fast-01" {
+			//	diags = append(diags, diag.Diagnostic{
+			//		Severity:      diag.Error,
+			//		Summary:       "Invalid map key",
+			//		Detail:        detail,
+			//		AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
+			//	})
+			//}
+			//}
+		}
+		return diags
+	}
+}
+
+/*
+var vmVolumes = make([]string, 0)
+var allKeys = make(map[string]bool, 0)
+func validateVolume(i interface{}, k string) (warnings []string, errors []error) {
+	if k == "volume.0.name" {
+		vmVolumes = []string{}
+		for k1 := range allKeys {
+			delete(allKeys, k1)
+		}
+	}
+
+	vmVolumes = append(vmVolumes, i.(string))
+	if len(vmVolumes) > 1 {
+		for _, vol := range vmVolumes {
+			_, ok := allKeys[vol]
+			if ok {
+				errors = append(errors, fmt.Errorf("there should not be volumes with the same name: %q", vol))
+			}
+			allKeys[vol] = true
+		}
+	}
+	return warnings, errors
 }
 
 func uniqueCidr() schema.SchemaValidateDiagFunc {
@@ -309,42 +366,4 @@ func defaultNetworkCount() schema.SchemaValidateDiagFunc {
 	}
 }
 
-func allDiagFunc(validators ...schema.SchemaValidateDiagFunc) schema.SchemaValidateDiagFunc {
-	return func(i interface{}, k cty.Path) diag.Diagnostics {
-		var diags diag.Diagnostics
-		for _, validator := range validators {
-			diags = append(diags, validator(i, k)...)
-		}
-		return diags
-	}
-}
-
-func validateMapValue() schema.SchemaValidateDiagFunc {
-	return func(v interface{}, path cty.Path) diag.Diagnostics {
-		var diags diag.Diagnostics
-		for key, value := range v.(map[string]interface{}) {
-			var detail string
-			if key == "size" {
-				_, err := strconv.Atoi(value.(string))
-				if err != nil {
-					diags = append(diags, diag.Diagnostic{
-						Severity:      diag.Error,
-						Summary:       "Inappropriate value for attribute \"size\": a number is required.",
-						Detail:        detail,
-						AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
-					})
-				}
-			} //else if key == "storage_type" {
-			//if value != "iscsi-fast-01" {
-			//	diags = append(diags, diag.Diagnostic{
-			//		Severity:      diag.Error,
-			//		Summary:       "Invalid map key",
-			//		Detail:        detail,
-			//		AttributePath: append(path, cty.IndexStep{Key: cty.StringVal(key)}),
-			//	})
-			//}
-			//}
-		}
-		return diags
-	}
-}
+*/

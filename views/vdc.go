@@ -222,9 +222,6 @@ func VdcUpdate(ctx context.Context, res *schema.ResourceData, m interface{}) dia
 			}
 		}
 
-		//removeNetSet := netSet1.Difference(netSet2)
-		//addNetSet := netSet2.Difference(netSet1)
-
 		// add
 		if len(addNetSet) > 0 {
 			obj.AddNetwork(ctx, res, addNetSet)

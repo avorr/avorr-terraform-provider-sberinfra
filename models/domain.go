@@ -4,9 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
-
 	"gitlab.gos-tech.xyz/pid/iac/terraform-provider-sberinfra/utils"
+	"net/url"
 
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -39,7 +38,6 @@ func (o *Domain) ReadTF(res *schema.ResourceData) {
 
 func (o *Domain) WriteTF(res *schema.ResourceData) {
 	res.SetId(o.Id.String())
-	// resource.Set(k, fmt.Sprintf("%v", v))
 }
 
 func (o *Domain) Deserialize(responseBytes []byte) error {
@@ -76,7 +74,6 @@ func (o *Domain) Deserialize(responseBytes []byte) error {
 }
 
 func (o *Domain) ReadDI() ([]byte, error) {
-	//return Api.NewRequestRead(fmt.Sprintf("domains?searchstring=%s", url.QueryEscape(o.Name)))
 	return Api.NewRequestRead(fmt.Sprintf("domains?filter[name]=%s", url.QueryEscape(o.Name)))
 }
 
